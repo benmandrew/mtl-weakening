@@ -149,3 +149,31 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
     for t in terms[1:]:
         result = ltl.Or(result, t)
     return result
+
+
+def to_string(formula: Mitl) -> str:
+    def fmt_interval(interval: Tuple[int, Optional[int]]) -> str:
+        low, high = interval
+        if high is None:
+            return f"[{low}, ∞)"
+        return f"[{low}, {high}]"
+
+    match formula:
+        case Prop(name):
+            return name
+        case Not(f):
+            return f"!({to_string(f)})"
+        case And(left, right):
+            return f"({to_string(left)} & {to_string(right)})"
+        case Or(left, right):
+            return f"({to_string(left)} | {to_string(right)})"
+        case Implies(left, right):
+            return f"({to_string(left)} -> {to_string(right)})"
+        case Eventually(f, interval):
+            return f"F{fmt_interval(interval)} ({to_string(f)})"
+        case Always(f, interval):
+            return f"G{fmt_interval(interval)} ({to_string(f)})"
+        case Until(left, right, interval):
+            return f"({to_string(left)} U{fmt_interval(interval)} {to_string(right)})"
+        case _:
+            raise ValueError(f"Unsupported MITL construct: {formula}")

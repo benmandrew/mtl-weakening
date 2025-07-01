@@ -1,5 +1,8 @@
 import subprocess as sp
 from lark import Lark, Transformer, Discard
+import ltl
+import mitl
+import pprint
 
 
 class TreeTransformer(Transformer):
@@ -27,7 +30,11 @@ class TreeTransformer(Transformer):
 with open("cex.lark", "r") as f:
     parser = Lark(f.read(), parser="lalr")
 
-ltlspec = "G(trigger -> counter=N + 1)"
+# ltlspec = "G(trigger -> counter=N + 1)"
+
+mitl_fmla = mitl.Always(mitl.Prop("trigger"), (4, None))
+mitl_string = mitl.to_string(mitl_fmla)
+ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
 
 
 def main():
@@ -38,10 +45,15 @@ def main():
     out = sp.run(
         ["nuXmv", "-source", "commands.txt"], capture_output=True, text=True
     ).stdout
-    out = out.split("Trace Type: Counterexample")[2].strip() + "\n"
-    out = parser.parse(out)
-    out = TreeTransformer().transform(out)
-    print(out)
+    cex_string = "Trace Type: Counterexample"
+    if out.find(cex_string) == -1:
+        print(f"Specification {mitl_string} is true")
+    else:
+        out = out.split(cex_string)[2].strip() + "\n"
+        out = parser.parse(out)
+        out = TreeTransformer().transform(out)
+        print(f"Counterexample to {mitl_string}:")
+        pprint.pp(out)
 
 
 if __name__ == "__main__":
