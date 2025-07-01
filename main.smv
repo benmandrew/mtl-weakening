@@ -1,0 +1,24 @@
+MODULE main
+
+DEFINE
+  N := 5;  -- Customize this to change delay (e.g., 3, 10, etc.)
+
+VAR
+  counter : 0..N;
+  trigger : boolean;
+
+ASSIGN
+  init(counter) := 0;
+  next(counter) := case
+    counter < N : counter + 1;
+    TRUE        : counter;
+  esac;
+
+  init(trigger) := FALSE;
+  next(trigger) := case
+    counter = N : TRUE;
+    TRUE        : trigger;
+  esac;
+
+
+LTLSPEC G(trigger -> counter=N + 1)

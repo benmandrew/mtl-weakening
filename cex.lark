@@ -1,0 +1,15 @@
+?start: state*
+
+state: "-> State:" INT "." INT "<-" NL var+
+var: WORD "=" expr NL
+expr: INT | bool
+bool: "TRUE" -> true
+    | "FALSE" -> false
+
+%import common.INT
+%import common.WORD
+%import common.NEWLINE -> NL
+%import common.WS_INLINE
+
+%ignore "-- Loop starts here" NL
+%ignore WS_INLINE
