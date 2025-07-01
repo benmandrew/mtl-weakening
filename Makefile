@@ -1,4 +1,7 @@
-.PHONY: fmt lint ruff pylint
+.PHONY: test fmt lint ruff pylint
+
+test:
+	python3 -m unittest
 
 fmt:
 	python3 -m black -l 80 .
