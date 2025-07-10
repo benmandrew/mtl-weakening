@@ -32,19 +32,43 @@ with open("cex.lark", "r") as f:
 
 # ltlspec = "G(trigger -> counter=N + 1)"
 
-mitl_fmla = mitl.Always(mitl.Prop("trigger"), (4, None))
+mitl_fmla = mitl.Always(
+    mitl.Eventually(mitl.Prop("trigger"), (0, 4)), (0, None)
+)
 mitl_string = mitl.to_string(mitl_fmla)
 ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
+
+
+def sed_escape(s):
+    return s.replace("&", "\&")
+
+
+def run_and_capture(cmd):
+    process = sp.Popen(
+        cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True, bufsize=1
+    )
+    out = []
+    for line in process.stdout:
+        # Ignore nuXmv copyright output
+        if not line.startswith("*** ") and line != "\n":
+            print(line, end="")
+            out.append(line)
+    process.wait()
+    print()
+    return "".join(out)
 
 
 def main():
     f = open("commands.txt", "w")
     sp.run(
-        ["sed", "s/$LTLSPEC/{}/".format(ltlspec), "commands.in.txt"], stdout=f
+        [
+            "sed",
+            "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
+            "commands.in.txt",
+        ],
+        stdout=f,
     )
-    out = sp.run(
-        ["nuXmv", "-source", "commands.txt"], capture_output=True, text=True
-    ).stdout
+    out = run_and_capture(["nuXmv", "-source", "commands.txt"])
     cex_string = "Trace Type: Counterexample"
     if out.find(cex_string) == -1:
         print(f"Specification {mitl_string} is true")

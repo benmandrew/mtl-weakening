@@ -11,14 +11,11 @@ ASSIGN
   init(counter) := 0;
   next(counter) := case
     counter < N : counter + 1;
-    TRUE        : counter;
+    TRUE        : 0;
   esac;
 
   init(trigger) := FALSE;
   next(trigger) := case
     counter = N : TRUE;
-    TRUE        : trigger;
+    TRUE        : FALSE;
   esac;
-
-
-LTLSPEC G(trigger -> counter=N + 1)
