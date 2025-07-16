@@ -174,3 +174,4 @@ cython_debug/
 .pypirc
 
 check_model.txt
+trace.smv
