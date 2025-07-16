@@ -4,136 +4,6 @@ import collections
 import mitl as m
 
 
-class Marking:
-    def __init__(self, state: dict):
-        self.positive = set()
-        self.negative = set()
-        for k, v in state.items():
-            if type(v) is bool:
-                p = m.Prop(k)
-                if v:
-                    self.positive.add(p)
-                else:
-                    self.negative.add(p)
-
-    def add(self, f: m.Mitl):
-        if f not in self.positive and f not in self.negative:
-            match f:
-                case m.Prop(name):
-                    raise ValueError(
-                        f"Prop '{name}' does not exist in the marking"
-                    )
-                case m.Not(f):
-                    self.add(f)
-                case m.And(left, right):
-                    self.add(left)
-                    self.add(right)
-                case m.Or(left, right):
-                    self.add(left)
-                    self.add(right)
-                case m.Implies(left, right):
-                    self.add(left)
-                    self.add(right)
-                case m.Eventually(f, _):
-                    self.add(f)
-                case m.Always(f, _):
-                    self.add(f)
-                case m.Until(left, right, _):
-                    self.add(f)
-                case _:
-                    raise ValueError(f"Unsupported MITL construct: {f}")
-
-    def __str__(self):
-        pos = [m.to_string(s) for s in self.positive]
-        neg = [m.to_string(s) for s in self.negative]
-        return str(pos) + " " + str(neg)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def to_list(self) -> list[m.Mitl]:
-        out = list(self.positive) + list(self.negative)
-        return sorted(out, key=lambda f: len(m.to_string(f)))
-
-
-def generate_markings(f, trace):
-    cache = dict()
-
-    def eval_f(f):
-        if f in cache:
-            print("bruh")
-            return cache[f]
-        n = len(trace)
-        out = [False] * n
-        match f:
-            case m.Prop(name):
-                out = [state[name] for state in trace]
-            case m.Not(g):
-                inner = eval_f(g)
-                out = [not v for v in inner]
-            case m.And(left, right):
-                left = eval_f(left)
-                right = eval_f(right)
-                out = [l and r for l, r in zip(left, right)]  # noqa: E741
-            case m.Or(left, right):
-                left = eval_f(left)
-                right = eval_f(right)
-                out = [l or r for l, r in zip(left, right)]  # noqa: E741
-            case m.Implies(left, right):
-                left = eval_f(left)
-                right = eval_f(right)
-                out = [not l or r for l, r in zip(left, right)]  # noqa: E741
-            case m.Eventually(g, interval):
-                a, b = interval
-                inner = eval_f(g)
-                for t in range(n):
-                    t_min = max(t + a, 0)
-                    t_max = n - 1 if b is None else min(t + b, n - 1)
-                    out[t] = any(inner[k] for k in range(t_min, t_max + 1))
-            case m.Always(g, interval):
-                a, b = interval
-                inner = eval_f(g)
-                for t in range(n):
-                    t_min = max(t + a, 0)
-                    t_max = n - 1 if b is None else min(t + b, n - 1)
-                    out[t] = all(inner[k] for k in range(t_min, t_max + 1))
-            case m.Until(left, right, interval):
-                a, b = interval
-                left = eval_f(left)
-                right = eval_f(right)
-                for t in range(n):
-                    t_min = max(t + a, 0)
-                    t_max = n - 1 if b is None else min(t + b, n - 1)
-                    for k in range(t_min, t_max + 1):
-                        if right[k] and all(left[j] for j in range(t, k)):
-                            out[t] = True
-                            break
-            case _:
-                raise ValueError(f"Unsupported MITL construct: {f}")
-        cache[f] = out
-        return out
-
-    eval_f(f)
-    return cache
-
-
-def fmt_markings(markings: dict) -> str:
-    out = ""
-    subformulae = list(markings.keys())
-    max_len = max(len(m.to_string(f)) for f in subformulae)
-    for f in subformulae:
-        s = m.to_string(f)
-        out += f"{s:<{max_len}} : "
-        for marking in markings[f]:
-            if marking:
-                out += "X-"
-            else:
-                out += " -"
-        out = out[:-1]
-        out += "\n"
-    return out[:-1]
-
-
 def periodic_trace_idx(trace: list) -> Optional[int]:
     if len(trace) == 0:
         return None
@@ -144,14 +14,14 @@ def periodic_trace_idx(trace: list) -> Optional[int]:
     return None
 
 
-class DataType(Enum):
+class Mutability(Enum):
     VARIABLE = 1
     CONSTANT = 2
 
 
 def get_variable_types(
     trace: list[dict[str, bool | int]],
-) -> dict[str, tuple[DataType, str]]:
+) -> dict[str, tuple[Mutability, str]]:
     variable_values = collections.defaultdict(set)
     for state in trace:
         for k, v in state.items():
@@ -159,15 +29,15 @@ def get_variable_types(
     variable_types = {}
     for var, values in variable_values.items():
         if all(isinstance(v, bool) for v in values):
-            variable_types[var] = (DataType.VARIABLE, "boolean")
+            variable_types[var] = (Mutability.VARIABLE, "boolean")
         elif all(isinstance(v, int) for v in values):
             max_val = max(values)
             min_val = min(values)
             if min_val == max_val:
-                variable_types[var] = (DataType.CONSTANT, f"{min_val}")
+                variable_types[var] = (Mutability.CONSTANT, f"{min_val}")
             else:
                 variable_types[var] = (
-                    DataType.VARIABLE,
+                    Mutability.VARIABLE,
                     f"{min_val}..{max_val}",
                 )
         else:
@@ -177,17 +47,41 @@ def get_variable_types(
     return variable_types
 
 
-def generate_trace_smv(trace: list) -> str:
-    num_states = len(trace)
-    loop_start = periodic_trace_idx(trace)
-    variable_types = get_variable_types(trace)
-    lines = []
-    lines.append("MODULE main")
-    lines.append("VAR")
+def generate_vars(
+    variable_types: dict[str, tuple[Mutability, str]], num_states: int
+) -> list[str]:
+    lines = ["VAR"]
     lines.append(f"  state : 0..{num_states - 1};")
-    for var, typ in variable_types.items():
-        lines.append(f"  {var} : {typ};")
-    lines.append("ASSIGN")
+    for var, (mutability, smv_type) in variable_types.items():
+        if mutability == Mutability.VARIABLE:
+            lines.append(f"  {var} : {smv_type};")
+    return lines
+
+
+def generate_defines(
+    variable_types: dict[str, tuple[Mutability, str]],
+) -> list[str]:
+    lines = []
+    if any(
+        [
+            mutability == Mutability.CONSTANT
+            for _, (mutability, _) in variable_types.items()
+        ]
+    ):
+        lines.append("DEFINE")
+        for var, (mutability, smv_type) in variable_types.items():
+            if mutability == Mutability.CONSTANT:
+                lines.append(f"  {var} := {smv_type};")
+    return lines
+
+
+def generate_assignments(
+    trace: list[dict[str, bool | int]],
+    variable_types: dict[str, tuple[Mutability, str]],
+    num_states: int,
+) -> list[str]:
+    loop_start = periodic_trace_idx(trace)
+    lines = ["ASSIGN"]
     lines.append("  init(state) := 0;")
     lines.append("  next(state) := case")
     for i in range(num_states):
@@ -195,8 +89,12 @@ def generate_trace_smv(trace: list) -> str:
         lines.append(f"    state = {i} : {next_state};")
     lines.append("    TRUE : state;")
     lines.append("  esac;")
-    # Set init and next values for all variables
-    for var in variable_types:
+    variables = {
+        var
+        for var, (mutability, _) in variable_types.items()
+        if mutability == Mutability.VARIABLE
+    }
+    for var in variables:
         val = trace[0][var]
         val_str = (
             "TRUE" if val is True else "FALSE" if val is False else str(val)
@@ -211,11 +109,69 @@ def generate_trace_smv(trace: list) -> str:
             lines.append(f"    state = {i} : {val_str};")
         lines.append(f"    TRUE : {val_str};")
         lines.append("  esac;")
+    return lines
+
+
+def generate_trace_smv(trace: list[dict[str, bool | int]]) -> str:
+    num_states = len(trace)
+    variable_types = get_variable_types(trace)
+    lines = ["MODULE main"]
+    lines += generate_vars(variable_types, num_states)
+    lines += generate_defines(variable_types)
+    lines += generate_assignments(trace, variable_types, num_states)
     return "\n".join(lines)
 
 
-def write_trace_smv(trace: list, formula: m.Mitl) -> None:
+def write_trace_smv(
+    trace: list[dict[str, bool | int]], formula: m.Mitl
+) -> list[m.Mitl]:
     trace_smv = generate_trace_smv(trace)
-    ltlspec_smv, _ = m.generate_subformulae_smv(formula)
+    ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
     with open("trace.smv", "w") as f:
         f.write(trace_smv + "\n\n" + ltlspec_smv + "\n")
+    return subformulae
+
+
+def parse_nuxmv_output(
+    output: str, subformulae: list[m.Mitl], num_states: int
+) -> dict[m.Mitl, list[bool]]:
+    lines = output.split("\n")
+    lines = list(
+        filter(
+            lambda line: line.startswith("-- ")
+            and not line.startswith(
+                "-- as demonstrated by the following execution sequence"
+            ),
+            lines,
+        )
+    )
+    lines = [line.strip() for line in lines]
+    markings: dict[m.Mitl, list[bool]] = {}
+    for i, f in enumerate(subformulae):
+        markings[f] = []
+        for j in range(num_states):
+            idx = i * num_states + j
+            if lines[idx].endswith("true"):
+                markings[f].append(True)
+            elif lines[idx].endswith("false"):
+                markings[f].append(False)
+            else:
+                raise ValueError(f"line '{lines[idx]}' is malformed")
+    return markings
+
+
+def fmt_markings(markings: dict[m.Mitl, list[bool]]) -> str:
+    out = ""
+    subformulae = list(markings.keys())
+    max_len = max(len(m.to_string(f)) for f in subformulae)
+    for f in reversed(subformulae):
+        s = m.to_string(f)
+        out += f"{s:<{max_len}} : "
+        for marking in markings[f]:
+            if marking:
+                out += "X-"
+            else:
+                out += " -"
+        out = out[:-1]
+        out += "\n"
+    return out[:-1]

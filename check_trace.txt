@@ -1,4 +1,6 @@
 read_model -i trace.smv
 go
 
-simulate -trace_all
+check_ltlspec
+
+quit

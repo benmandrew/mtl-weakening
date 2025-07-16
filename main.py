@@ -42,11 +42,13 @@ def sed_escape(s):
     return s.replace("&", "\&")
 
 
-def run_and_capture(cmd, output=True):
+def run_and_capture(cmd, output=True) -> str:
     process = sp.Popen(
         cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True, bufsize=1
     )
     out = []
+    if process.stdout is None:
+        raise ValueError("stdout is None")
     for line in process.stdout:
         # Ignore nuXmv copyright output
         if not line.startswith("*** ") and line != "\n":
@@ -76,18 +78,23 @@ def main():
     else:
         out = out.split(cex_match_string)[2].strip() + "\n"
         parsetree = parser.parse(out)
-        cex = TreeTransformer().transform(parsetree)
+        cex: list[dict[str, bool | int]] = TreeTransformer().transform(
+            parsetree
+        )
         print(f"Counterexample to {mitl_string}:")
         pprint.pp(cex)
         print()
 
-        # print(marking.generate_trace_smv(cex))
+        subformulae = marking.write_trace_smv(cex, mitl_fmla)
 
-        marking.write_trace_smv(cex, mitl_fmla)
+        out = run_and_capture(
+            ["nuXmv", "-source", "check_trace.txt"], output=False
+        )
 
+        markings = marking.parse_nuxmv_output(out, subformulae, len(cex))
         # print(markings)
 
-        # print(fmt_markings(markings))
+        print(marking.fmt_markings(markings))
 
 
 if __name__ == "__main__":

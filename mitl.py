@@ -43,20 +43,20 @@ class Next(Mitl):
 @dataclass(frozen=True, order=True)
 class Eventually(Mitl):
     operand: Mitl
-    interval: Tuple[int, Optional[int]]
+    interval: Tuple[int, Optional[int]] = (0, None)
 
 
 @dataclass(frozen=True, order=True)
 class Always(Mitl):
     operand: Mitl
-    interval: Tuple[int, Optional[int]]
+    interval: Tuple[int, Optional[int]] = (0, None)
 
 
 @dataclass(frozen=True, order=True)
 class Until(Mitl):
     left: Mitl
     right: Mitl
-    interval: Tuple[int, Optional[int]]
+    interval: Tuple[int, Optional[int]] = (0, None)
 
 
 def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
@@ -162,9 +162,12 @@ def to_string(formula: Mitl) -> str:
             raise ValueError(f"Unsupported MITL construct: {formula}")
 
 
-def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
+def generate_subformulae_smv(
+    f: Mitl, num_states: int
+) -> tuple[str, list[Mitl]]:
     label_map: dict[Mitl, str] = {}
     ltlspec_lines = []
+    subformulae = []
     counter = 1
 
     def get_label():
@@ -174,10 +177,15 @@ def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
         return label
 
     def aux(f):
-        if f in label_map:
-            return label_map[f]
-        label = get_label()
-        expr = ltl.to_nuxmv(mitl_to_ltl(f))
+        subformulae.append(f)
+        for i in range(num_states):
+            g = Always(Implies(Prop(f"state = {i}"), f))
+            if g in label_map:
+                return label_map[g]
+            label = get_label()
+            expr = ltl.to_nuxmv(mitl_to_ltl(g))
+            label_map[g] = label
+            ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
         match f:
             case Prop(_):
                 pass
@@ -201,9 +209,7 @@ def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
                 aux(right)
             case _:
                 raise ValueError(f"Unsupported MITL construct: {f}")
-        label_map[f] = label
-        ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
         return label
 
-    root_label = aux(f)
-    return "\n".join(ltlspec_lines), root_label
+    aux(f)
+    return "\n".join(ltlspec_lines), subformulae
