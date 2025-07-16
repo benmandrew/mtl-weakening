@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
 from src import ltl
-from src.matchable import matchable
+from src.util import matchable
 
 
 class Mitl:

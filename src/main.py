@@ -2,6 +2,7 @@ from lark import Lark, Transformer, Discard
 from src import ltl
 from src import mitl
 from src import marking
+from src import util
 import subprocess as sp
 import pprint
 
@@ -31,34 +32,13 @@ class TreeTransformer(Transformer):
 with open("res/check_model.lark", "r") as f:
     parser = Lark(f.read(), parser="lalr")
 
-mitl_fmla = mitl.Always(
-    mitl.Eventually(mitl.Prop("trigger"), (0, 4)), (0, None)
-)
+mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, 4)))
 mitl_string = mitl.to_string(mitl_fmla)
 ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
 
 
 def sed_escape(s: str) -> str:
     return s.replace("&", "\&")
-
-
-def run_and_capture(cmd, output=True) -> str:
-    process = sp.Popen(
-        cmd, stdout=sp.PIPE, stderr=sp.STDOUT, text=True, bufsize=1
-    )
-    out = []
-    if process.stdout is None:
-        raise ValueError("stdout is None")
-    for line in process.stdout:
-        # Ignore nuXmv copyright output
-        if not line.startswith("*** ") and line != "\n":
-            if output:
-                print(line, end="")
-            out.append(line)
-    process.wait()
-    if output:
-        print()
-    return "".join(out)
 
 
 def main():
@@ -71,7 +51,7 @@ def main():
             ],
             stdout=f,
         )
-    out = run_and_capture(
+    out = util.run_and_capture(
         ["nuXmv", "-source", "res/check_model.txt"], output=False
     )
     cex_match_string = "Trace Type: Counterexample"
@@ -87,15 +67,7 @@ def main():
         pprint.pp(cex)
         print()
 
-        subformulae = marking.write_trace_smv("res/trace.smv", cex, mitl_fmla)
-
-        out = run_and_capture(
-            ["nuXmv", "-source", "res/check_trace.txt"], output=False
-        )
-
-        markings = marking.parse_nuxmv_output(out, subformulae, len(cex))
-        # print(markings)
-
+        markings = marking.mark_trace(cex, mitl_fmla)
         print(marking.fmt_markings(markings))
 
 

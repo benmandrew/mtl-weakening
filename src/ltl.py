@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from src.matchable import matchable
+from src.util import matchable
 
 
 @matchable

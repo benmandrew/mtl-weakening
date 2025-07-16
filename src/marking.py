@@ -2,6 +2,7 @@ from typing import Optional
 from enum import Enum
 import collections
 from src import mitl as m
+from src import util
 
 
 def periodic_trace_idx(trace: list) -> Optional[int]:
@@ -81,6 +82,8 @@ def generate_assignments(
     num_states: int,
 ) -> list[str]:
     loop_start = periodic_trace_idx(trace)
+    if loop_start is None:
+        raise ValueError("Cannot identify loop in trace")
     lines = ["ASSIGN"]
     lines.append("  init(state) := 0;")
     lines.append("  next(state) := case")
@@ -102,11 +105,12 @@ def generate_assignments(
         lines.append(f"  init({var}) := {val_str};")
         lines.append(f"  next({var}) := case")
         for i, state in enumerate(trace):
+            im = (i - 1) % num_states
             val = state[var]
             val_str = (
                 "TRUE" if val is True else "FALSE" if val is False else str(val)
             )
-            lines.append(f"    state = {i} : {val_str};")
+            lines.append(f"    state = {im} : {val_str};")
         lines.append(f"    TRUE : {val_str};")
         lines.append("  esac;")
     return lines
@@ -145,7 +149,6 @@ def parse_nuxmv_output(
             lines,
         )
     )
-    lines = [line.strip() for line in lines]
     markings: dict[m.Mitl, list[bool]] = {}
     for i, f in enumerate(subformulae):
         markings[f] = []
@@ -175,3 +178,13 @@ def fmt_markings(markings: dict[m.Mitl, list[bool]]) -> str:
         out = out[:-1]
         out += "\n"
     return out[:-1]
+
+
+def mark_trace(
+    trace: list[dict[str, bool | int]], formula: m.Mitl
+) -> dict[m.Mitl, list[bool]]:
+    subformulae = write_trace_smv("res/trace.smv", trace, formula)
+    out = util.run_and_capture(
+        ["nuXmv", "-source", "res/check_trace.txt"], output=False
+    )
+    return parse_nuxmv_output(out, subformulae, len(trace))
