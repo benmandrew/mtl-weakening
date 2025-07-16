@@ -1,7 +1,7 @@
 from typing import Optional
 from enum import Enum
 import collections
-import mitl as m
+from src import mitl as m
 
 
 def periodic_trace_idx(trace: list) -> Optional[int]:

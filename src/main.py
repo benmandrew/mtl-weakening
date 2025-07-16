@@ -1,8 +1,8 @@
-import subprocess as sp
 from lark import Lark, Transformer, Discard
-import ltl
-import mitl
-import marking
+from src import ltl
+from src import mitl
+from src import marking
+import subprocess as sp
 import pprint
 
 

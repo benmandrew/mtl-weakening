@@ -1,6 +1,6 @@
 import unittest
-import mitl as m
-import ltl as l
+from src import mitl as m
+from src import ltl as l
 
 
 class TestMitlToLtl(unittest.TestCase):
