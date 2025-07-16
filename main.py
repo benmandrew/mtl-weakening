@@ -81,7 +81,7 @@ def main():
         pprint.pp(cex)
         print()
 
-        print(marking.generate_trace_smv(cex))
+        # print(marking.generate_trace_smv(cex))
 
         marking.write_trace_smv(cex, mitl_fmla)
 

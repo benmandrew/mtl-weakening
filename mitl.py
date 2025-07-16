@@ -73,29 +73,23 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
             return ltl.Implies(mitl_to_ltl(l), mitl_to_ltl(r))
         case Eventually(f, (a, b)):
             subf = mitl_to_ltl(f)
-            out = None
+            out = subf
             if b is None:
                 out = ltl.Eventually(subf)
             else:
-                for _ in range(b - a + 1):
-                    if out is None:
-                        out = subf
-                    else:
-                        out = ltl.Or(subf, ltl.Next(out))
+                for _ in range(b - a):
+                    out = ltl.Or(subf, ltl.Next(out))
             for _ in range(a):
                 out = ltl.Next(out)
             return out
         case Always(f, (a, b)):
             subf = mitl_to_ltl(f)
-            out = None
+            out = subf
             if b is None:
                 out = ltl.Always(subf)
             else:
-                for _ in range(b - a + 1):
-                    if out is None:
-                        out = subf
-                    else:
-                        out = ltl.And(subf, ltl.Next(out))
+                for _ in range(b - a):
+                    out = ltl.And(subf, ltl.Next(out))
             for _ in range(a):
                 out = ltl.Next(out)
             return out
@@ -107,12 +101,9 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
             else:
                 terms = []
                 for i in range(b - a + 1):
-                    out = None
-                    for _ in range(i + 1):
-                        if out is None:
-                            out = right
-                        else:
-                            out = ltl.And(left, ltl.Next(out))
+                    out = right
+                    for _ in range(i):
+                        out = ltl.And(left, ltl.Next(out))
                     terms.append(out)
                 return apply_next_k(make_disjunction(terms), a)
         case _:
@@ -172,9 +163,7 @@ def to_string(formula: Mitl) -> str:
 
 
 def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
-    label_map = {}
-    define_lines = []
-    holds_define_lines = []
+    label_map: dict[Mitl, str] = {}
     ltlspec_lines = []
     counter = 1
 
@@ -213,18 +202,8 @@ def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
             case _:
                 raise ValueError(f"Unsupported MITL construct: {f}")
         label_map[f] = label
-        define_lines.append(f"  {label} := {expr};")
-        holds_define_lines.append(f"  holds_{label} := {label};")
-        ltlspec_lines.append(f"LTLSPEC NAME {label} := {label};")
+        ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
         return label
 
     root_label = aux(f)
-    out = (
-        "DEFINE\n"
-        + "\n".join(define_lines)
-        + "\n\n"
-        + "\n".join(holds_define_lines)
-        + "\n\n"
-        + "\n".join(ltlspec_lines)
-    )
-    return out, root_label
+    return "\n".join(ltlspec_lines), root_label

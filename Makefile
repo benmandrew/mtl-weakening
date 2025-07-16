@@ -6,10 +6,13 @@ test:
 fmt:
 	python3 -m black -l 80 .
 
-lint: ruff pylint
+lint: ruff pylint mypy
 
 ruff:
 	python3 -m ruff check
 
 pylint:
 	find . -name "*.py" -not -path "*/.*" | xargs python3 -m pylint --errors-only
+
+mypy:
+	find . -name "*.py" -not -path "*/.*" | xargs python3 -m mypy

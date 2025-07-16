@@ -1,4 +1,5 @@
 from typing import Optional
+from enum import Enum
 import collections
 import mitl as m
 
@@ -73,15 +74,15 @@ def generate_markings(f, trace):
             case m.And(left, right):
                 left = eval_f(left)
                 right = eval_f(right)
-                out = [l and r for l, r in zip(left, right)]
+                out = [l and r for l, r in zip(left, right)]  # noqa: E741
             case m.Or(left, right):
                 left = eval_f(left)
                 right = eval_f(right)
-                out = [l or r for l, r in zip(left, right)]
+                out = [l or r for l, r in zip(left, right)]  # noqa: E741
             case m.Implies(left, right):
                 left = eval_f(left)
                 right = eval_f(right)
-                out = [not l or r for l, r in zip(left, right)]
+                out = [not l or r for l, r in zip(left, right)]  # noqa: E741
             case m.Eventually(g, interval):
                 a, b = interval
                 inner = eval_f(g)
@@ -143,7 +144,14 @@ def periodic_trace_idx(trace: list) -> Optional[int]:
     return None
 
 
-def get_variable_types(trace: list):
+class DataType(Enum):
+    VARIABLE = 1
+    CONSTANT = 2
+
+
+def get_variable_types(
+    trace: list[dict[str, bool | int]],
+) -> dict[str, tuple[DataType, str]]:
     variable_values = collections.defaultdict(set)
     for state in trace:
         for k, v in state.items():
@@ -151,11 +159,17 @@ def get_variable_types(trace: list):
     variable_types = {}
     for var, values in variable_values.items():
         if all(isinstance(v, bool) for v in values):
-            variable_types[var] = "boolean"
+            variable_types[var] = (DataType.VARIABLE, "boolean")
         elif all(isinstance(v, int) for v in values):
             max_val = max(values)
             min_val = min(values)
-            variable_types[var] = f"{min_val}..{max_val}"
+            if min_val == max_val:
+                variable_types[var] = (DataType.CONSTANT, f"{min_val}")
+            else:
+                variable_types[var] = (
+                    DataType.VARIABLE,
+                    f"{min_val}..{max_val}",
+                )
         else:
             raise ValueError(
                 f"Mixed or unsupported types for variable '{var}': {values}"
@@ -183,16 +197,20 @@ def generate_trace_smv(trace: list) -> str:
     lines.append("  esac;")
     # Set init and next values for all variables
     for var in variable_types:
-        lines.append(f"  init({var}) := case")
+        val = trace[0][var]
+        val_str = (
+            "TRUE" if val is True else "FALSE" if val is False else str(val)
+        )
+        lines.append(f"  init({var}) := {val_str};")
+        lines.append(f"  next({var}) := case")
         for i, state in enumerate(trace):
             val = state[var]
             val_str = (
                 "TRUE" if val is True else "FALSE" if val is False else str(val)
             )
             lines.append(f"    state = {i} : {val_str};")
-        lines.append("    TRUE : FALSE;")
+        lines.append(f"    TRUE : {val_str};")
         lines.append("  esac;")
-        lines.append(f"  next({var}) := init({var});")
     return "\n".join(lines)
 
 
