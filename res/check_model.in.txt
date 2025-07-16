@@ -1,4 +1,4 @@
-read_model -i main.smv
+read_model -i res/model.smv
 go
 
 add_property -l -p "$LTLSPEC" -n prop

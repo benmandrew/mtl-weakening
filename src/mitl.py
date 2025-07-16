@@ -176,7 +176,7 @@ def generate_subformulae_smv(
         counter += 1
         return label
 
-    def aux(f):
+    def aux(f: Mitl):
         subformulae.append(f)
         for i in range(num_states):
             g = Always(Implies(Prop(f"state = {i}"), f))
@@ -189,8 +189,8 @@ def generate_subformulae_smv(
         match f:
             case Prop(_):
                 pass
-            case Not(g):
-                aux(g)
+            case Not(h):
+                aux(h)
             case And(left, right):
                 aux(left)
                 aux(right)
@@ -200,10 +200,10 @@ def generate_subformulae_smv(
             case Implies(left, right):
                 aux(left)
                 aux(right)
-            case Eventually(g, _):
-                aux(g)
-            case Always(g, _):
-                aux(g)
+            case Eventually(h, _):
+                aux(h)
+            case Always(h, _):
+                aux(h)
             case Until(left, right, _):
                 aux(left)
                 aux(right)

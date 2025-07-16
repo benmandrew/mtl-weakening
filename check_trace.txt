@@ -1,6 +1,0 @@
-read_model -i trace.smv
-go
-
-check_ltlspec
-
-quit

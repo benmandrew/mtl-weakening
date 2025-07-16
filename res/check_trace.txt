@@ -1,0 +1,6 @@
+read_model -i res/trace.smv
+go
+
+check_ltlspec
+
+quit

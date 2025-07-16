@@ -28,7 +28,7 @@ class TreeTransformer(Transformer):
         return d
 
 
-with open("cex.lark", "r") as f:
+with open("res/check_model.lark", "r") as f:
     parser = Lark(f.read(), parser="lalr")
 
 mitl_fmla = mitl.Always(
@@ -38,7 +38,7 @@ mitl_string = mitl.to_string(mitl_fmla)
 ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
 
 
-def sed_escape(s):
+def sed_escape(s: str) -> str:
     return s.replace("&", "\&")
 
 
@@ -62,16 +62,18 @@ def run_and_capture(cmd, output=True) -> str:
 
 
 def main():
-    f = open("check_model.txt", "w")
-    sp.run(
-        [
-            "sed",
-            "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
-            "check_model.in.txt",
-        ],
-        stdout=f,
+    with open("res/check_model.txt", "w") as f:
+        sp.run(
+            [
+                "sed",
+                "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
+                "res/check_model.in.txt",
+            ],
+            stdout=f,
+        )
+    out = run_and_capture(
+        ["nuXmv", "-source", "res/check_model.txt"], output=False
     )
-    out = run_and_capture(["nuXmv", "-source", "check_model.txt"], output=False)
     cex_match_string = "Trace Type: Counterexample"
     if out.find(cex_match_string) == -1:
         print(f"Specification {mitl_string} is true")
@@ -85,10 +87,10 @@ def main():
         pprint.pp(cex)
         print()
 
-        subformulae = marking.write_trace_smv(cex, mitl_fmla)
+        subformulae = marking.write_trace_smv("res/trace.smv", cex, mitl_fmla)
 
         out = run_and_capture(
-            ["nuXmv", "-source", "check_trace.txt"], output=False
+            ["nuXmv", "-source", "res/check_trace.txt"], output=False
         )
 
         markings = marking.parse_nuxmv_output(out, subformulae, len(cex))

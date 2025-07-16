@@ -123,11 +123,11 @@ def generate_trace_smv(trace: list[dict[str, bool | int]]) -> str:
 
 
 def write_trace_smv(
-    trace: list[dict[str, bool | int]], formula: m.Mitl
+    filepath: str, trace: list[dict[str, bool | int]], formula: m.Mitl
 ) -> list[m.Mitl]:
     trace_smv = generate_trace_smv(trace)
     ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
-    with open("trace.smv", "w") as f:
+    with open(filepath, "w") as f:
         f.write(trace_smv + "\n\n" + ltlspec_smv + "\n")
     return subformulae
 
