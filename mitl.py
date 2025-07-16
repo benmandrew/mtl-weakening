@@ -7,52 +7,52 @@ class Mitl:
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Prop(Mitl):
     name: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Not(Mitl):
     operand: Mitl
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class And(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Or(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Implies(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Next(Mitl):
     operand: Mitl
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Eventually(Mitl):
     operand: Mitl
     interval: Tuple[int, Optional[int]]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Always(Mitl):
     operand: Mitl
     interval: Tuple[int, Optional[int]]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Until(Mitl):
     left: Mitl
     right: Mitl
@@ -63,19 +63,14 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
     match formula:
         case Prop(name):
             return ltl.Prop(name)
-
         case Not(f):
             return ltl.Not(mitl_to_ltl(f))
-
         case And(l, r):
             return ltl.And(mitl_to_ltl(l), mitl_to_ltl(r))
-
         case Or(l, r):
             return ltl.Or(mitl_to_ltl(l), mitl_to_ltl(r))
-
         case Implies(l, r):
             return ltl.Implies(mitl_to_ltl(l), mitl_to_ltl(r))
-
         case Eventually(f, (a, b)):
             subf = mitl_to_ltl(f)
             out = None
@@ -90,7 +85,6 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
             for _ in range(a):
                 out = ltl.Next(out)
             return out
-
         case Always(f, (a, b)):
             subf = mitl_to_ltl(f)
             out = None
@@ -105,7 +99,6 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
             for _ in range(a):
                 out = ltl.Next(out)
             return out
-
         case Until(l, r, (a, b)):
             left = mitl_to_ltl(l)
             right = mitl_to_ltl(r)
@@ -122,7 +115,6 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
                             out = ltl.And(left, ltl.Next(out))
                     terms.append(out)
                 return apply_next_k(make_disjunction(terms), a)
-
         case _:
             raise ValueError("Unsupported MITL construct")
 
@@ -177,3 +169,62 @@ def to_string(formula: Mitl) -> str:
             return f"({to_string(left)} U{fmt_interval(interval)} {to_string(right)})"
         case _:
             raise ValueError(f"Unsupported MITL construct: {formula}")
+
+
+def generate_subformulae_smv(f: Mitl) -> Tuple[str, str]:
+    label_map = {}
+    define_lines = []
+    holds_define_lines = []
+    ltlspec_lines = []
+    counter = 1
+
+    def get_label():
+        nonlocal counter
+        label = f"f{counter}"
+        counter += 1
+        return label
+
+    def aux(f):
+        if f in label_map:
+            return label_map[f]
+        label = get_label()
+        expr = ltl.to_nuxmv(mitl_to_ltl(f))
+        match f:
+            case Prop(_):
+                pass
+            case Not(g):
+                aux(g)
+            case And(left, right):
+                aux(left)
+                aux(right)
+            case Or(left, right):
+                aux(left)
+                aux(right)
+            case Implies(left, right):
+                aux(left)
+                aux(right)
+            case Eventually(g, _):
+                aux(g)
+            case Always(g, _):
+                aux(g)
+            case Until(left, right, _):
+                aux(left)
+                aux(right)
+            case _:
+                raise ValueError(f"Unsupported MITL construct: {f}")
+        label_map[f] = label
+        define_lines.append(f"  {label} := {expr};")
+        holds_define_lines.append(f"  holds_{label} := {label};")
+        ltlspec_lines.append(f"LTLSPEC NAME {label} := {label};")
+        return label
+
+    root_label = aux(f)
+    out = (
+        "DEFINE\n"
+        + "\n".join(define_lines)
+        + "\n\n"
+        + "\n".join(holds_define_lines)
+        + "\n\n"
+        + "\n".join(ltlspec_lines)
+    )
+    return out, root_label
