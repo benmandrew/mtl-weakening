@@ -30,10 +30,10 @@ class TestMarking(unittest.TestCase):
         )
         expected = format_expect(
             """
-            trigger               :  - - - - - -X
-            F[0, 4] (trigger)     :  - -X-X-X-X-X
-            G (F[0, 4] (trigger)) :  - - - - - - 
-            =Lasso=               :   └─────────┘
+            trigger               │ │ │ │ │ │ │●│
+            F[0, 4] (trigger)     │ │ │●│●│●│●│●│
+            G (F[0, 4] (trigger)) │ │ │ │ │ │ │ │
+            =Lasso=                  └─────────┘
         """
         )
         result = str(marking.Marking(trace, formula))
@@ -50,11 +50,11 @@ class TestMarking(unittest.TestCase):
         )
         expected = format_expect(
             """
-            b           :  -X
-            a           : X- 
-            (a | b)     : X-X
-            F ((a | b)) : X-X
-            =Lasso=     : └─┘
+            b           │ │●│
+            a           │●│ │
+            (a | b)     │●│●│
+            F ((a | b)) │●│●│
+            =Lasso=      └─┘
         """
         )
         result = str(marking.Marking(trace, formula))
@@ -81,17 +81,48 @@ class TestMarking(unittest.TestCase):
         )
         expected = format_expect(
             """
-            a                         : X-X-X- - -X-X- - -X
-            G[0, 2] (a)               : X- - - - - - - - -X
-            F[0, 4] (G[0, 2] (a))     : X- - - - -X-X-X-X-X
-            G (F[0, 4] (G[0, 2] (a))) :  - - - - -X-X-X-X-X
-            =Lasso=                   :                   ⊔
+            a                         │●│●│●│ │ │●│●│ │ │●│
+            G[0, 2] (a)               │●│ │ │ │ │ │ │ │ │●│
+            F[0, 4] (G[0, 2] (a))     │●│ │ │ │ │●│●│●│●│●│
+            G (F[0, 4] (G[0, 2] (a))) │ │ │ │ │ │●│●│●│●│●│
+            =Lasso=                                      ⊔
         """
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_4(self):
+        formula = mitl.Always(
+            mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 2)), (0, 4))
+        )
+        trace = marking.Trace(
+            [
+                {"a": True},
+                {"a": True},
+                {"a": True},
+                {"a": False},
+                {"a": True},
+                {"a": True},
+                {"a": True},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+            ],
+            9,
+        )
+        expected = format_expect(
+            """
+            a                         │●│●│●│ │●│●│●│ │ │●│
+            G[0, 2] (a)               │●│ │ │ │●│ │ │ │ │●│
+            F[0, 4] (G[0, 2] (a))     │●│●│●│●│●│●│●│●│●│●│
+            G (F[0, 4] (G[0, 2] (a))) │●│●│●│●│●│●│●│●│●│●│
+            =Lasso=                                      ⊔
+        """
+        )
+        result = str(marking.Marking(trace, formula))
+        self.assertEqual(result, expected)
+
+    def test_fmt_markings_5(self):
         formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 4)))
         trace = marking.Trace(
             [
@@ -105,10 +136,10 @@ class TestMarking(unittest.TestCase):
         )
         expected = format_expect(
             """
-            a               :  - - - -X
-            F[0, 4] (a)     : X-X-X-X-X
-            G (F[0, 4] (a)) : X-X-X-X-X
-            =Lasso=         : └───────┘
+            a               │ │ │ │ │●│
+            F[0, 4] (a)     │●│●│●│●│●│
+            G (F[0, 4] (a)) │●│●│●│●│●│
+            =Lasso=          └───────┘
         """
         )
         result = str(marking.Marking(trace, formula))

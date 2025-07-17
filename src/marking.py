@@ -200,7 +200,7 @@ class Marking:
         return parse_nuxmv_output(out, subformulae, len(trace))
 
     def add_loop_str(self, max_len: int) -> str:
-        out = f"{self.loop_str:<{max_len}} : "
+        out = f"{self.loop_str:<{max_len}}  "
         for i in range(self.trace_len):
             if i == self.loop_start and i == self.trace_len - 1:
                 out += "⊔"
@@ -222,13 +222,12 @@ class Marking:
         )
         for f in reversed(subformulae):
             s = m.to_string(f)
-            out += f"{s:<{max_len}} : "
+            out += f"{s:<{max_len}} "
             for marking in self.markings[f]:
                 if marking:
-                    out += "X-"
+                    out += "│●"
                 else:
-                    out += " -"
-            out = out[:-1]
-            out += "\n"
+                    out += "│ "
+            out += "│\n"
         out += self.add_loop_str(max_len)
         return out

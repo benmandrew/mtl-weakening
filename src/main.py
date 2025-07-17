@@ -64,9 +64,7 @@ def main():
         print(f"Counterexample to {mitl_string}:")
         pprint.pp(cex.trace)
         print()
-
         markings = marking.Marking(cex, mitl_fmla)
-
         print(markings)
 
 
