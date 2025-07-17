@@ -152,6 +152,8 @@ def to_string(formula: Mitl) -> str:
     def fmt_interval(interval: Tuple[int, Optional[int]]) -> str:
         low, high = interval
         if high is None:
+            if low == 0:
+                return ""
             return f"[{low}, ∞)"
         return f"[{low}, {high}]"
 
