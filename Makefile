@@ -1,4 +1,4 @@
-.PHONY: run test fmt lint ruff pylint
+.PHONY: run test fmt fmt-ci lint ruff pylint
 
 run:
 	python3 -m src.main
@@ -8,6 +8,9 @@ test:
 
 fmt:
 	python3 -m black -l 80 .
+
+fmt-ci:
+	python3 -m black --check -l 80 .
 
 lint: ruff pylint mypy
 
