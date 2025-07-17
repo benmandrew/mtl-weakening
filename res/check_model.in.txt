@@ -1,9 +1,6 @@
 read_model -i res/model.smv
 go
-
 add_property -l -p "$LTLSPEC" -n prop
-
 check_property -P prop
 show_traces -v
-
 quit

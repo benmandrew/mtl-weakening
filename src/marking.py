@@ -5,14 +5,37 @@ from src import mitl as m
 from src import util
 
 
-def periodic_trace_idx(trace: list) -> Optional[int]:
-    if len(trace) == 0:
+class Trace:
+    def __init__(
+        self,
+        trace: list[dict[str, bool | int]],
+        loop_start: Optional[int] = None,
+    ):
+        # NuXmv identifies loops by duplicating the state at the start of the loop at the end of the trace
+        if loop_start is None:
+            self.loop_start = self.periodic_trace_idx(trace)
+            self.trace = trace[:-1]
+        else:
+            self.loop_start = loop_start
+            self.trace = trace
+
+    def periodic_trace_idx(self, trace) -> Optional[int]:
+        if len(trace) == 0:
+            return None
+        last = trace[-1]
+        for i in range(len(trace) - 2, -1, -1):
+            if last == trace[i]:
+                return i
         return None
-    last = trace[-1]
-    for i in range(len(trace) - 2, -1, -1):
-        if last == trace[i]:
-            return i
-    return None
+
+    def __len__(self) -> int:
+        return len(self.trace)
+
+    def __getitem__(self, i) -> dict[str, bool | int]:
+        return self.trace[i]
+
+    def __iter__(self):
+        return iter(self.trace)
 
 
 class Mutability(Enum):
@@ -21,7 +44,7 @@ class Mutability(Enum):
 
 
 def get_variable_types(
-    trace: list[dict[str, bool | int]],
+    trace: Trace,
 ) -> dict[str, tuple[Mutability, str]]:
     variable_values = collections.defaultdict(set)
     for state in trace:
@@ -77,18 +100,17 @@ def generate_defines(
 
 
 def generate_assignments(
-    trace: list[dict[str, bool | int]],
+    trace: Trace,
     variable_types: dict[str, tuple[Mutability, str]],
     num_states: int,
 ) -> list[str]:
-    loop_start = periodic_trace_idx(trace)
-    if loop_start is None:
+    if trace.loop_start is None:
         raise ValueError("Cannot identify loop in trace")
     lines = ["ASSIGN"]
     lines.append("  init(state) := 0;")
     lines.append("  next(state) := case")
     for i in range(num_states):
-        next_state = i + 1 if i < num_states - 1 else loop_start
+        next_state = i + 1 if i < num_states - 1 else trace.loop_start
         lines.append(f"    state = {i} : {next_state};")
     lines.append("    TRUE : state;")
     lines.append("  esac;")
@@ -116,7 +138,7 @@ def generate_assignments(
     return lines
 
 
-def generate_trace_smv(trace: list[dict[str, bool | int]]) -> str:
+def generate_trace_smv(trace: Trace) -> str:
     num_states = len(trace)
     variable_types = get_variable_types(trace)
     lines = ["MODULE main"]
@@ -127,7 +149,7 @@ def generate_trace_smv(trace: list[dict[str, bool | int]]) -> str:
 
 
 def write_trace_smv(
-    filepath: str, trace: list[dict[str, bool | int]], formula: m.Mitl
+    filepath: str, trace: Trace, formula: m.Mitl
 ) -> list[m.Mitl]:
     trace_smv = generate_trace_smv(trace)
     ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
@@ -180,9 +202,7 @@ def fmt_markings(markings: dict[m.Mitl, list[bool]]) -> str:
     return out[:-1]
 
 
-def mark_trace(
-    trace: list[dict[str, bool | int]], formula: m.Mitl
-) -> dict[m.Mitl, list[bool]]:
+def mark_trace(trace: Trace, formula: m.Mitl) -> dict[m.Mitl, list[bool]]:
     subformulae = write_trace_smv("res/trace.smv", trace, formula)
     out = util.run_and_capture(
         ["nuXmv", "-source", "res/check_trace.txt"], output=False

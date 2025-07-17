@@ -15,7 +15,7 @@ class TreeTransformer(Transformer):
     NL = lambda self, _: Discard  # noqa: E731
 
     def start(self, tok):
-        return tok
+        return marking.Trace(tok)
 
     def expr(self, tok):
         return tok[0]
@@ -60,11 +60,9 @@ def main():
     else:
         out = out.split(cex_match_string)[2].strip() + "\n"
         parsetree = parser.parse(out)
-        cex: list[dict[str, bool | int]] = TreeTransformer().transform(
-            parsetree
-        )
+        cex: marking.Trace = TreeTransformer().transform(parsetree)
         print(f"Counterexample to {mitl_string}:")
-        pprint.pp(cex)
+        pprint.pp(cex.trace)
         print()
 
         markings = marking.mark_trace(cex, mitl_fmla)
