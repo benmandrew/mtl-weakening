@@ -33,9 +33,10 @@ class TestMarking(unittest.TestCase):
             trigger               :  - - - - - -X
             F[0, 4] (trigger)     :  - -X-X-X-X-X
             G (F[0, 4] (trigger)) :  - - - - - - 
+            =Lasso=               :   └─────────┘
         """
         )
-        result = marking.fmt_markings(marking.mark_trace(trace, formula))
+        result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_2(self):
@@ -53,9 +54,10 @@ class TestMarking(unittest.TestCase):
             a           : X- 
             (a | b)     : X-X
             F ((a | b)) : X-X
+            =Lasso=     : └─┘
         """
         )
-        result = marking.fmt_markings(marking.mark_trace(trace, formula))
+        result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_3(self):
@@ -83,9 +85,10 @@ class TestMarking(unittest.TestCase):
             G[0, 2] (a)               : X- - - - - - - - -X
             F[0, 4] (G[0, 2] (a))     : X- - - - -X-X-X-X-X
             G (F[0, 4] (G[0, 2] (a))) :  - - - - -X-X-X-X-X
+            =Lasso=                   :                   ⊔
         """
         )
-        result = marking.fmt_markings(marking.mark_trace(trace, formula))
+        result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_4(self):
@@ -105,9 +108,10 @@ class TestMarking(unittest.TestCase):
             a               :  - - - -X
             F[0, 4] (a)     : X-X-X-X-X
             G (F[0, 4] (a)) : X-X-X-X-X
+            =Lasso=         : └───────┘
         """
         )
-        result = marking.fmt_markings(marking.mark_trace(trace, formula))
+        result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
 

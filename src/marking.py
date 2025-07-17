@@ -19,14 +19,13 @@ class Trace:
             self.loop_start = loop_start
             self.trace = trace
 
-    def periodic_trace_idx(self, trace) -> Optional[int]:
-        if len(trace) == 0:
-            return None
-        last = trace[-1]
-        for i in range(len(trace) - 2, -1, -1):
-            if last == trace[i]:
-                return i
-        return None
+    def periodic_trace_idx(self, trace) -> int:
+        if len(trace) > 0:
+            last = trace[-1]
+            for i in range(len(trace) - 2, -1, -1):
+                if last == trace[i]:
+                    return i
+        raise ValueError("Cannot identify loop in trace")
 
     def __len__(self) -> int:
         return len(self.trace)
@@ -104,8 +103,6 @@ def generate_assignments(
     variable_types: dict[str, tuple[Mutability, str]],
     num_states: int,
 ) -> list[str]:
-    if trace.loop_start is None:
-        raise ValueError("Cannot identify loop in trace")
     lines = ["ASSIGN"]
     lines.append("  init(state) := 0;")
     lines.append("  next(state) := case")
@@ -185,26 +182,53 @@ def parse_nuxmv_output(
     return markings
 
 
-def fmt_markings(markings: dict[m.Mitl, list[bool]]) -> str:
-    out = ""
-    subformulae = list(markings.keys())
-    max_len = max(len(m.to_string(f)) for f in subformulae)
-    for f in reversed(subformulae):
-        s = m.to_string(f)
-        out += f"{s:<{max_len}} : "
-        for marking in markings[f]:
-            if marking:
-                out += "X-"
+class Marking:
+    loop_str = "=Lasso="
+
+    def __init__(self, trace: Trace, formula: m.Mitl):
+        self.markings = self.mark_trace(trace, formula)
+        self.trace_len = len(trace)
+        self.loop_start = trace.loop_start
+
+    def mark_trace(
+        self, trace: Trace, formula: m.Mitl
+    ) -> dict[m.Mitl, list[bool]]:
+        subformulae = write_trace_smv("res/trace.smv", trace, formula)
+        out = util.run_and_capture(
+            ["nuXmv", "-source", "res/check_trace.txt"], output=False
+        )
+        return parse_nuxmv_output(out, subformulae, len(trace))
+
+    def add_loop_str(self, max_len: int) -> str:
+        out = f"{self.loop_str:<{max_len}} : "
+        for i in range(self.trace_len):
+            if i == self.loop_start and i == self.trace_len - 1:
+                out += "⊔"
+            elif i == self.loop_start:
+                out += "└─"
+            elif i == self.trace_len - 1:
+                out += "┘"
+            elif i > self.loop_start:
+                out += "──"
             else:
-                out += " -"
-        out = out[:-1]
-        out += "\n"
-    return out[:-1]
+                out += "  "
+        return out
 
-
-def mark_trace(trace: Trace, formula: m.Mitl) -> dict[m.Mitl, list[bool]]:
-    subformulae = write_trace_smv("res/trace.smv", trace, formula)
-    out = util.run_and_capture(
-        ["nuXmv", "-source", "res/check_trace.txt"], output=False
-    )
-    return parse_nuxmv_output(out, subformulae, len(trace))
+    def __str__(self) -> str:
+        out = ""
+        subformulae = list(self.markings.keys())
+        max_len = max(
+            len(self.loop_str), max(len(m.to_string(f)) for f in subformulae)
+        )
+        for f in reversed(subformulae):
+            s = m.to_string(f)
+            out += f"{s:<{max_len}} : "
+            for marking in self.markings[f]:
+                if marking:
+                    out += "X-"
+                else:
+                    out += " -"
+            out = out[:-1]
+            out += "\n"
+        out += self.add_loop_str(max_len)
+        return out

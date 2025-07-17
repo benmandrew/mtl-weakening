@@ -65,8 +65,9 @@ def main():
         pprint.pp(cex.trace)
         print()
 
-        markings = marking.mark_trace(cex, mitl_fmla)
-        print(marking.fmt_markings(markings))
+        markings = marking.Marking(cex, mitl_fmla)
+
+        print(markings)
 
 
 if __name__ == "__main__":
