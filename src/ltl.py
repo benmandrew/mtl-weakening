@@ -69,24 +69,23 @@ class Until(Ltl):
 def to_nuxmv(formula: Ltl) -> str:
     if isinstance(formula, Prop):
         return formula.name
-    elif isinstance(formula, Not):
+    if isinstance(formula, Not):
         return f"!({to_nuxmv(formula.operand)})"
-    elif isinstance(formula, Next):
+    if isinstance(formula, Next):
         return f"X ({to_nuxmv(formula.operand)})"
-    elif isinstance(formula, Eventually):
+    if isinstance(formula, Eventually):
         return f"F ({to_nuxmv(formula.operand)})"
-    elif isinstance(formula, Always):
+    if isinstance(formula, Always):
         return f"G ({to_nuxmv(formula.operand)})"
-    elif isinstance(formula, And):
+    if isinstance(formula, And):
         return f"({to_nuxmv(formula.left)} & {to_nuxmv(formula.right)})"
-    elif isinstance(formula, Or):
+    if isinstance(formula, Or):
         return f"({to_nuxmv(formula.left)} | {to_nuxmv(formula.right)})"
-    elif isinstance(formula, Implies):
+    if isinstance(formula, Implies):
         return f"({to_nuxmv(formula.left)} -> {to_nuxmv(formula.right)})"
-    elif isinstance(formula, Until):
+    if isinstance(formula, Until):
         return f"({to_nuxmv(formula.left)} U {to_nuxmv(formula.right)})"
-    else:
-        raise ValueError(f"Unsupported LTL construct: {formula}")
+    raise ValueError(f"Unsupported LTL construct: {formula}")
 
 
 def to_string(formula: Ltl) -> str:

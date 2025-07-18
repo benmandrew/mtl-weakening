@@ -2,9 +2,10 @@ from lark import Lark, Transformer, Discard
 from src import ltl
 from src import mitl
 from src import marking
-from src import util
-import subprocess as sp
-import pprint
+
+# from src import util
+# import subprocess as sp
+# import pprint
 
 
 class TreeTransformer(Transformer):
@@ -42,29 +43,46 @@ def sed_escape(s: str) -> str:
 
 
 def main():
-    with open("res/check_model.txt", "w") as f:
-        sp.run(
-            [
-                "sed",
-                "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
-                "res/check_model.in.txt",
-            ],
-            stdout=f,
-        )
-    out = util.run_and_capture(
-        ["nuXmv", "-source", "res/check_model.txt"], output=False
+    # with open("res/check_model.txt", "w") as f:
+    #     sp.run(
+    #         [
+    #             "sed",
+    #             "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
+    #             "res/check_model.in.txt",
+    #         ],
+    #         stdout=f,
+    #     )
+    # out = util.run_and_capture(
+    #     ["nuXmv", "-source", "res/check_model.txt"], output=False
+    # )
+    # cex_match_string = "Trace Type: Counterexample"
+    # if out.find(cex_match_string) == -1:
+    #     print(f"Specification {mitl_string} is true")
+    # else:
+    #     out = out.split(cex_match_string)[2].strip() + "\n"
+    #     parsetree = parser.parse(out)
+    #     cex: marking.Trace = TreeTransformer().transform(parsetree)
+    #     print(f"Counterexample to {mitl_string}:")
+    #     pprint.pp(cex.trace)
+    #     print()
+    #     for i in range(1, 7):
+    #         mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, i)))
+    #         markings = marking.Marking(cex, mitl_fmla)
+    #         print(markings)
+    # formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 1)))
+    trace = marking.Trace(
+        [
+            {"a": False},
+            {"a": False},
+            {"a": False},
+            {"a": True},
+        ],
+        2,
     )
-    cex_match_string = "Trace Type: Counterexample"
-    if out.find(cex_match_string) == -1:
-        print(f"Specification {mitl_string} is true")
-    else:
-        out = out.split(cex_match_string)[2].strip() + "\n"
-        parsetree = parser.parse(out)
-        cex: marking.Trace = TreeTransformer().transform(parsetree)
-        print(f"Counterexample to {mitl_string}:")
-        pprint.pp(cex.trace)
-        print()
-        markings = marking.Marking(cex, mitl_fmla)
+    # print(marking.Marking(trace, formula))
+    for i in range(1, 4):
+        mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, i)))
+        markings = marking.Marking(trace, mitl_fmla)
         print(markings)
 
 

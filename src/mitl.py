@@ -72,17 +72,17 @@ class Until(Mitl):
 def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
     if isinstance(formula, Prop):
         return ltl.Prop(formula.name)
-    elif isinstance(formula, Not):
+    if isinstance(formula, Not):
         return ltl.Not(mitl_to_ltl(formula.operand))
-    elif isinstance(formula, And):
+    if isinstance(formula, And):
         return ltl.And(mitl_to_ltl(formula.left), mitl_to_ltl(formula.right))
-    elif isinstance(formula, Or):
+    if isinstance(formula, Or):
         return ltl.Or(mitl_to_ltl(formula.left), mitl_to_ltl(formula.right))
-    elif isinstance(formula, Implies):
+    if isinstance(formula, Implies):
         return ltl.Implies(
             mitl_to_ltl(formula.left), mitl_to_ltl(formula.right)
         )
-    elif isinstance(formula, Eventually):
+    if isinstance(formula, Eventually):
         a, b = formula.interval
         subf = mitl_to_ltl(formula.operand)
         out = subf
@@ -94,7 +94,7 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
         for _ in range(a):
             out = ltl.Next(out)
         return out
-    elif isinstance(formula, Always):
+    if isinstance(formula, Always):
         a, b = formula.interval
         subf = mitl_to_ltl(formula.operand)
         out = subf
@@ -106,22 +106,20 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
         for _ in range(a):
             out = ltl.Next(out)
         return out
-    elif isinstance(formula, Until):
+    if isinstance(formula, Until):
         a, b = formula.interval
         left = mitl_to_ltl(formula.left)
         right = mitl_to_ltl(formula.right)
         if b is None:
             return apply_next_k(ltl.Until(left, right), a)
-        else:
-            terms = []
-            for i in range(b - a + 1):
-                out = right
-                for _ in range(i):
-                    out = ltl.And(left, ltl.Next(out))
-                terms.append(out)
-            return apply_next_k(make_disjunction(terms), a)
-    else:
-        raise ValueError("Unsupported MITL construct")
+        terms = []
+        for i in range(b - a + 1):
+            out = right
+            for _ in range(i):
+                out = ltl.And(left, ltl.Next(out))
+            terms.append(out)
+        return apply_next_k(make_disjunction(terms), a)
+    raise ValueError("Unsupported MITL construct")
 
 
 def apply_next_k(formula: ltl.Ltl, k: int) -> ltl.Ltl:
@@ -159,26 +157,25 @@ def to_string(formula: Mitl) -> str:
 
     if isinstance(formula, Prop):
         return formula.name
-    elif isinstance(formula, Not):
+    if isinstance(formula, Not):
         return f"!({to_string(formula.operand)})"
-    elif isinstance(formula, And):
+    if isinstance(formula, And):
         return f"({to_string(formula.left)} & {to_string(formula.right)})"
-    elif isinstance(formula, Or):
+    if isinstance(formula, Or):
         return f"({to_string(formula.left)} | {to_string(formula.right)})"
-    elif isinstance(formula, Implies):
+    if isinstance(formula, Implies):
         return f"({to_string(formula.left)} -> {to_string(formula.right)})"
-    elif isinstance(formula, Eventually):
+    if isinstance(formula, Eventually):
         return (
             f"F{fmt_interval(formula.interval)} ({to_string(formula.operand)})"
         )
-    elif isinstance(formula, Always):
+    if isinstance(formula, Always):
         return (
             f"G{fmt_interval(formula.interval)} ({to_string(formula.operand)})"
         )
-    elif isinstance(formula, Until):
+    if isinstance(formula, Until):
         return f"({to_string(formula.left)} U{fmt_interval(formula.interval)} {to_string(formula.right)})"
-    else:
-        raise ValueError(f"Unsupported MITL construct: {formula}")
+    raise ValueError(f"Unsupported MITL construct: {formula}")
 
 
 def generate_subformulae_smv(

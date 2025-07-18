@@ -25,13 +25,19 @@ class Trace:
             for i in range(len(trace) - 2, -1, -1):
                 if last == trace[i]:
                     return i
-        raise ValueError("Cannot identify loop in trace")
+        raise RuntimeError("Cannot identify loop in trace")
+
+    def idx(self, i: int) -> int:
+        if i >= len(self.trace):
+            j = (i - self.loop_start) % (len(self.trace) - self.loop_start)
+            return j + self.loop_start
+        return i
 
     def __len__(self) -> int:
         return len(self.trace)
 
     def __getitem__(self, i) -> dict[str, bool | int]:
-        return self.trace[i]
+        return self.trace[self.idx(i)]
 
     def __iter__(self):
         return iter(self.trace)
@@ -213,6 +219,9 @@ class Marking:
             else:
                 out += "  "
         return out
+
+    def __getitem__(self, k) -> list[bool]:
+        return self.markings[k]
 
     def __str__(self) -> str:
         out = ""
