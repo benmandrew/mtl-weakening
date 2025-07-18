@@ -104,6 +104,48 @@ class TestWeaken(unittest.TestCase):
         assert result is not None
         self.assertTupleEqual(result, (0, 1))
 
+    def test_weakening_gu(self):
+        formula = mitl.Always(
+            mitl.Until(mitl.Prop("a"), mitl.Prop("b"), (0, 2))
+        )
+        indices = [0]
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": True},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 5))
+
+    def test_weakening_uf_right(self):
+        formula = mitl.Until(
+            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (0, 1))
+        )
+        indices = [1]
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": True},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 4))
+
 
 if __name__ == "__main__":
     unittest.main()

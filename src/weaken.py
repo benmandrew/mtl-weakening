@@ -49,7 +49,9 @@ class Weaken:
         )
         self.trace_len = len(trace)
         self.subformula = get_subformula(formula, indices)
-        if isinstance(self.subformula, (mitl.Always, mitl.Eventually)):
+        if isinstance(
+            self.subformula, (mitl.Always, mitl.Eventually, mitl.Until)
+        ):
             self.original_interval = self.subformula.interval
         else:
             raise ValueError(
@@ -166,10 +168,51 @@ class Weaken:
             intervals.append(interval)
         return max(intervals, key=self.interval_abs_diff)
 
-    def aux_until(
+    def weaken_until(self, formula: mitl.Until, trace_idx: int):
+        a, b = formula.interval
+        if b is None:
+            raise ValueError(f"Cannot weaken interval of U[{a}, ∞)")
+        for i in range(a, self.trace_len):
+            if self.markings[formula.right][self.trace.idx(trace_idx + i)]:
+                return a, max(b, i)
+            if not self.markings[formula.left][self.trace.idx(trace_idx + i)]:
+                break
+        return None
+
+    def aux_until_left(
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
+
+    def aux_until_right(
+        self, formula: mitl.Until, trace_idx: int, formula_idx: int
+    ) -> Optional[mitl.Interval]:
+        a, b = formula.interval
+        right_idx = self.trace_len if b is None else b + 1
+        all_intervals = [
+            self.aux(formula.right, trace_idx + i, formula_idx + 1)
+            for i in range(a, right_idx)
+        ]
+        valid_intervals: list[Optional[mitl.Interval]] = []
+        for i in range(a, right_idx):
+            valid_intervals.append(all_intervals[i])
+            if not self.markings[formula.left][self.trace.idx(trace_idx + i)]:
+                break
+        intervals = [i for i in valid_intervals if i is not None]
+        return min(intervals, key=self.interval_abs_diff)
+
+    def aux_until(
+        self, formula: mitl.Until, trace_idx: int, formula_idx: int
+    ) -> Optional[mitl.Interval]:
+        if formula_idx == len(self.indices):
+            return self.weaken_until(formula, trace_idx)
+        if self.indices[formula_idx] == 0:
+            return self.aux_until_left(formula, trace_idx, formula_idx)
+        if self.indices[formula_idx] == 1:
+            return self.aux_until_right(formula, trace_idx, formula_idx)
+        raise IndexError(
+            f"De Bruijn index {formula_idx} invalid for {mitl.to_string(formula)}"
+        )
 
     def aux(
         self, formula: mitl.Mitl, trace_idx: int, formula_idx: int

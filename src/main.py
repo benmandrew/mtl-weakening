@@ -71,22 +71,21 @@ def main():
     # formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 1)))
     trace = marking.Trace(
         [
-            {"a": False},
-            {"a": False},
-            {"a": False},
-            {"a": False},
-            {"a": False},
-            {"a": False},
-            {"a": True},
-            {"a": True},
-            {"a": True},
+            {"a": True, "b": False},
+            {"a": True, "b": False},
+            {"a": True, "b": False},
+            {"a": False, "b": False},
+            {"a": False, "b": False},
+            {"a": False, "b": False},
+            {"a": False, "b": False},
+            {"a": False, "b": True},
         ],
         0,
     )
     # print(marking.Marking(trace, formula))
     for i in range(4, 0, -1):
-        mitl_fmla = mitl.Always(
-            mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, i)))
+        mitl_fmla = mitl.Until(
+            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (0, i))
         )
         markings = marking.Marking(trace, mitl_fmla)
         print(markings)

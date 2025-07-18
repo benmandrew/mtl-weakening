@@ -169,8 +169,8 @@ def to_string(formula: Mitl) -> str:
     if isinstance(formula, Until):
         return (
             f"({to_string(formula.left)} "
-            "U{fmt_interval(formula.interval)} "
-            "{to_string(formula.right)})"
+            f"U{fmt_interval(formula.interval)} "
+            f"{to_string(formula.right)})"
         )
     raise ValueError(f"Unsupported MITL construct: {formula}")
 
