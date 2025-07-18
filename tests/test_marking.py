@@ -1,7 +1,7 @@
-import unittest
 import textwrap
-from src import marking
-from src import mitl
+import unittest
+
+from src import marking, mitl
 
 
 def format_expect(s: str) -> str:
@@ -11,7 +11,7 @@ def format_expect(s: str) -> str:
 class TestMarking(unittest.TestCase):
 
     def setUp(self):
-        super(TestMarking, self).setUp()
+        super().setUp()
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
     def test_fmt_markings_gf(self):

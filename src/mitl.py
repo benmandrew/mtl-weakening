@@ -1,72 +1,63 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
+
 from src import ltl
-from src.util import matchable
 
 
 class Mitl:
     pass
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Prop(Mitl):
     name: str
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Not(Mitl):
     operand: Mitl
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class And(Mitl):
     left: Mitl
     right: Mitl
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Or(Mitl):
     left: Mitl
     right: Mitl
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Implies(Mitl):
     left: Mitl
     right: Mitl
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Next(Mitl):
     operand: Mitl
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Eventually(Mitl):
     operand: Mitl
-    interval: Tuple[int, Optional[int]] = (0, None)
+    interval: tuple[int, Optional[int]] = (0, None)
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Always(Mitl):
     operand: Mitl
-    interval: Tuple[int, Optional[int]] = (0, None)
+    interval: tuple[int, Optional[int]] = (0, None)
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Until(Mitl):
     left: Mitl
     right: Mitl
-    interval: Tuple[int, Optional[int]] = (0, None)
+    interval: tuple[int, Optional[int]] = (0, None)
 
 
 def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
@@ -147,7 +138,7 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
 
 
 def to_string(formula: Mitl) -> str:
-    def fmt_interval(interval: Tuple[int, Optional[int]]) -> str:
+    def fmt_interval(interval: tuple[int, Optional[int]]) -> str:
         low, high = interval
         if high is None:
             if low == 0:
@@ -174,7 +165,11 @@ def to_string(formula: Mitl) -> str:
             f"G{fmt_interval(formula.interval)} ({to_string(formula.operand)})"
         )
     if isinstance(formula, Until):
-        return f"({to_string(formula.left)} U{fmt_interval(formula.interval)} {to_string(formula.right)})"
+        return (
+            f"({to_string(formula.left)} "
+            "U{fmt_interval(formula.interval)} "
+            "{to_string(formula.right)})"
+        )
     raise ValueError(f"Unsupported MITL construct: {formula}")
 
 
@@ -206,18 +201,10 @@ def generate_subformulae_smv(
             pass
         elif isinstance(f, Not):
             aux(f.operand)
-        elif isinstance(f, And):
+        elif isinstance(f, (And, Or, Implies)):
             aux(f.left)
             aux(f.right)
-        elif isinstance(f, Or):
-            aux(f.left)
-            aux(f.right)
-        elif isinstance(f, Implies):
-            aux(f.left)
-            aux(f.right)
-        elif isinstance(f, Eventually):
-            aux(f.operand)
-        elif isinstance(f, Always):
+        elif isinstance(f, (Eventually, Always)):
             aux(f.operand)
         elif isinstance(f, Until):
             aux(f.left)

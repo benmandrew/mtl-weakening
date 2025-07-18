@@ -1,6 +1,7 @@
-from typing import Optional
-from enum import Enum
 import collections
+from enum import Enum
+from typing import Optional
+
 from src import mitl as m
 from src import util
 
@@ -11,7 +12,8 @@ class Trace:
         trace: list[dict[str, bool | int]],
         loop_start: Optional[int] = None,
     ):
-        # NuXmv identifies loops by duplicating the state at the start of the loop at the end of the trace
+        # NuXmv identifies loops by duplicating the state
+        # at the start of the loop at the end of the trace
         if loop_start is None:
             self.loop_start = self.periodic_trace_idx(trace)
             self.trace = trace[:-1]

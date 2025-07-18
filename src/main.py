@@ -1,7 +1,6 @@
-from lark import Lark, Transformer, Discard
-from src import ltl
-from src import mitl
-from src import marking
+from lark import Discard, Lark, Transformer
+
+from src import ltl, marking, mitl
 
 # from src import util
 # import subprocess as sp
@@ -30,7 +29,7 @@ class TreeTransformer(Transformer):
         return d
 
 
-with open("res/check_model.lark", "r") as f:
+with open("res/check_model.lark") as f:
     parser = Lark(f.read(), parser="lalr")
 
 mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, 4)))
@@ -39,7 +38,7 @@ ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
 
 
 def sed_escape(s: str) -> str:
-    return s.replace("&", "\&")
+    return s.replace("&", r"\&")
 
 
 def main():

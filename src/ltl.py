@@ -1,65 +1,54 @@
 from dataclasses import dataclass
-from src.util import matchable
 
 
-@matchable
 @dataclass(frozen=True, order=True)
 class Ltl:
     pass
 
 
-@matchable
 @dataclass(frozen=True)
 class Prop(Ltl):
     name: str
 
 
-@matchable
 @dataclass(frozen=True)
 class Not(Ltl):
     operand: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Next(Ltl):
     operand: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Eventually(Ltl):
     operand: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Always(Ltl):
     operand: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class And(Ltl):
     left: Ltl
     right: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Or(Ltl):
     left: Ltl
     right: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Implies(Ltl):
     left: Ltl
     right: Ltl
 
 
-@matchable
 @dataclass(frozen=True)
 class Until(Ltl):
     left: Ltl

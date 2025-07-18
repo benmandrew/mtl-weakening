@@ -1,7 +1,6 @@
 import unittest
-from src import marking
-from src import mitl
-from src import weaken
+
+from src import marking, mitl, weaken
 
 
 class TestWeaken(unittest.TestCase):

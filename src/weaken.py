@@ -1,7 +1,7 @@
-from typing import Optional
 import functools
-from src import mitl
-from src import marking
+from typing import Optional
+
+from src import marking, mitl
 
 
 def get_subformula(formula: mitl.Mitl, indices: list[int]) -> mitl.Mitl:
@@ -10,23 +10,14 @@ def get_subformula(formula: mitl.Mitl, indices: list[int]) -> mitl.Mitl:
             IndexError(
                 f"De Bruijn index {i} invalid for {mitl.to_string(formula)}"
             )
-        if (
-            isinstance(formula, mitl.Not)
-            or isinstance(formula, mitl.Eventually)
-            or isinstance(formula, mitl.Always)
-        ):
+        if isinstance(formula, (mitl.Not, mitl.Eventually, mitl.Always)):
             if i == 0:
                 formula = formula.operand
             else:
                 IndexError(
                     f"De Bruijn index {i} invalid for {mitl.to_string(formula)}"
                 )
-        elif (
-            isinstance(formula, mitl.And)
-            or isinstance(formula, mitl.Or)
-            or isinstance(formula, mitl.Implies)
-            or isinstance(formula, mitl.Until)
-        ):
+        elif isinstance(formula, (mitl.And, mitl.Or, mitl.Implies, mitl.Until)):
             if i == 0:
                 formula = formula.left
             elif i == 1:
