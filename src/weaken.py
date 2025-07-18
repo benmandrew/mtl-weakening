@@ -1,4 +1,3 @@
-import functools
 from typing import Optional
 
 from src import marking, mitl
@@ -73,12 +72,20 @@ def weaken_interval(
 ):
     trace_len = len(trace)
     subformula = get_subformula(formula, indices)
-    if isinstance(subformula, mitl.Always):
-        interval_comparator = max_interval
-    elif isinstance(subformula, mitl.Eventually):
-        interval_comparator = min_interval
+    if isinstance(subformula, (mitl.Always, mitl.Eventually)):
+        target_interval = subformula.interval
     else:
-        raise ValueError(f"Unsupported MITL construct: {subformula}")
+        raise ValueError(f"Cannot weaken MITL subformula: {subformula}")
+
+    def interval_abs_diff(
+        interval: tuple[int, int],
+    ) -> int:
+        second = (
+            abs(interval[1])
+            if target_interval[1] is None
+            else abs(interval[1] - target_interval[1])
+        )
+        return abs(interval[0] - target_interval[0]) + second
 
     def aux_and(
         formula: mitl.And, trace_idx: int, formula_idx: int
@@ -123,13 +130,15 @@ def weaken_interval(
             return weaken_eventually(formula, trace_idx)
         a, b = formula.interval
         right_idx = trace_len if b is None else b + 1
-        intervals = [
+        all_intervals = [
             aux(formula.operand, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
         ]
-        print("  " * formula_idx + "Eventually", intervals)
-        # return functools.reduce(max_interval, intervals)
-        return functools.reduce(interval_comparator, intervals)
+        intervals = [i for i in all_intervals if i is not None]
+        if intervals == []:
+            return None
+        print("  " * formula_idx + "Eventually", all_intervals)
+        return min(intervals, key=interval_abs_diff)
 
     def weaken_always(formula: mitl.Always, trace_idx: int):
         a, b = formula.interval
@@ -157,8 +166,7 @@ def weaken_interval(
                 return None
             intervals.append(interval)
         print("  " * formula_idx + "Always", intervals)
-        # return functools.reduce(max_interval, intervals, None)
-        return functools.reduce(interval_comparator, intervals, None)
+        return max(intervals, key=interval_abs_diff)
 
     def aux_until(
         formula: mitl.Until, trace_idx: int, formula_idx: int

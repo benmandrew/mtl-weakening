@@ -74,13 +74,20 @@ def main():
             {"a": False},
             {"a": False},
             {"a": False},
+            {"a": False},
+            {"a": False},
+            {"a": False},
+            {"a": True},
+            {"a": True},
             {"a": True},
         ],
-        2,
+        0,
     )
     # print(marking.Marking(trace, formula))
-    for i in range(1, 4):
-        mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, i)))
+    for i in range(4, 0, -1):
+        mitl_fmla = mitl.Always(
+            mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, i)))
+        )
         markings = marking.Marking(trace, mitl_fmla)
         print(markings)
 
