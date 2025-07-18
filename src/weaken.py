@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 from src import marking, mitl
 
@@ -30,40 +30,6 @@ def get_subformula(formula: mitl.Mitl, indices: list[int]) -> mitl.Mitl:
     return formula
 
 
-def max_interval(
-    interval_a: Optional[tuple[int, int]],
-    interval_b: Optional[tuple[int, int]],
-) -> Optional[tuple[int, int]]:
-    if interval_a is None and interval_b is None:
-        return None
-    if interval_a is None:
-        return interval_b
-    if interval_b is None:
-        return interval_a
-    if interval_a[0] <= interval_b[0] and interval_a[1] >= interval_b[1]:
-        return interval_a
-    if interval_a[0] >= interval_b[0] and interval_a[1] <= interval_b[1]:
-        return interval_b
-    raise ValueError("Non-overlapping intervals")
-
-
-def min_interval(
-    interval_a: Optional[tuple[int, int]],
-    interval_b: Optional[tuple[int, int]],
-) -> Optional[tuple[int, int]]:
-    if interval_a is None and interval_b is None:
-        return None
-    if interval_a is None:
-        return interval_b
-    if interval_b is None:
-        return interval_a
-    if interval_a[0] >= interval_b[0] and interval_a[1] <= interval_b[1]:
-        return interval_a
-    if interval_a[0] <= interval_b[0] and interval_a[1] >= interval_b[1]:
-        return interval_b
-    raise ValueError("Non-overlapping intervals")
-
-
 def weaken_interval(
     formula: mitl.Mitl,
     indices: list[int],
@@ -73,23 +39,31 @@ def weaken_interval(
     trace_len = len(trace)
     subformula = get_subformula(formula, indices)
     if isinstance(subformula, (mitl.Always, mitl.Eventually)):
-        target_interval = subformula.interval
+        original_interval = subformula.interval
     else:
         raise ValueError(f"Cannot weaken MITL subformula: {subformula}")
 
     def interval_abs_diff(
-        interval: tuple[int, int],
+        interval: mitl.Interval,
     ) -> int:
-        second = (
-            abs(interval[1])
-            if target_interval[1] is None
-            else abs(interval[1] - target_interval[1])
-        )
-        return abs(interval[0] - target_interval[0]) + second
+        if original_interval[1] is None and interval[1] is None:
+            right = 0
+        elif original_interval[1] is None:
+            right = -cast(int, interval[1])
+        else:
+            right = abs(
+                cast(int, interval[1]) - cast(int, original_interval[1])
+            )
+        return abs(interval[0] - original_interval[0]) + right
+
+    def aux_not(
+        formula: mitl.Not, trace_idx: int, formula_idx: int
+    ) -> Optional[mitl.Interval]:
+        raise NotImplementedError("")
 
     def aux_and(
         formula: mitl.And, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         if indices[formula_idx] == 0:
             if not markings.markings[formula.right][trace_idx]:
                 return None
@@ -104,17 +78,27 @@ def weaken_interval(
 
     def aux_or(
         formula: mitl.Or, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
-        raise NotImplementedError("")
+    ) -> Optional[mitl.Interval]:
+        if indices[formula_idx] == 0:
+            if markings.markings[formula.right][trace_idx]:
+                return original_interval
+            return aux(formula.left, trace_idx, formula_idx + 1)
+        if indices[formula_idx] == 1:
+            if markings.markings[formula.left][trace_idx]:
+                return original_interval
+            return aux(formula.right, trace_idx, formula_idx + 1)
+        raise IndexError(
+            f"De Bruijn index {formula_idx} invalid for {mitl.to_string(formula)}"
+        )
 
     def aux_implies(
         formula: mitl.Implies, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
 
     def weaken_eventually(
         formula: mitl.Eventually, trace_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
@@ -125,7 +109,7 @@ def weaken_interval(
 
     def aux_eventually(
         formula: mitl.Eventually, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         if formula_idx == len(indices):
             return weaken_eventually(formula, trace_idx)
         a, b = formula.interval
@@ -137,7 +121,6 @@ def weaken_interval(
         intervals = [i for i in all_intervals if i is not None]
         if intervals == []:
             return None
-        print("  " * formula_idx + "Eventually", all_intervals)
         return min(intervals, key=interval_abs_diff)
 
     def weaken_always(formula: mitl.Always, trace_idx: int):
@@ -154,7 +137,7 @@ def weaken_interval(
 
     def aux_always(
         formula: mitl.Always, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         if formula_idx == len(indices):
             return weaken_always(formula, trace_idx)
         a, b = formula.interval
@@ -165,22 +148,21 @@ def weaken_interval(
             if interval is None:
                 return None
             intervals.append(interval)
-        print("  " * formula_idx + "Always", intervals)
         return max(intervals, key=interval_abs_diff)
 
     def aux_until(
         formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
 
     def aux(
         formula: mitl.Mitl, trace_idx: int, formula_idx: int
-    ) -> Optional[tuple[int, int]]:
+    ) -> Optional[mitl.Interval]:
         assert formula_idx <= len(indices)
         if isinstance(formula, mitl.Prop):
             return None
         if isinstance(formula, mitl.Not):
-            raise ValueError("Not not supported")
+            return aux_not(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.And):
             return aux_and(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Or):

@@ -61,23 +61,29 @@ class TestWeaken(unittest.TestCase):
         result = weaken.weaken_interval(formula, indices, trace, markings)
         self.assertTupleEqual(result, (0, 4))
 
-    # def test_weakening_gg(self):
-    #     formula = mitl.Always(
-    #         mitl.Or(mitl.Prop("a"), mitl.Always(mitl.Prop("b"), (0, 1)))
-    #     )
-    #     indices = [0, 1]
-    #     trace = marking.Trace(
-    #         [
-    #             {"a": True, "b": False},
-    #             {"a": True, "b": False},
-    #             {"a": False, "b": True},
-    #             {"a": True, "b": True},
-    #         ],
-    #         0,
-    #     )
-    #     markings = marking.Marking(trace, formula)
-    #     result = weaken.weaken_interval(formula, indices, trace, markings)
-    #     self.assertTupleEqual(result, (0, 2))
+    def test_weakening_gg(self):
+        formula = mitl.Always(
+            mitl.Or(mitl.Prop("a"), mitl.Always(mitl.Prop("b"), (0, 2)))
+        )
+        indices = [0, 1]
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": True},
+                {"a": True, "b": True},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": True, "b": True},
+            ],
+            0,
+        )
+        markings = marking.Marking(trace, formula)
+        result = weaken.weaken_interval(formula, indices, trace, markings)
+        self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gfg(self):
         formula = mitl.Always(

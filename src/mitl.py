@@ -3,6 +3,8 @@ from typing import Optional
 
 from src import ltl
 
+Interval = tuple[int, Optional[int]]
+
 
 class Mitl:
     pass
@@ -44,20 +46,20 @@ class Next(Mitl):
 @dataclass(frozen=True, order=True)
 class Eventually(Mitl):
     operand: Mitl
-    interval: tuple[int, Optional[int]] = (0, None)
+    interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True)
 class Always(Mitl):
     operand: Mitl
-    interval: tuple[int, Optional[int]] = (0, None)
+    interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True)
 class Until(Mitl):
     left: Mitl
     right: Mitl
-    interval: tuple[int, Optional[int]] = (0, None)
+    interval: Interval = (0, None)
 
 
 def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
@@ -138,7 +140,7 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
 
 
 def to_string(formula: Mitl) -> str:
-    def fmt_interval(interval: tuple[int, Optional[int]]) -> str:
+    def fmt_interval(interval: Interval) -> str:
         low, high = interval
         if high is None:
             if low == 0:
