@@ -30,151 +30,168 @@ def get_subformula(formula: mitl.Mitl, indices: list[int]) -> mitl.Mitl:
     return formula
 
 
-def weaken_interval(
-    formula: mitl.Mitl,
-    indices: list[int],
-    trace: marking.Trace,
-    markings: marking.Marking,
-):
-    trace_len = len(trace)
-    subformula = get_subformula(formula, indices)
-    if isinstance(subformula, (mitl.Always, mitl.Eventually)):
-        original_interval = subformula.interval
-    else:
-        raise ValueError(f"Cannot weaken MITL subformula: {subformula}")
+class Weaken:
+
+    def __init__(
+        self,
+        formula: mitl.Mitl,
+        indices: list[int],
+        trace: marking.Trace,
+        markings: Optional[marking.Marking] = None,
+    ):
+        self.formula = formula
+        self.indices = indices
+        self.trace = trace
+        self.markings = (
+            marking.Marking(self.trace, self.formula)
+            if markings is None
+            else markings
+        )
+        self.trace_len = len(trace)
+        self.subformula = get_subformula(formula, indices)
+        if isinstance(self.subformula, (mitl.Always, mitl.Eventually)):
+            self.original_interval = self.subformula.interval
+        else:
+            raise ValueError(
+                f"Cannot weaken MITL subformula: {self.subformula}"
+            )
 
     def interval_abs_diff(
+        self,
         interval: mitl.Interval,
     ) -> int:
-        if original_interval[1] is None and interval[1] is None:
+        if self.original_interval[1] is None and interval[1] is None:
             right = 0
-        elif original_interval[1] is None:
+        elif self.original_interval[1] is None:
             right = -cast(int, interval[1])
         else:
             right = abs(
-                cast(int, interval[1]) - cast(int, original_interval[1])
+                cast(int, interval[1]) - cast(int, self.original_interval[1])
             )
-        return abs(interval[0] - original_interval[0]) + right
+        return abs(interval[0] - self.original_interval[0]) + right
 
     def aux_not(
-        formula: mitl.Not, trace_idx: int, formula_idx: int
+        self, formula: mitl.Not, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
 
     def aux_and(
-        formula: mitl.And, trace_idx: int, formula_idx: int
+        self, formula: mitl.And, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
-        if indices[formula_idx] == 0:
-            if not markings.markings[formula.right][trace_idx]:
+        if self.indices[formula_idx] == 0:
+            if not self.markings.markings[formula.right][trace_idx]:
                 return None
-            return aux(formula.left, trace_idx, formula_idx + 1)
-        if indices[formula_idx] == 1:
-            if not markings.markings[formula.left][trace_idx]:
+            return self.aux(formula.left, trace_idx, formula_idx + 1)
+        if self.indices[formula_idx] == 1:
+            if not self.markings.markings[formula.left][trace_idx]:
                 return None
-            return aux(formula.right, trace_idx, formula_idx + 1)
+            return self.aux(formula.right, trace_idx, formula_idx + 1)
         raise IndexError(
             f"De Bruijn index {formula_idx} invalid for {mitl.to_string(formula)}"
         )
 
     def aux_or(
-        formula: mitl.Or, trace_idx: int, formula_idx: int
+        self, formula: mitl.Or, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
-        if indices[formula_idx] == 0:
-            if markings.markings[formula.right][trace_idx]:
-                return original_interval
-            return aux(formula.left, trace_idx, formula_idx + 1)
-        if indices[formula_idx] == 1:
-            if markings.markings[formula.left][trace_idx]:
-                return original_interval
-            return aux(formula.right, trace_idx, formula_idx + 1)
+        if self.indices[formula_idx] == 0:
+            if self.markings[formula.right][trace_idx]:
+                return self.original_interval
+            return self.aux(formula.left, trace_idx, formula_idx + 1)
+        if self.indices[formula_idx] == 1:
+            if self.markings[formula.left][trace_idx]:
+                return self.original_interval
+            return self.aux(formula.right, trace_idx, formula_idx + 1)
         raise IndexError(
             f"De Bruijn index {formula_idx} invalid for {mitl.to_string(formula)}"
         )
 
     def aux_implies(
-        formula: mitl.Implies, trace_idx: int, formula_idx: int
+        self, formula: mitl.Implies, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
 
     def weaken_eventually(
-        formula: mitl.Eventually, trace_idx: int
+        self, formula: mitl.Eventually, trace_idx: int
     ) -> Optional[mitl.Interval]:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
-        for i in range(a, trace_len):
-            if markings[formula.operand][trace.idx(trace_idx + i)]:
+        for i in range(a, self.trace_len):
+            if self.markings[formula.operand][self.trace.idx(trace_idx + i)]:
                 return a, max(b, i)
         return None
 
     def aux_eventually(
-        formula: mitl.Eventually, trace_idx: int, formula_idx: int
+        self, formula: mitl.Eventually, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
-        if formula_idx == len(indices):
-            return weaken_eventually(formula, trace_idx)
+        if formula_idx == len(self.indices):
+            return self.weaken_eventually(formula, trace_idx)
         a, b = formula.interval
-        right_idx = trace_len if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         all_intervals = [
-            aux(formula.operand, trace_idx + i, formula_idx + 1)
+            self.aux(formula.operand, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
         ]
         intervals = [i for i in all_intervals if i is not None]
         if intervals == []:
             return None
-        return min(intervals, key=interval_abs_diff)
+        return min(intervals, key=self.interval_abs_diff)
 
-    def weaken_always(formula: mitl.Always, trace_idx: int):
+    def weaken_always(self, formula: mitl.Always, trace_idx: int):
         a, b = formula.interval
-        right_idx = trace_len if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         # Expand the interval until we find a state when the operand is false,
         # then reduce the interval to just before that
         for i in range(a, right_idx):
-            if not markings[formula.operand][trace.idx(trace_idx + i)]:
+            if not self.markings[formula.operand][
+                self.trace.idx(trace_idx + i)
+            ]:
                 if i == a:
                     return None
                 return a, i - 1
         return a, b
 
     def aux_always(
-        formula: mitl.Always, trace_idx: int, formula_idx: int
+        self, formula: mitl.Always, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
-        if formula_idx == len(indices):
-            return weaken_always(formula, trace_idx)
+        if formula_idx == len(self.indices):
+            return self.weaken_always(formula, trace_idx)
         a, b = formula.interval
-        right_idx = trace_len if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         intervals = []
         for i in range(a, right_idx):
-            interval = aux(formula.operand, trace_idx + i, formula_idx + 1)
+            interval = self.aux(formula.operand, trace_idx + i, formula_idx + 1)
             if interval is None:
                 return None
             intervals.append(interval)
-        return max(intervals, key=interval_abs_diff)
+        return max(intervals, key=self.interval_abs_diff)
 
     def aux_until(
-        formula: mitl.Until, trace_idx: int, formula_idx: int
+        self, formula: mitl.Until, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
         raise NotImplementedError("")
 
     def aux(
-        formula: mitl.Mitl, trace_idx: int, formula_idx: int
+        self, formula: mitl.Mitl, trace_idx: int, formula_idx: int
     ) -> Optional[mitl.Interval]:
-        assert formula_idx <= len(indices)
+        assert formula_idx <= len(self.indices)
         if isinstance(formula, mitl.Prop):
             return None
         if isinstance(formula, mitl.Not):
-            return aux_not(formula, trace_idx, formula_idx)
+            return self.aux_not(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.And):
-            return aux_and(formula, trace_idx, formula_idx)
+            return self.aux_and(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Or):
-            return aux_or(formula, trace_idx, formula_idx)
+            return self.aux_or(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Implies):
-            return aux_implies(formula, trace_idx, formula_idx)
+            return self.aux_implies(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Eventually):
-            return aux_eventually(formula, trace_idx, formula_idx)
+            return self.aux_eventually(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Always):
-            return aux_always(formula, trace_idx, formula_idx)
+            return self.aux_always(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Until):
-            return aux_until(formula, trace_idx, formula_idx)
+            return self.aux_until(formula, trace_idx, formula_idx)
         raise ValueError(f"Unsupported MITL construct: {formula}")
 
-    return aux(formula, 0, 0)
+    def weaken(self) -> Optional[mitl.Interval]:
+        return self.aux(self.formula, 0, 0)

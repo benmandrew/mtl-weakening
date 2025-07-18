@@ -18,8 +18,8 @@ class TestWeaken(unittest.TestCase):
             ],
             0,
         )
-        markings = marking.Marking(trace, formula)
-        result = weaken.weaken_interval(formula, indices, trace, markings)
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gf(self):
@@ -37,8 +37,8 @@ class TestWeaken(unittest.TestCase):
             ],
             1,
         )
-        markings = marking.Marking(trace, formula)
-        result = weaken.weaken_interval(formula, indices, trace, markings)
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
         self.assertTupleEqual(result, (0, 6))
 
     def test_weakening_ff(self):
@@ -57,8 +57,8 @@ class TestWeaken(unittest.TestCase):
             ],
             0,
         )
-        markings = marking.Marking(trace, formula)
-        result = weaken.weaken_interval(formula, indices, trace, markings)
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
         self.assertTupleEqual(result, (0, 4))
 
     def test_weakening_gg(self):
@@ -81,8 +81,8 @@ class TestWeaken(unittest.TestCase):
             ],
             0,
         )
-        markings = marking.Marking(trace, formula)
-        result = weaken.weaken_interval(formula, indices, trace, markings)
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gfg(self):
@@ -100,8 +100,8 @@ class TestWeaken(unittest.TestCase):
             ],
             0,
         )
-        markings = marking.Marking(trace, formula)
-        result = weaken.weaken_interval(formula, indices, trace, markings)
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
         self.assertTupleEqual(result, (0, 1))
 
 
