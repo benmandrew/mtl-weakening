@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 from src import marking, mitl
 
@@ -37,7 +37,7 @@ class Weaken:
         formula: mitl.Mitl,
         indices: list[int],
         trace: marking.Trace,
-        markings: Optional[marking.Marking] = None,
+        markings: marking.Marking | None = None,
     ):
         self.formula = formula
         self.indices = indices
@@ -74,12 +74,12 @@ class Weaken:
 
     def aux_not(
         self, formula: mitl.Not, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         raise NotImplementedError("")
 
     def aux_and(
         self, formula: mitl.And, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         if self.indices[formula_idx] == 0:
             if not self.markings.markings[formula.right][trace_idx]:
                 return None
@@ -94,7 +94,7 @@ class Weaken:
 
     def aux_or(
         self, formula: mitl.Or, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         if self.indices[formula_idx] == 0:
             if self.markings[formula.right][trace_idx]:
                 return self.original_interval
@@ -109,12 +109,12 @@ class Weaken:
 
     def aux_implies(
         self, formula: mitl.Implies, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         raise NotImplementedError("")
 
     def weaken_eventually(
         self, formula: mitl.Eventually, trace_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
@@ -125,7 +125,7 @@ class Weaken:
 
     def aux_eventually(
         self, formula: mitl.Eventually, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         if formula_idx == len(self.indices):
             return self.weaken_eventually(formula, trace_idx)
         a, b = formula.interval
@@ -155,7 +155,7 @@ class Weaken:
 
     def aux_always(
         self, formula: mitl.Always, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         if formula_idx == len(self.indices):
             return self.weaken_always(formula, trace_idx)
         a, b = formula.interval
@@ -181,19 +181,35 @@ class Weaken:
 
     def aux_until_left(
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
-        raise NotImplementedError("")
+    ) -> mitl.Interval | None:
+        a, b = formula.interval
+        right_idx = self.trace_len if b is None else b + 1
+        all_intervals = [
+            self.aux(formula.left, trace_idx + i, formula_idx + 1)
+            for i in range(a, right_idx)
+        ]
+        valid_intervals = []
+        for i, interval in enumerate(all_intervals):
+            if interval is None:
+                break
+            if not self.markings[formula.right][
+                self.trace.idx(trace_idx + i + a)
+            ]:
+                continue
+            valid_intervals.append(interval)
+        intervals = [i for i in valid_intervals if i is not None]
+        return max(intervals, key=self.interval_abs_diff)
 
     def aux_until_right(
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         a, b = formula.interval
         right_idx = self.trace_len if b is None else b + 1
         all_intervals = [
             self.aux(formula.right, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
         ]
-        valid_intervals: list[Optional[mitl.Interval]] = []
+        valid_intervals: list[mitl.Interval | None] = []
         for i in range(a, right_idx):
             valid_intervals.append(all_intervals[i])
             if not self.markings[formula.left][self.trace.idx(trace_idx + i)]:
@@ -203,7 +219,7 @@ class Weaken:
 
     def aux_until(
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         if formula_idx == len(self.indices):
             return self.weaken_until(formula, trace_idx)
         if self.indices[formula_idx] == 0:
@@ -216,7 +232,7 @@ class Weaken:
 
     def aux(
         self, formula: mitl.Mitl, trace_idx: int, formula_idx: int
-    ) -> Optional[mitl.Interval]:
+    ) -> mitl.Interval | None:
         assert formula_idx <= len(self.indices)
         if isinstance(formula, mitl.Prop):
             return None
@@ -236,5 +252,5 @@ class Weaken:
             return self.aux_until(formula, trace_idx, formula_idx)
         raise ValueError(f"Unsupported MITL construct: {formula}")
 
-    def weaken(self) -> Optional[mitl.Interval]:
+    def weaken(self) -> mitl.Interval | None:
         return self.aux(self.formula, 0, 0)

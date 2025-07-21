@@ -146,6 +146,27 @@ class TestWeaken(unittest.TestCase):
         assert result is not None
         self.assertTupleEqual(result, (0, 4))
 
+    def test_weakening_ug_left(self):
+        formula = mitl.Until(
+            mitl.Always(mitl.Prop("a"), (0, 4)), mitl.Prop("b")
+        )
+        indices = [0]
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": True},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": False},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 2))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from src import ltl
 
-Interval = tuple[int, Optional[int]]
+Interval = tuple[int, int | None]
 
 
 class Mitl:
