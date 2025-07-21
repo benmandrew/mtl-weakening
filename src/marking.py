@@ -194,7 +194,7 @@ class Marking:
 
     def __init__(self, trace: Trace, formula: m.Mitl):
         self.markings = self.mark_trace(trace, formula)
-        self.trace_len = len(trace)
+        self.trace = trace
         self.loop_start = trace.loop_start
 
     def mark_trace(
@@ -208,18 +208,21 @@ class Marking:
 
     def add_loop_str(self, max_len: int) -> str:
         out = f"{self.loop_str:<{max_len}}  "
-        for i in range(self.trace_len):
-            if i == self.loop_start and i == self.trace_len - 1:
+        for i in range(len(self.trace)):
+            if i == self.loop_start and i == len(self.trace) - 1:
                 out += "⊔"
             elif i == self.loop_start:
                 out += "└─"
-            elif i == self.trace_len - 1:
+            elif i == len(self.trace) - 1:
                 out += "┘"
             elif i > self.loop_start:
                 out += "──"
             else:
                 out += "  "
         return out
+
+    def get(self, f: m.Mitl, i: int) -> bool:
+        return self.markings[f][self.trace.idx(i)]
 
     def __getitem__(self, k) -> list[bool]:
         return self.markings[k]

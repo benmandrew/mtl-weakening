@@ -81,11 +81,11 @@ class Weaken:
         self, formula: mitl.And, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         if self.indices[formula_idx] == 0:
-            if not self.markings.markings[formula.right][trace_idx]:
+            if not self.markings.get(formula.right, trace_idx):
                 return None
             return self.aux(formula.left, trace_idx, formula_idx + 1)
         if self.indices[formula_idx] == 1:
-            if not self.markings.markings[formula.left][trace_idx]:
+            if not self.markings.get(formula.left, trace_idx):
                 return None
             return self.aux(formula.right, trace_idx, formula_idx + 1)
         raise IndexError(
@@ -96,11 +96,11 @@ class Weaken:
         self, formula: mitl.Or, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         if self.indices[formula_idx] == 0:
-            if self.markings[formula.right][trace_idx]:
+            if self.markings.get(formula.right, trace_idx):
                 return self.original_interval
             return self.aux(formula.left, trace_idx, formula_idx + 1)
         if self.indices[formula_idx] == 1:
-            if self.markings[formula.left][trace_idx]:
+            if self.markings.get(formula.left, trace_idx):
                 return self.original_interval
             return self.aux(formula.right, trace_idx, formula_idx + 1)
         raise IndexError(
@@ -118,8 +118,8 @@ class Weaken:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
-        for i in range(a, self.trace_len):
-            if self.markings[formula.operand][self.trace.idx(trace_idx + i)]:
+        for i in range(a, self.trace_len * 2):
+            if self.markings.get(formula.operand, trace_idx + i):
                 return a, max(b, i)
         return None
 
@@ -129,7 +129,7 @@ class Weaken:
         if formula_idx == len(self.indices):
             return self.weaken_eventually(formula, trace_idx)
         a, b = formula.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace_len * 2 if b is None else b + 1
         all_intervals = [
             self.aux(formula.operand, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
@@ -141,13 +141,11 @@ class Weaken:
 
     def weaken_always(self, formula: mitl.Always, trace_idx: int):
         a, b = formula.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace_len * 2 if b is None else b + 1
         # Expand the interval until we find a state when the operand is false,
         # then reduce the interval to just before that
         for i in range(a, right_idx):
-            if not self.markings[formula.operand][
-                self.trace.idx(trace_idx + i)
-            ]:
+            if not self.markings.get(formula.operand, trace_idx + i):
                 if i == a:
                     return None
                 return a, i - 1
@@ -159,7 +157,7 @@ class Weaken:
         if formula_idx == len(self.indices):
             return self.weaken_always(formula, trace_idx)
         a, b = formula.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace_len * 2 if b is None else b + 1
         intervals = []
         for i in range(a, right_idx):
             interval = self.aux(formula.operand, trace_idx + i, formula_idx + 1)
@@ -172,10 +170,10 @@ class Weaken:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of U[{a}, ∞)")
-        for i in range(a, self.trace_len):
-            if self.markings[formula.right][self.trace.idx(trace_idx + i)]:
+        for i in range(a, self.trace_len * 2):
+            if self.markings.get(formula.right, trace_idx + i):
                 return a, max(b, i)
-            if not self.markings[formula.left][self.trace.idx(trace_idx + i)]:
+            if not self.markings.get(formula.left, trace_idx + i):
                 break
         return None
 
@@ -183,7 +181,7 @@ class Weaken:
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         a, b = formula.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace_len * 2 if b is None else b + 1
         all_intervals = [
             self.aux(formula.left, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
@@ -192,29 +190,29 @@ class Weaken:
         for i, interval in enumerate(all_intervals):
             if interval is None:
                 break
-            if not self.markings[formula.right][
-                self.trace.idx(trace_idx + i + a)
-            ]:
+            if not self.markings.get(formula.right, trace_idx + i + a):
                 continue
             valid_intervals.append(interval)
         intervals = [i for i in valid_intervals if i is not None]
+        if not intervals:
+            return None
         return max(intervals, key=self.interval_abs_diff)
 
     def aux_until_right(
         self, formula: mitl.Until, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         a, b = formula.interval
-        right_idx = self.trace_len if b is None else b + 1
-        all_intervals = [
-            self.aux(formula.right, trace_idx + i, formula_idx + 1)
-            for i in range(a, right_idx)
-        ]
+        right_idx = self.trace_len * 2 if b is None else b + 1
         valid_intervals: list[mitl.Interval | None] = []
         for i in range(a, right_idx):
-            valid_intervals.append(all_intervals[i])
-            if not self.markings[formula.left][self.trace.idx(trace_idx + i)]:
+            valid_intervals.append(
+                self.aux(formula.right, trace_idx + i, formula_idx + 1)
+            )
+            if not self.markings.get(formula.left, trace_idx + i):
                 break
         intervals = [i for i in valid_intervals if i is not None]
+        if not intervals:
+            return None
         return min(intervals, key=self.interval_abs_diff)
 
     def aux_until(

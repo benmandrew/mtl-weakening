@@ -126,7 +126,7 @@ class TestWeaken(unittest.TestCase):
 
     def test_weakening_uf_right(self):
         formula = mitl.Until(
-            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (0, 1))
+            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (2, 3))
         )
         indices = [1]
         trace = marking.Trace(
@@ -138,13 +138,16 @@ class TestWeaken(unittest.TestCase):
                 {"a": False, "b": False},
                 {"a": False, "b": False},
                 {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": False, "b": False},
                 {"a": False, "b": True},
             ],
             0,
         )
         result = weaken.Weaken(formula, indices, trace).weaken()
         assert result is not None
-        self.assertTupleEqual(result, (0, 4))
+        self.assertTupleEqual(result, (2, 7))
 
     def test_weakening_ug_left(self):
         formula = mitl.Until(
@@ -166,6 +169,25 @@ class TestWeaken(unittest.TestCase):
         result = weaken.Weaken(formula, indices, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 2))
+
+    def test_weakening_gug_right(self):
+        formula = mitl.Always(
+            mitl.Until(mitl.Prop("a"), mitl.Always(mitl.Prop("b"), (1, 4)))
+        )
+        indices = [0, 1]
+        trace = marking.Trace(
+            [
+                {"a": False, "b": False},
+                {"a": True, "b": True},
+                {"a": True, "b": True},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (1, 2))
 
 
 if __name__ == "__main__":
