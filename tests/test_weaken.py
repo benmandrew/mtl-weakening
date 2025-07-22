@@ -40,6 +40,15 @@ class TestWeaken(unittest.TestCase):
         result = weaken.Weaken(formula, indices, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 6))
+        trace = marking.Trace(
+            [
+                {"a": True},
+                {"a": False},
+            ],
+            1,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        self.assertIsNone(result)
 
     def test_weakening_ff(self):
         formula = mitl.Eventually(
