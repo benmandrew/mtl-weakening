@@ -87,22 +87,24 @@ class TestWeaken(unittest.TestCase):
 
     def test_weakening_gfg(self):
         formula = mitl.Always(
-            mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 2)))
+            mitl.Eventually(mitl.Always(mitl.Prop("a"), (2, 5)))
         )
         indices = [0, 0]
         trace = marking.Trace(
             [
                 {"a": False},
-                {"a": False},
-                {"a": False},
                 {"a": True},
+                {"a": True},
+                {"a": True},
+                {"a": True},
+                {"a": False},
                 {"a": True},
             ],
-            0,
+            2,
         )
         result = weaken.Weaken(formula, indices, trace).weaken()
         assert result is not None
-        self.assertTupleEqual(result, (0, 1))
+        self.assertTupleEqual(result, (2, 3))
 
     def test_weakening_gu(self):
         formula = mitl.Always(
