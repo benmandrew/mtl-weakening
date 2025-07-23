@@ -172,6 +172,49 @@ class TestMarking(unittest.TestCase):
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
+    def test_fmt_markings_r(self):
+        formula = mitl.Release(mitl.Prop("a"), mitl.Prop("b"))
+        trace = marking.Trace(
+            [
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": True, "b": False},
+                {"a": False, "b": False},
+            ],
+            0,
+        )
+        expected = format_expect(
+            """
+            b       │●│●│●│ │ │
+            a       │ │ │ │●│ │
+            (a R b) │ │ │ │ │ │
+            =Lasso=  └───────┘
+        """
+        )
+        result = str(marking.Marking(trace, formula))
+        self.assertEqual(result, expected)
+        trace = marking.Trace(
+            [
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": True, "b": True},
+                {"a": False, "b": False},
+            ],
+            0,
+        )
+        expected = format_expect(
+            """
+            b       │●│●│●│●│ │
+            a       │ │ │ │●│ │
+            (a R b) │●│●│●│●│ │
+            =Lasso=  └───────┘
+        """
+        )
+        result = str(marking.Marking(trace, formula))
+        self.assertEqual(result, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

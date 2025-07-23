@@ -6,56 +6,68 @@ Interval = tuple[int, int | None]
 
 
 class Mitl:
-    pass
+
+    def __str__(self) -> str:
+        return to_string(self)
+
+    def __repr__(self) -> str:
+        return to_string(self)
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Prop(Mitl):
     name: str
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Not(Mitl):
     operand: Mitl
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class And(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Or(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Implies(Mitl):
     left: Mitl
     right: Mitl
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Next(Mitl):
     operand: Mitl
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Eventually(Mitl):
     operand: Mitl
     interval: Interval = (0, None)
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Always(Mitl):
     operand: Mitl
     interval: Interval = (0, None)
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True, order=True, repr=False)
 class Until(Mitl):
+    left: Mitl
+    right: Mitl
+    interval: Interval = (0, None)
+
+
+@dataclass(frozen=True, order=True, repr=False)
+class Release(Mitl):
     left: Mitl
     right: Mitl
     interval: Interval = (0, None)
@@ -111,6 +123,11 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
                 out = ltl.And(left, ltl.Next(out))
             terms.append(out)
         return apply_next_k(make_disjunction(terms), a)
+    if isinstance(formula, Release):
+        rewrite = Not(
+            Until(Not(formula.left), Not(formula.right), formula.interval)
+        )
+        return mitl_to_ltl(rewrite)
     raise ValueError("Unsupported MITL construct")
 
 
@@ -136,6 +153,86 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
     for t in terms[1:]:
         result = ltl.Or(result, t)
     return result
+
+
+def get_de_bruijn(
+    formula: Mitl,
+    indices: list[int],
+    formula_idx: int,
+) -> Mitl:
+    if (
+        isinstance(formula, (Not, Eventually, Always, Next))
+        and indices[formula_idx] == 0
+    ):
+        return formula.operand
+    if isinstance(formula, (And, Or, Implies, Until, Release)):
+        if indices[formula_idx] == 0:
+            return formula.left
+        if indices[formula_idx] == 1:
+            return formula.right
+    raise IndexError(
+        f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
+    )
+
+
+def to_nnf_in_not(formula: Mitl) -> Mitl:
+    if isinstance(formula, Prop):
+        return Not(formula)
+    if isinstance(formula, Not):
+        return to_nnf(formula.operand)
+    if isinstance(formula, And):
+        return Or(to_nnf(Not(formula.left)), to_nnf(Not(formula.right)))
+    if isinstance(formula, Or):
+        return And(to_nnf(Not(formula.left)), to_nnf(Not(formula.right)))
+    if isinstance(formula, Implies):
+        return And(to_nnf(formula.left), to_nnf(Not(formula.right)))
+    if isinstance(formula, Eventually):
+        return Always(to_nnf(Not(formula.operand)), formula.interval)
+    if isinstance(formula, Always):
+        return Eventually(to_nnf(Not(formula.operand)), formula.interval)
+    if isinstance(formula, Until):
+        return Release(
+            to_nnf(Not(formula.left)),
+            to_nnf(Not(formula.right)),
+            formula.interval,
+        )
+    if isinstance(formula, Release):
+        return Until(
+            to_nnf(Not(formula.left)),
+            to_nnf(Not(formula.right)),
+            formula.interval,
+        )
+    if isinstance(formula, Next):
+        return Next(to_nnf(Not(formula.operand)))
+    raise ValueError(f"Unexpected formula in Not: {formula}")
+
+
+def to_nnf(formula: Mitl) -> Mitl:
+    if isinstance(formula, Prop):
+        return formula
+    if isinstance(formula, Not):
+        return to_nnf_in_not(formula.operand)
+    if isinstance(formula, And):
+        return And(to_nnf(formula.left), to_nnf(formula.right))
+    if isinstance(formula, Or):
+        return Or(to_nnf(formula.left), to_nnf(formula.right))
+    if isinstance(formula, Implies):
+        return Or(to_nnf(Not(formula.left)), to_nnf(formula.right))
+    if isinstance(formula, Eventually):
+        return Eventually(to_nnf(formula.operand), formula.interval)
+    if isinstance(formula, Always):
+        return Always(to_nnf(formula.operand), formula.interval)
+    if isinstance(formula, Until):
+        return Until(
+            to_nnf(formula.left), to_nnf(formula.right), formula.interval
+        )
+    if isinstance(formula, Release):
+        return Release(
+            to_nnf(formula.left), to_nnf(formula.right), formula.interval
+        )
+    if isinstance(formula, Next):
+        return Next(to_nnf(formula.operand))
+    raise ValueError(f"Unknown MITL formula type: {type(formula)}")
 
 
 def to_string(formula: Mitl) -> str:
@@ -171,6 +268,14 @@ def to_string(formula: Mitl) -> str:
             f"U{fmt_interval(formula.interval)} "
             f"{to_string(formula.right)})"
         )
+    if isinstance(formula, Release):
+        return (
+            f"({to_string(formula.left)} "
+            f"R{fmt_interval(formula.interval)} "
+            f"{to_string(formula.right)})"
+        )
+    if isinstance(formula, Next):
+        return f"X ({to_string(formula.operand)})"
     raise ValueError(f"Unsupported MITL construct: {formula}")
 
 
@@ -200,14 +305,9 @@ def generate_subformulae_smv(
             ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
         if isinstance(f, Prop):
             pass
-        elif isinstance(f, Not):
+        elif isinstance(f, (Not, Eventually, Always)):
             aux(f.operand)
-        elif isinstance(f, (And, Or, Implies)):
-            aux(f.left)
-            aux(f.right)
-        elif isinstance(f, (Eventually, Always)):
-            aux(f.operand)
-        elif isinstance(f, Until):
+        elif isinstance(f, (And, Or, Implies, Until, Release)):
             aux(f.left)
             aux(f.right)
         else:

@@ -222,10 +222,70 @@ class Marking:
         return out
 
     def get(self, f: m.Mitl, i: int) -> bool:
-        return self.markings[f][self.trace.idx(i)]
+        return self[f][self.trace.idx(i)]
 
-    def __getitem__(self, k) -> list[bool]:
-        return self.markings[k]
+    def __getitem__(self, f: m.Mitl) -> list[bool]:
+        if f in self.markings:
+            return self.markings[f]
+        if isinstance(f, m.Prop):
+            raise ValueError(f"Proposition '{f}' not found in markings. ")
+        if isinstance(f, m.Not):
+            bs = [not v for v in self[f.operand]]
+            self.markings[f] = bs
+            return bs
+        if isinstance(f, m.And):
+            bs = [
+                left and right
+                for left, right in zip(self[f.left], self[f.right])
+            ]
+            self.markings[f] = bs
+            return bs
+        if isinstance(f, m.Or):
+            bs = [
+                left or right
+                for left, right in zip(self[f.left], self[f.right])
+            ]
+            self.markings[f] = bs
+            return bs
+        if isinstance(f, m.Implies):
+            bs = [
+                (not left) or right
+                for left, right in zip(self[f.left], self[f.right])
+            ]
+            self.markings[f] = bs
+            return bs
+        if isinstance(f, m.Eventually):
+            vs = self[f.operand]
+            bs = [False] * len(vs)
+            for i in range(len(bs)):
+                right_idx = (
+                    f.interval[1] + 1
+                    if f.interval[1] is not None
+                    else len(vs) - i
+                )
+                bs[i] = any(
+                    vs[self.trace.idx(j)]
+                    for j in range(i + f.interval[0], i + right_idx)
+                )
+            self.markings[f] = bs
+            return bs
+        if isinstance(f, m.Always):
+            vs = self[f.operand]
+            bs = [False] * len(vs)
+            for i in range(len(bs)):
+                right_idx = (
+                    f.interval[1] + 1
+                    if f.interval[1] is not None
+                    else len(vs) - i
+                )
+                bs[i] = all(
+                    vs[self.trace.idx(j)]
+                    for j in range(i + f.interval[0], i + right_idx)
+                )
+            self.markings[f] = bs
+            return bs
+        # if isinstance(f, m.Until):
+        raise ValueError(f"Unsupported MITL construct: {f}")
 
     def __str__(self) -> str:
         out = ""

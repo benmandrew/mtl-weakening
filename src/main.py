@@ -2,10 +2,6 @@ from lark import Discard, Lark, Transformer
 
 from src import ltl, marking, mitl
 
-# from src import util
-# import subprocess as sp
-# import pprint
-
 
 class TreeTransformer(Transformer):
     INT = int
@@ -42,53 +38,27 @@ def sed_escape(s: str) -> str:
 
 
 def main():
-    # with open("res/check_model.txt", "w") as f:
-    #     sp.run(
-    #         [
-    #             "sed",
-    #             "s/$LTLSPEC/{}/".format(sed_escape(ltlspec)),
-    #             "res/check_model.in.txt",
-    #         ],
-    #         stdout=f,
-    #     )
-    # out = util.run_and_capture(
-    #     ["nuXmv", "-source", "res/check_model.txt"], output=False
-    # )
-    # cex_match_string = "Trace Type: Counterexample"
-    # if out.find(cex_match_string) == -1:
-    #     print(f"Specification {mitl_string} is true")
-    # else:
-    #     out = out.split(cex_match_string)[2].strip() + "\n"
-    #     parsetree = parser.parse(out)
-    #     cex: marking.Trace = TreeTransformer().transform(parsetree)
-    #     print(f"Counterexample to {mitl_string}:")
-    #     pprint.pp(cex.trace)
-    #     print()
-    #     for i in range(1, 7):
-    #         mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, i)))
-    #         markings = marking.Marking(cex, mitl_fmla)
-    #         print(markings)
-    # formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 1)))
+
+    formula = mitl.Always(mitl.Eventually(mitl.Prop("p"), (3, 4)))
     trace = marking.Trace(
         [
-            {"a": True, "b": False},
-            {"a": True, "b": False},
-            {"a": True, "b": False},
-            {"a": False, "b": False},
-            {"a": False, "b": False},
-            {"a": False, "b": False},
-            {"a": False, "b": False},
-            {"a": False, "b": True},
+            {"p": False},
+            {"p": False},
+            {"p": False},
+            {"p": False},
+            {"p": True},
+            {"p": True},
+            {"p": True},
+            {"p": True},
         ],
         0,
     )
-    # print(marking.Marking(trace, formula))
-    for i in range(4, 0, -1):
-        mitl_fmla = mitl.Until(
-            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (0, i))
-        )
-        markings = marking.Marking(trace, mitl_fmla)
-        print(markings)
+    markings = marking.Marking(trace, formula)
+    print(markings)
+    formula = mitl.Always(mitl.Prop("p"), (2, 4))
+    markings[formula]
+    print(markings)
+    # w = weaken.Weaken(formula, indices, trace).weaken()
 
 
 if __name__ == "__main__":
