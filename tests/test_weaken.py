@@ -200,6 +200,38 @@ class TestWeaken(unittest.TestCase):
         assert result is not None
         self.assertTupleEqual(result, (1, 2))
 
+    def test_weakening_gngf(self):
+        formula = mitl.Always(
+            mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 2))))
+        )
+        indices = [0, 0, 0]
+        trace = marking.Trace(
+            [
+                {"p": False},
+                {"p": False},
+                {"p": True},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 1))
+
+    def test_weakening_nfg(self):
+        formula = mitl.Not(mitl.Eventually(mitl.Always(mitl.Prop("p"), (0, 1))))
+        indices = [0, 0]
+        trace = marking.Trace(
+            [
+                {"p": False},
+                {"p": True},
+                {"p": True},
+            ],
+            0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 2))
+
 
 if __name__ == "__main__":
     unittest.main()

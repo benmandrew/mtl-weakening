@@ -157,25 +157,19 @@ class Weaken:
         self, formula: mitl.Implies, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         """
-        Weakening implication by rewriting it as a disjunction.
+        Weakening inside implication.
         """
-        return self._aux(
-            mitl.Or(mitl.Not(formula.left), formula.right),
-            trace_idx,
-            formula_idx,
-        )
+        # Don't rewrite as disjunction as it changes the De Bruijn index!
+        raise NotImplementedError("")
 
     def _naux_implies(
         self, formula: mitl.Implies, trace_idx: int, formula_idx: int
     ) -> mitl.Interval | None:
         """
-        Weakening implication in negative polarity by rewriting it as a disjunction.
+        Weakening inside implication implication in negative polarity by .
         """
-        return self._naux(
-            mitl.Or(mitl.Not(formula.left), formula.right),
-            trace_idx,
-            formula_idx,
-        )
+        # Don't rewrite as disjunction as it changes the De Bruijn index!
+        raise NotImplementedError("")
 
     def _weaken_eventually(
         self, formula: mitl.Eventually, trace_idx: int
@@ -186,6 +180,7 @@ class Weaken:
         a, b = formula.interval
         if b is None:
             raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
+        # Expand the interval until we find a state when the operand is true
         for i in range(a, self.trace_len * 2):
             if self.markings.get(formula.operand, trace_idx + i):
                 return a, max(b, i)
@@ -198,14 +193,13 @@ class Weaken:
         Directly weaken interval of eventually operator in negative polarity.
         """
         a, b = formula.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
-        # Expand the interval until we find a state when the operand is false,
-        # then reduce the interval to just before that
+        right_idx = self.trace_len if b is None else b + 1
+        # Expand the interval until we find a state when the operand is false
         for i in range(a, right_idx):
             if not self.markings.get(formula.operand, trace_idx + i):
                 if i == a:
                     return None
-                return a, i - 1
+                return a, i
         return a, b
 
     def _aux_eventually(
@@ -236,7 +230,7 @@ class Weaken:
         if formula_idx == len(self.indices):
             return self._nweaken_eventually(formula, trace_idx)
         a, b = formula.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         intervals = []
         for i in range(a, right_idx):
             interval = self._naux(
@@ -252,7 +246,7 @@ class Weaken:
         Directly weaken interval of always operator.
         """
         a, b = formula.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         # Expand the interval until we find a state when the operand is false,
         # then reduce the interval to just before that
         for i in range(a, right_idx):
@@ -268,9 +262,13 @@ class Weaken:
         """
         a, b = formula.interval
         if b is None:
-            raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
+            raise ValueError(
+                f"Cannot weaken interval of G[{a}, ∞) in negative polarity"
+            )
+        # Expand the interval until we find a state when the operand is true,
+        # then reduce the interval to just before that
         for i in range(a, self.trace_len * 2):
-            if self.markings.get(formula.operand, trace_idx + i):
+            if not self.markings.get(formula.operand, trace_idx + i):
                 return a, max(b, i)
         return None
 
@@ -303,7 +301,7 @@ class Weaken:
         if formula_idx == len(self.indices):
             return self._nweaken_always(formula, trace_idx)
         a, b = formula.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
+        right_idx = self.trace_len if b is None else b + 1
         all_intervals = [
             self._naux(formula.operand, trace_idx + i, formula_idx + 1)
             for i in range(a, right_idx)
@@ -450,7 +448,7 @@ class Weaken:
         if isinstance(formula, mitl.Prop):
             return None
         if isinstance(formula, mitl.Not):
-            return self._naux(formula.operand, trace_idx, formula_idx)
+            return self._naux(formula.operand, trace_idx, formula_idx + 1)
         if isinstance(formula, mitl.And):
             return self._aux_and(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Or):
@@ -483,7 +481,7 @@ class Weaken:
         if isinstance(formula, mitl.Prop):
             return None
         if isinstance(formula, mitl.Not):
-            return self._aux(formula.operand, trace_idx, formula_idx)
+            return self._aux(formula.operand, trace_idx, formula_idx + 1)
         if isinstance(formula, mitl.And):
             return self._naux_and(formula, trace_idx, formula_idx)
         if isinstance(formula, mitl.Or):
