@@ -5,7 +5,7 @@ from src import ltl
 Interval = tuple[int, int | None]
 
 
-class Mitl:
+class Mtl:
 
     def __str__(self) -> str:
         return to_string(self)
@@ -15,80 +15,78 @@ class Mitl:
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Prop(Mitl):
+class Prop(Mtl):
     name: str
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Not(Mitl):
-    operand: Mitl
+class Not(Mtl):
+    operand: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class And(Mitl):
-    left: Mitl
-    right: Mitl
+class And(Mtl):
+    left: Mtl
+    right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Or(Mitl):
-    left: Mitl
-    right: Mitl
+class Or(Mtl):
+    left: Mtl
+    right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Implies(Mitl):
-    left: Mitl
-    right: Mitl
+class Implies(Mtl):
+    left: Mtl
+    right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Next(Mitl):
-    operand: Mitl
+class Next(Mtl):
+    operand: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Eventually(Mitl):
-    operand: Mitl
+class Eventually(Mtl):
+    operand: Mtl
     interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Always(Mitl):
-    operand: Mitl
+class Always(Mtl):
+    operand: Mtl
     interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Until(Mitl):
-    left: Mitl
-    right: Mitl
+class Until(Mtl):
+    left: Mtl
+    right: Mtl
     interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
-class Release(Mitl):
-    left: Mitl
-    right: Mitl
+class Release(Mtl):
+    left: Mtl
+    right: Mtl
     interval: Interval = (0, None)
 
 
-def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
+def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
     if isinstance(formula, Prop):
         return ltl.Prop(formula.name)
     if isinstance(formula, Not):
-        return ltl.Not(mitl_to_ltl(formula.operand))
+        return ltl.Not(mtl_to_ltl(formula.operand))
     if isinstance(formula, And):
-        return ltl.And(mitl_to_ltl(formula.left), mitl_to_ltl(formula.right))
+        return ltl.And(mtl_to_ltl(formula.left), mtl_to_ltl(formula.right))
     if isinstance(formula, Or):
-        return ltl.Or(mitl_to_ltl(formula.left), mitl_to_ltl(formula.right))
+        return ltl.Or(mtl_to_ltl(formula.left), mtl_to_ltl(formula.right))
     if isinstance(formula, Implies):
-        return ltl.Implies(
-            mitl_to_ltl(formula.left), mitl_to_ltl(formula.right)
-        )
+        return ltl.Implies(mtl_to_ltl(formula.left), mtl_to_ltl(formula.right))
     if isinstance(formula, Eventually):
         a, b = formula.interval
-        subf = mitl_to_ltl(formula.operand)
+        subf = mtl_to_ltl(formula.operand)
         out = subf
         if b is None:
             out = ltl.Eventually(subf)
@@ -100,7 +98,7 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
         return out
     if isinstance(formula, Always):
         a, b = formula.interval
-        subf = mitl_to_ltl(formula.operand)
+        subf = mtl_to_ltl(formula.operand)
         out = subf
         if b is None:
             out = ltl.Always(subf)
@@ -112,8 +110,8 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
         return out
     if isinstance(formula, Until):
         a, b = formula.interval
-        left = mitl_to_ltl(formula.left)
-        right = mitl_to_ltl(formula.right)
+        left = mtl_to_ltl(formula.left)
+        right = mtl_to_ltl(formula.right)
         if b is None:
             return apply_next_k(ltl.Until(left, right), a)
         terms = []
@@ -127,8 +125,8 @@ def mitl_to_ltl(formula: Mitl) -> ltl.Ltl:
         rewrite = Not(
             Until(Not(formula.left), Not(formula.right), formula.interval)
         )
-        return mitl_to_ltl(rewrite)
-    raise ValueError("Unsupported MITL construct")
+        return mtl_to_ltl(rewrite)
+    raise ValueError("Unsupported MTL construct")
 
 
 def apply_next_k(formula: ltl.Ltl, k: int) -> ltl.Ltl:
@@ -156,7 +154,7 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
 
 
 class DeBruijnIndexError(IndexError):
-    def __init__(self, indices: list[int], formula_idx: int, formula: Mitl):
+    def __init__(self, indices: list[int], formula_idx: int, formula: Mtl):
         super().__init__(
             f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
         )
@@ -166,10 +164,10 @@ class DeBruijnIndexError(IndexError):
 
 
 def get_de_bruijn(
-    formula: Mitl,
+    formula: Mtl,
     indices: list[int],
     formula_idx: int,
-) -> Mitl:
+) -> Mtl:
     if (
         isinstance(formula, (Not, Eventually, Always, Next))
         and indices[formula_idx] == 0
@@ -183,7 +181,7 @@ def get_de_bruijn(
     raise DeBruijnIndexError(indices, formula_idx, formula)
 
 
-def to_nnf_in_not(formula: Mitl) -> Mitl:
+def to_nnf_in_not(formula: Mtl) -> Mtl:
     if isinstance(formula, Prop):
         return Not(formula)
     if isinstance(formula, Not):
@@ -215,7 +213,7 @@ def to_nnf_in_not(formula: Mitl) -> Mitl:
     raise ValueError(f"Unexpected formula in Not: {formula}")
 
 
-def to_nnf(formula: Mitl) -> Mitl:
+def to_nnf(formula: Mtl) -> Mtl:
     if isinstance(formula, Prop):
         return formula
     if isinstance(formula, Not):
@@ -240,11 +238,11 @@ def to_nnf(formula: Mitl) -> Mitl:
         )
     if isinstance(formula, Next):
         return Next(to_nnf(formula.operand))
-    raise ValueError(f"Unknown MITL formula type: {type(formula)}")
+    raise ValueError(f"Unknown MTL formula type: {type(formula)}")
 
 
 # def _convert_indices_to_nnf_not_aux(
-#     formula: Mitl, indices: list[int], formula_idx: int
+#     formula: Mtl, indices: list[int], formula_idx: int
 # ) -> list[int]:
 #     if isinstance(formula, Prop):
 #         return indices
@@ -294,7 +292,7 @@ def to_nnf(formula: Mitl) -> Mitl:
 
 
 # def _convert_indices_to_nnf_aux(
-#     formula: Mitl, indices: list[int], formula_idx: int
+#     formula: Mtl, indices: list[int], formula_idx: int
 # ) -> list[int]:
 #     if isinstance(formula, Prop):
 #         return indices
@@ -322,15 +320,15 @@ def to_nnf(formula: Mitl) -> Mitl:
 #         )
 #     if isinstance(formula, Next):
 #         return Next(to_nnf(formula.operand))
-#     raise ValueError(f"Unknown MITL formula type: {type(formula)}")
+#     raise ValueError(f"Unknown MTL formula type: {type(formula)}")
 
 
 # # Convert De Bruijn indices of a formula to that of the NNF version.
-# def convert_indices_to_nnf(formula: Mitl, indices: list[int]) -> list[int]:
+# def convert_indices_to_nnf(formula: Mtl, indices: list[int]) -> list[int]:
 #     return _convert_indices_to_nnf_aux(formula, indices, 0)
 
 
-def to_string(formula: Mitl) -> str:
+def to_string(formula: Mtl) -> str:
     def fmt_interval(interval: Interval) -> str:
         low, high = interval
         if high is None:
@@ -371,13 +369,11 @@ def to_string(formula: Mitl) -> str:
         )
     if isinstance(formula, Next):
         return f"X ({to_string(formula.operand)})"
-    raise ValueError(f"Unsupported MITL construct: {formula}")
+    raise ValueError(f"Unsupported MTL construct: {formula}")
 
 
-def generate_subformulae_smv(
-    f: Mitl, num_states: int
-) -> tuple[str, list[Mitl]]:
-    label_map: dict[Mitl, str] = {}
+def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
+    label_map: dict[Mtl, str] = {}
     ltlspec_lines = []
     subformulae = []
     counter = 1
@@ -388,14 +384,14 @@ def generate_subformulae_smv(
         counter += 1
         return label
 
-    def aux(f: Mitl):
+    def aux(f: Mtl):
         subformulae.append(f)
         for i in range(num_states):
             g = Always(Implies(Prop(f"state = {i}"), f))
             if g in label_map:
                 return label_map[g]
             label = get_label()
-            expr = ltl.to_nuxmv(mitl_to_ltl(g))
+            expr = ltl.to_nuxmv(mtl_to_ltl(g))
             label_map[g] = label
             ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
         if isinstance(f, Prop):
@@ -406,7 +402,7 @@ def generate_subformulae_smv(
             aux(f.left)
             aux(f.right)
         else:
-            raise ValueError(f"Unsupported MITL construct: {f}")
+            raise ValueError(f"Unsupported MTL construct: {f}")
         return label
 
     aux(f)

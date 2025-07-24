@@ -1,12 +1,12 @@
 import unittest
 
-from src import marking, mitl, weaken
+from src import marking, mtl, weaken
 
 
 class TestWeaken(unittest.TestCase):
 
     def test_weakening_fg(self):
-        formula = mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 2)))
+        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)))
         indices = [0]
         trace = marking.Trace(
             [
@@ -23,7 +23,7 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gf(self):
-        formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 4)))
+        formula = mtl.Always(mtl.Eventually(mtl.Prop("a"), (0, 4)))
         indices = [0]
         trace = marking.Trace(
             [
@@ -51,8 +51,8 @@ class TestWeaken(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_weakening_ff(self):
-        formula = mitl.Eventually(
-            mitl.And(mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (0, 2)))
+        formula = mtl.Eventually(
+            mtl.And(mtl.Prop("a"), mtl.Eventually(mtl.Prop("b"), (0, 2)))
         )
         indices = [0, 1]
         trace = marking.Trace(
@@ -71,8 +71,8 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 4))
 
     def test_weakening_gg(self):
-        formula = mitl.Always(
-            mitl.Or(mitl.Prop("a"), mitl.Always(mitl.Prop("b"), (0, 2)))
+        formula = mtl.Always(
+            mtl.Or(mtl.Prop("a"), mtl.Always(mtl.Prop("b"), (0, 2)))
         )
         indices = [0, 1]
         trace = marking.Trace(
@@ -95,9 +95,7 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gfg(self):
-        formula = mitl.Always(
-            mitl.Eventually(mitl.Always(mitl.Prop("a"), (2, 5)))
-        )
+        formula = mtl.Always(mtl.Eventually(mtl.Always(mtl.Prop("a"), (2, 5))))
         indices = [0, 0]
         trace = marking.Trace(
             [
@@ -116,9 +114,7 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (2, 3))
 
     def test_weakening_gu(self):
-        formula = mitl.Always(
-            mitl.Until(mitl.Prop("a"), mitl.Prop("b"), (0, 2))
-        )
+        formula = mtl.Always(mtl.Until(mtl.Prop("a"), mtl.Prop("b"), (0, 2)))
         indices = [0]
         trace = marking.Trace(
             [
@@ -136,8 +132,8 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 5))
 
     def test_weakening_uf_right(self):
-        formula = mitl.Until(
-            mitl.Prop("a"), mitl.Eventually(mitl.Prop("b"), (2, 3))
+        formula = mtl.Until(
+            mtl.Prop("a"), mtl.Eventually(mtl.Prop("b"), (2, 3))
         )
         indices = [1]
         trace = marking.Trace(
@@ -161,9 +157,7 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (2, 7))
 
     def test_weakening_ug_left(self):
-        formula = mitl.Until(
-            mitl.Always(mitl.Prop("a"), (0, 4)), mitl.Prop("b")
-        )
+        formula = mtl.Until(mtl.Always(mtl.Prop("a"), (0, 4)), mtl.Prop("b"))
         indices = [0]
         trace = marking.Trace(
             [
@@ -182,8 +176,8 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 2))
 
     def test_weakening_gug_right(self):
-        formula = mitl.Always(
-            mitl.Until(mitl.Prop("a"), mitl.Always(mitl.Prop("b"), (1, 4)))
+        formula = mtl.Always(
+            mtl.Until(mtl.Prop("a"), mtl.Always(mtl.Prop("b"), (1, 4)))
         )
         indices = [0, 1]
         trace = marking.Trace(
@@ -201,8 +195,8 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (1, 2))
 
     def test_weakening_gngf(self):
-        formula = mitl.Always(
-            mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 2))))
+        formula = mtl.Always(
+            mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 2))))
         )
         indices = [0, 0, 0]
         trace = marking.Trace(
@@ -218,7 +212,7 @@ class TestWeaken(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_nfg(self):
-        formula = mitl.Not(mitl.Eventually(mitl.Always(mitl.Prop("p"), (0, 1))))
+        formula = mtl.Not(mtl.Eventually(mtl.Always(mtl.Prop("p"), (0, 1))))
         indices = [0, 0]
         trace = marking.Trace(
             [

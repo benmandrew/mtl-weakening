@@ -1,6 +1,6 @@
 from lark import Discard, Lark, Transformer
 
-from src import ltl, marking, mitl
+from src import ltl, marking, mtl
 
 
 class TreeTransformer(Transformer):
@@ -28,9 +28,9 @@ class TreeTransformer(Transformer):
 with open("res/check_model.lark") as f:
     parser = Lark(f.read(), parser="lalr")
 
-mitl_fmla = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, 4)))
-mitl_string = mitl.to_string(mitl_fmla)
-ltlspec = ltl.to_nuxmv(mitl.mitl_to_ltl(mitl_fmla))
+mtl_fmla = mtl.Always(mtl.Eventually(mtl.Prop("trigger"), (0, 4)))
+mtl_string = mtl.to_string(mtl_fmla)
+ltlspec = ltl.to_nuxmv(mtl.mtl_to_ltl(mtl_fmla))
 
 
 def sed_escape(s: str) -> str:
@@ -38,7 +38,7 @@ def sed_escape(s: str) -> str:
 
 
 def main():
-    formula = mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 2))))
+    formula = mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 2))))
     trace = marking.Trace(
         [
             {"p": False},
@@ -48,7 +48,7 @@ def main():
         0,
     )
     markings = marking.Marking(trace, formula)
-    formula = mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 1))))
+    formula = mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 1))))
     markings[formula]
     print(markings)
     # w = weaken.Weaken(formula, indices, trace).weaken()

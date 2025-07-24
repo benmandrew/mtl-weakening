@@ -1,7 +1,7 @@
 import collections
 from enum import Enum
 
-from src import mitl as m
+from src import mtl as m
 from src import util
 
 
@@ -152,9 +152,7 @@ def generate_trace_smv(trace: Trace) -> str:
     return "\n".join(lines)
 
 
-def write_trace_smv(
-    filepath: str, trace: Trace, formula: m.Mitl
-) -> list[m.Mitl]:
+def write_trace_smv(filepath: str, trace: Trace, formula: m.Mtl) -> list[m.Mtl]:
     trace_smv = generate_trace_smv(trace)
     ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
     with open(filepath, "w") as f:
@@ -163,8 +161,8 @@ def write_trace_smv(
 
 
 def parse_nuxmv_output(
-    output: str, subformulae: list[m.Mitl], num_states: int
-) -> dict[m.Mitl, list[bool]]:
+    output: str, subformulae: list[m.Mtl], num_states: int
+) -> dict[m.Mtl, list[bool]]:
     lines = output.split("\n")
     lines = list(
         filter(
@@ -175,7 +173,7 @@ def parse_nuxmv_output(
             lines,
         )
     )
-    markings: dict[m.Mitl, list[bool]] = {}
+    markings: dict[m.Mtl, list[bool]] = {}
     for i, f in enumerate(subformulae):
         markings[f] = []
         for j in range(num_states):
@@ -192,14 +190,14 @@ def parse_nuxmv_output(
 class Marking:
     loop_str = "=Lasso="
 
-    def __init__(self, trace: Trace, formula: m.Mitl):
+    def __init__(self, trace: Trace, formula: m.Mtl):
         self.markings = self.mark_trace(trace, formula)
         self.trace = trace
         self.loop_start = trace.loop_start
 
     def mark_trace(
-        self, trace: Trace, formula: m.Mitl
-    ) -> dict[m.Mitl, list[bool]]:
+        self, trace: Trace, formula: m.Mtl
+    ) -> dict[m.Mtl, list[bool]]:
         subformulae = write_trace_smv("res/trace.smv", trace, formula)
         out = util.run_and_capture(
             ["nuXmv", "-source", "res/check_trace.txt"], output=False
@@ -221,10 +219,10 @@ class Marking:
                 out += "  "
         return out
 
-    def get(self, f: m.Mitl, i: int) -> bool:
+    def get(self, f: m.Mtl, i: int) -> bool:
         return self[f][self.trace.idx(i)]
 
-    def __getitem__(self, f: m.Mitl) -> list[bool]:
+    def __getitem__(self, f: m.Mtl) -> list[bool]:
         if f in self.markings:
             return self.markings[f]
         if isinstance(f, m.Prop):
@@ -285,7 +283,7 @@ class Marking:
         #         )
         #         if self[f.left][self.trace.idx(i)]
         else:
-            raise ValueError(f"Unsupported MITL construct: {f}")
+            raise ValueError(f"Unsupported MTL construct: {f}")
 
         self.markings[f] = bs
         return bs

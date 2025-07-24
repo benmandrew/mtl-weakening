@@ -1,13 +1,13 @@
 import unittest
 
 from src import ltl as l
-from src import mitl as m
+from src import mtl as m
 
 
-class TestMitlToLtl(unittest.TestCase):
+class TestMtlToLtl(unittest.TestCase):
 
     def test_eventually_upper_bound(self):
-        mitl = m.Eventually(m.Prop("p"), (2, 4))
+        mtl = m.Eventually(m.Prop("p"), (2, 4))
         expected = l.Next(
             l.Next(
                 l.Or(
@@ -15,45 +15,45 @@ class TestMitlToLtl(unittest.TestCase):
                 )
             )
         )
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
     def test_eventually_infinite_upper_bound(self):
-        mitl = m.Eventually(m.Prop("p"), (1, None))
+        mtl = m.Eventually(m.Prop("p"), (1, None))
         expected = l.Next(l.Eventually(l.Prop("p")))
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
     def test_always_upper_bound(self):
-        mitl = m.Always(m.Prop("p"), (1, 3))
+        mtl = m.Always(m.Prop("p"), (1, 3))
         expected = l.Next(
             l.And(l.Prop("p"), l.Next(l.And(l.Prop("p"), l.Next(l.Prop("p")))))
         )
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
     def test_always_infinite_upper_bound(self):
-        mitl = m.Always(m.Prop("p"), (3, None))
+        mtl = m.Always(m.Prop("p"), (3, None))
         expected = l.Next(l.Next(l.Next(l.Always(l.Prop("p")))))
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
     def test_until_upper_bound(self):
-        mitl = m.Until(m.Prop("p"), m.Prop("q"), (1, 2))
+        mtl = m.Until(m.Prop("p"), m.Prop("q"), (1, 2))
         expected = l.Next(
             l.Or(l.Prop("q"), l.And(l.Prop("p"), l.Next(l.Prop("q"))))
         )
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
     def test_until_infinite_upper_bound(self):
-        mitl = m.Until(m.Prop("p"), m.Prop("q"), (2, None))
+        mtl = m.Until(m.Prop("p"), m.Prop("q"), (2, None))
         expected = l.Next(l.Next(l.Until(l.Prop("p"), l.Prop("q"))))
-        result = m.mitl_to_ltl(mitl)
+        result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
 
-class TestMitlToString(unittest.TestCase):
+class TestMtlToString(unittest.TestCase):
     def test_deep_nested_negations_and_temporal(self):
         formula = m.Not(
             m.Implies(
@@ -88,7 +88,7 @@ class TestMitlToString(unittest.TestCase):
         )
 
 
-class TestMitlToNNF(unittest.TestCase):
+class TestMtlToNNF(unittest.TestCase):
 
     def test_deep_nested_negations_and_temporal(self):
         formula = m.Not(

@@ -1,35 +1,35 @@
 from typing import cast
 
-from src import marking, mitl
+from src import marking, mtl
 
 
-def get_subformula(formula: mitl.Mitl, indices: list[int]) -> mitl.Mitl:
+def get_subformula(formula: mtl.Mtl, indices: list[int]) -> mtl.Mtl:
     for i, idx in enumerate(indices):
-        if isinstance(formula, mitl.Prop):
-            raise mitl.DeBruijnIndexError(indices, i, formula)
-        if isinstance(formula, (mitl.Not, mitl.Eventually, mitl.Always)):
+        if isinstance(formula, mtl.Prop):
+            raise mtl.DeBruijnIndexError(indices, i, formula)
+        if isinstance(formula, (mtl.Not, mtl.Eventually, mtl.Always)):
             if idx == 0:
                 formula = formula.operand
             else:
-                raise mitl.DeBruijnIndexError(indices, i, formula)
+                raise mtl.DeBruijnIndexError(indices, i, formula)
         elif isinstance(
-            formula, (mitl.And, mitl.Or, mitl.Implies, mitl.Until, mitl.Release)
+            formula, (mtl.And, mtl.Or, mtl.Implies, mtl.Until, mtl.Release)
         ):
             formula, _ = get_de_bruijn_binary(formula, indices, i)
         else:
-            raise ValueError(f"Unsupported MITL construct: {formula}")
+            raise ValueError(f"Unsupported MTL construct: {formula}")
     return formula
 
 
 def get_de_bruijn_binary(
-    formula: mitl.And | mitl.Or | mitl.Implies | mitl.Until | mitl.Release,
+    formula: mtl.And | mtl.Or | mtl.Implies | mtl.Until | mtl.Release,
     indices: list[int],
     formula_idx: int,
-) -> tuple[mitl.Mitl, mitl.Mitl]:
+) -> tuple[mtl.Mtl, mtl.Mtl]:
     """
     Return the binary operands of a formula ordered by De Bruijn index.
 
-    Given a binary MITL formula and a list of De Bruijn indices,
+    Given a binary MTL formula and a list of De Bruijn indices,
     this function returns a tuple of (primary, secondary) operands,
     where the primary operand corresponds to the De Bruijn index at
     the given formula_idx. The secondary is the other operand.
@@ -41,12 +41,12 @@ def get_de_bruijn_binary(
         return formula.left, formula.right
     if indices[formula_idx] == 1:
         return formula.right, formula.left
-    raise mitl.DeBruijnIndexError(indices, formula_idx, formula)
+    raise mtl.DeBruijnIndexError(indices, formula_idx, formula)
 
 
 class Weaken:
     """
-    Performs trace-guided interval weakening of MITL subformulas.
+    Performs trace-guided interval weakening of MTL subformulas.
 
     The subformula to weaken is identified by a De Bruijn index.
     Weakening is done by adjusting the interval so that the modified
@@ -62,7 +62,7 @@ class Weaken:
 
     def __init__(
         self,
-        formula: mitl.Mitl,
+        formula: mtl.Mtl,
         indices: list[int],
         trace: marking.Trace,
         markings: marking.Marking | None = None,
@@ -79,17 +79,15 @@ class Weaken:
         self.subformula = get_subformula(formula, indices)
         if isinstance(
             self.subformula,
-            (mitl.Always, mitl.Eventually, mitl.Until, mitl.Release),
+            (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
         ):
             self.original_interval = self.subformula.interval
         else:
-            raise ValueError(
-                f"Cannot weaken MITL subformula: {self.subformula}"
-            )
+            raise ValueError(f"Cannot weaken MTL subformula: {self.subformula}")
 
     def interval_abs_diff(
         self,
-        interval: mitl.Interval,
+        interval: mtl.Interval,
     ) -> int:
         if self.original_interval[1] is None and interval[1] is None:
             right = 0
@@ -102,8 +100,8 @@ class Weaken:
         return abs(interval[0] - self.original_interval[0]) + right
 
     def _aux_and(
-        self, formula: mitl.And, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.And, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside conjunction.
         """
@@ -115,8 +113,8 @@ class Weaken:
         return self._aux(primary, trace_idx, formula_idx + 1)
 
     def _naux_and(
-        self, formula: mitl.And, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.And, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside conjunction in negative polarity.
         """
@@ -128,8 +126,8 @@ class Weaken:
         return self._naux(primary, trace_idx, formula_idx + 1)
 
     def _aux_or(
-        self, formula: mitl.Or, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Or, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside disjunction.
         """
@@ -141,8 +139,8 @@ class Weaken:
         return self._aux(primary, trace_idx, formula_idx + 1)
 
     def _naux_or(
-        self, formula: mitl.Or, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Or, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside disjunction in negative polarity.
         """
@@ -154,8 +152,8 @@ class Weaken:
         return self._naux(primary, trace_idx, formula_idx + 1)
 
     def _aux_implies(
-        self, formula: mitl.Implies, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Implies, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside implication.
         """
@@ -163,8 +161,8 @@ class Weaken:
         raise NotImplementedError("")
 
     def _naux_implies(
-        self, formula: mitl.Implies, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Implies, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside implication implication in negative polarity by .
         """
@@ -172,8 +170,8 @@ class Weaken:
         raise NotImplementedError("")
 
     def _weaken_eventually(
-        self, formula: mitl.Eventually, trace_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Eventually, trace_idx: int
+    ) -> mtl.Interval | None:
         """
         Directly weaken interval of eventually operator.
         """
@@ -187,8 +185,8 @@ class Weaken:
         return None
 
     def _nweaken_eventually(
-        self, formula: mitl.Eventually, trace_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Eventually, trace_idx: int
+    ) -> mtl.Interval | None:
         """
         Directly weaken interval of eventually operator in negative polarity.
         """
@@ -203,8 +201,8 @@ class Weaken:
         return a, b
 
     def _aux_eventually(
-        self, formula: mitl.Eventually, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Eventually, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside eventually operator.
         """
@@ -222,8 +220,8 @@ class Weaken:
         return min(intervals, key=self.interval_abs_diff)
 
     def _naux_eventually(
-        self, formula: mitl.Eventually, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Eventually, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside eventually operator in negative polarity.
         """
@@ -241,7 +239,7 @@ class Weaken:
             intervals.append(interval)
         return max(intervals, key=self.interval_abs_diff)
 
-    def _weaken_always(self, formula: mitl.Always, trace_idx: int):
+    def _weaken_always(self, formula: mtl.Always, trace_idx: int):
         """
         Directly weaken interval of always operator.
         """
@@ -256,7 +254,7 @@ class Weaken:
                 return a, i - 1
         return a, b
 
-    def _nweaken_always(self, formula: mitl.Always, trace_idx: int):
+    def _nweaken_always(self, formula: mtl.Always, trace_idx: int):
         """
         Directly weaken interval of always operator in negative polarity.
         """
@@ -273,8 +271,8 @@ class Weaken:
         return None
 
     def _aux_always(
-        self, formula: mitl.Always, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Always, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside always operator.
         """
@@ -293,8 +291,8 @@ class Weaken:
         return max(intervals, key=self.interval_abs_diff)
 
     def _naux_always(
-        self, formula: mitl.Always, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Always, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside always operator in negative polarity.
         """
@@ -311,7 +309,7 @@ class Weaken:
             return None
         return min(intervals, key=self.interval_abs_diff)
 
-    def _weaken_until(self, formula: mitl.Until, trace_idx: int):
+    def _weaken_until(self, formula: mtl.Until, trace_idx: int):
         """
         Directly weaken interval of until operator.
         """
@@ -325,15 +323,15 @@ class Weaken:
                 break
         return None
 
-    def _nweaken_until(self, formula: mitl.Until, trace_idx: int):
+    def _nweaken_until(self, formula: mtl.Until, trace_idx: int):
         """
         Directly weaken interval of until operator in negative polarity.
         """
         raise NotImplementedError("")
 
     def _aux_until_left(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside until operator on the left side.
         """
@@ -356,7 +354,7 @@ class Weaken:
         return max(intervals, key=self.interval_abs_diff)
 
     def _naux_until_left(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
     ):
         """
         Weakening inside until operator on the left side in negative polarity.
@@ -364,13 +362,13 @@ class Weaken:
         raise NotImplementedError("")
 
     def _aux_until_right(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside until operator on the right side."""
         a, b = formula.interval
         right_idx = self.trace_len * 2 if b is None else b + 1
-        valid_intervals: list[mitl.Interval | None] = []
+        valid_intervals: list[mtl.Interval | None] = []
         for i in range(a, right_idx):
             valid_intervals.append(
                 self._aux(formula.right, trace_idx + i, formula_idx + 1)
@@ -383,7 +381,7 @@ class Weaken:
         return min(intervals, key=self.interval_abs_diff)
 
     def _naux_until_right(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
     ):
         """
         Weakening inside until operator on the right side in negative polarity.
@@ -391,50 +389,52 @@ class Weaken:
         raise NotImplementedError("")
 
     def _aux_until(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
-        Recursively weakens until operator subformulas."""
+        Recursively weakens until operator subformulas.
+        """
         if formula_idx == len(self.indices):
             return self._weaken_until(formula, trace_idx)
         if self.indices[formula_idx] == 0:
             return self._aux_until_left(formula, trace_idx, formula_idx)
         if self.indices[formula_idx] == 1:
             return self._aux_until_right(formula, trace_idx, formula_idx)
-        raise mitl.DeBruijnIndexError(self.indices, formula_idx, formula)
+        raise mtl.DeBruijnIndexError(self.indices, formula_idx, formula)
 
     def _naux_until(
-        self, formula: mitl.Until, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Until, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
-        Recursively weakens until operator subformulas in negative polarity."""
+        Recursively weakens until operator subformulas in negative polarity.
+        """
         if formula_idx == len(self.indices):
             return self._nweaken_until(formula, trace_idx)
         if self.indices[formula_idx] == 0:
             return self._naux_until_left(formula, trace_idx, formula_idx)
         if self.indices[formula_idx] == 1:
             return self._naux_until_right(formula, trace_idx, formula_idx)
-        raise mitl.DeBruijnIndexError(self.indices, formula_idx, formula)
+        raise mtl.DeBruijnIndexError(self.indices, formula_idx, formula)
 
     def _aux_release(
-        self, formula: mitl.Release, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Release, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside release operator.
         """
         raise NotImplementedError("")
 
     def _naux_release(
-        self, formula: mitl.Release, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Release, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Weakening inside Release operator within negation.
         """
         raise NotImplementedError("")
 
     def _aux(
-        self, formula: mitl.Mitl, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Mtl, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Recursively weakens subformulas in positive polarity.
 
@@ -445,29 +445,29 @@ class Weaken:
         handlers. Negations flip polarity and delegate to `_naux`.
         """
         assert formula_idx <= len(self.indices)
-        if isinstance(formula, mitl.Prop):
+        if isinstance(formula, mtl.Prop):
             return None
-        if isinstance(formula, mitl.Not):
+        if isinstance(formula, mtl.Not):
             return self._naux(formula.operand, trace_idx, formula_idx + 1)
-        if isinstance(formula, mitl.And):
+        if isinstance(formula, mtl.And):
             return self._aux_and(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Or):
+        if isinstance(formula, mtl.Or):
             return self._aux_or(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Implies):
+        if isinstance(formula, mtl.Implies):
             return self._aux_implies(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Eventually):
+        if isinstance(formula, mtl.Eventually):
             return self._aux_eventually(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Always):
+        if isinstance(formula, mtl.Always):
             return self._aux_always(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Until):
+        if isinstance(formula, mtl.Until):
             return self._aux_until(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Release):
+        if isinstance(formula, mtl.Release):
             return self._aux_release(formula, trace_idx, formula_idx)
-        raise ValueError(f"Unsupported MITL construct: {formula}")
+        raise ValueError(f"Unsupported MTL construct: {formula}")
 
     def _naux(
-        self, formula: mitl.Mitl, trace_idx: int, formula_idx: int
-    ) -> mitl.Interval | None:
+        self, formula: mtl.Mtl, trace_idx: int, formula_idx: int
+    ) -> mtl.Interval | None:
         """
         Recursively weakens subformulas in negative polarity.
 
@@ -478,27 +478,27 @@ class Weaken:
         dual-handling of temporal and boolean constructs.
         """
         assert formula_idx <= len(self.indices)
-        if isinstance(formula, mitl.Prop):
+        if isinstance(formula, mtl.Prop):
             return None
-        if isinstance(formula, mitl.Not):
+        if isinstance(formula, mtl.Not):
             return self._aux(formula.operand, trace_idx, formula_idx + 1)
-        if isinstance(formula, mitl.And):
+        if isinstance(formula, mtl.And):
             return self._naux_and(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Or):
+        if isinstance(formula, mtl.Or):
             return self._naux_or(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Implies):
+        if isinstance(formula, mtl.Implies):
             return self._naux_implies(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Eventually):
+        if isinstance(formula, mtl.Eventually):
             return self._naux_eventually(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Always):
+        if isinstance(formula, mtl.Always):
             return self._naux_always(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Until):
+        if isinstance(formula, mtl.Until):
             return self._naux_until(formula, trace_idx, formula_idx)
-        if isinstance(formula, mitl.Release):
+        if isinstance(formula, mtl.Release):
             return self._naux_release(formula, trace_idx, formula_idx)
-        raise ValueError(f"Unsupported MITL construct: {formula}")
+        raise ValueError(f"Unsupported MTL construct: {formula}")
 
-    def weaken(self) -> mitl.Interval | None:
+    def weaken(self) -> mtl.Interval | None:
         """
         Do weakening.
         """

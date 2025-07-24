@@ -1,7 +1,7 @@
 import textwrap
 import unittest
 
-from src import marking, mitl
+from src import marking, mtl
 
 
 def format_expect(s: str) -> str:
@@ -15,7 +15,7 @@ class TestMarking(unittest.TestCase):
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
     def test_fmt_markings_gf(self):
-        formula = mitl.Always(mitl.Eventually(mitl.Prop("trigger"), (0, 4)))
+        formula = mtl.Always(mtl.Eventually(mtl.Prop("trigger"), (0, 4)))
         trace = marking.Trace(
             [
                 {"counter": 0, "trigger": False},
@@ -38,7 +38,7 @@ class TestMarking(unittest.TestCase):
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
-        formula = mitl.Always(mitl.Eventually(mitl.Prop("a"), (0, 4)))
+        formula = mtl.Always(mtl.Eventually(mtl.Prop("a"), (0, 4)))
         trace = marking.Trace(
             [
                 {"a": False},
@@ -61,7 +61,7 @@ class TestMarking(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_f(self):
-        formula = mitl.Eventually(mitl.Or(mitl.Prop("a"), mitl.Prop("b")))
+        formula = mtl.Eventually(mtl.Or(mtl.Prop("a"), mtl.Prop("b")))
         trace = marking.Trace(
             [
                 {"a": True, "b": False},
@@ -82,8 +82,8 @@ class TestMarking(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_gfg(self):
-        formula = mitl.Always(
-            mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 2)), (0, 4))
+        formula = mtl.Always(
+            mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)), (0, 4))
         )
         trace = marking.Trace(
             [
@@ -139,7 +139,7 @@ class TestMarking(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_fg(self):
-        formula = mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 1)))
+        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 1)))
         trace = marking.Trace(
             [
                 {"a": False},
@@ -160,7 +160,7 @@ class TestMarking(unittest.TestCase):
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
-        formula = mitl.Eventually(mitl.Always(mitl.Prop("a"), (0, 2)))
+        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)))
         expected = format_expect(
             """
             a               │ │ │ │●│●│
@@ -173,7 +173,7 @@ class TestMarking(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_r(self):
-        formula = mitl.Release(mitl.Prop("a"), mitl.Prop("b"))
+        formula = mtl.Release(mtl.Prop("a"), mtl.Prop("b"))
         trace = marking.Trace(
             [
                 {"a": False, "b": True},
