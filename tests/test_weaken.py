@@ -102,8 +102,8 @@ class TestWeaken(unittest.TestCase):
                 {"a": False},
                 {"a": True},
                 {"a": True},
-                {"a": True},
-                {"a": True},
+                {"a": False},
+                {"a": False},
                 {"a": False},
                 {"a": True},
             ],
@@ -221,6 +221,21 @@ class TestWeaken(unittest.TestCase):
                 {"p": True},
             ],
             0,
+        )
+        result = weaken.Weaken(formula, indices, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 2))
+
+    def test_weakening_ng(self):
+        formula = mtl.Not(mtl.Always(mtl.Prop("p"), (0, 1)))
+        indices = [0]
+        trace = marking.Trace(
+            [
+                {"p": True},
+                {"p": True},
+                {"p": False},
+            ],
+            2,
         )
         result = weaken.Weaken(formula, indices, trace).weaken()
         assert result is not None

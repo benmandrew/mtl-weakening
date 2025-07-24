@@ -20,6 +20,17 @@ class Trace:
             self.loop_start = loop_start
             self.trace = trace
 
+    def to_markings(self) -> dict[m.Mtl, list[bool]]:
+        markings: dict[m.Mtl, list[bool]] = {}
+        for state in self.trace:
+            for k, v in state.items():
+                f = m.Prop(k)
+                if f not in markings:
+                    markings[f] = []
+                assert type(v) is bool
+                markings[f].append(v)
+        return markings
+
     def periodic_trace_idx(self, trace) -> int:
         if len(trace) > 0:
             last = trace[-1]
@@ -191,9 +202,11 @@ class Marking:
     loop_str = "=Lasso="
 
     def __init__(self, trace: Trace, formula: m.Mtl):
-        self.markings = self.mark_trace(trace, formula)
+        # self.markings = self.mark_trace(trace, formula)
         self.trace = trace
         self.loop_start = trace.loop_start
+        self.markings = trace.to_markings()
+        self[formula]
 
     def mark_trace(
         self, trace: Trace, formula: m.Mtl
@@ -268,20 +281,22 @@ class Marking:
                 )
             self.markings[f] = bs
             return bs
-        # if isinstance(f, m.Until):
-        #     rights = self[f.right]
-        #     bs = [False] * len(rights)
-        #     for i in range(len(bs)):
-        #         right_idx = (
-        #             f.interval[1] + 1
-        #             if f.interval[1] is not None
-        #             else len(rights) - i
-        #         )
-        #         bs[i] = any(
-        #             rights[self.trace.idx(j)]
-        #             for j in range(i + f.interval[0], i + right_idx)
-        #         )
-        #         if self[f.left][self.trace.idx(i)]
+        elif isinstance(f, m.Until):
+            rights = self[f.right]
+            lefts = self[f.left]
+            bs = [False] * len(rights)
+            for i in range(len(bs)):
+                right_idx = (
+                    f.interval[1] + 1
+                    if f.interval[1] is not None
+                    else len(rights) - i
+                )
+                for j in range(i + f.interval[0], i + right_idx):
+                    if rights[self.trace.idx(j)]:
+                        bs[i] = True
+                        break
+                    if not lefts[self.trace.idx(j)]:
+                        break
         else:
             raise ValueError(f"Unsupported MTL construct: {f}")
 
