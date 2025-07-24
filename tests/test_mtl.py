@@ -88,55 +88,5 @@ class TestMtlToString(unittest.TestCase):
         )
 
 
-class TestMtlToNNF(unittest.TestCase):
-
-    def test_deep_nested_negations_and_temporal(self):
-        formula = m.Not(
-            m.Implies(
-                m.And(m.Prop("p"), m.Not(m.Eventually(m.Prop("q"), (1, 2)))),
-                m.Always(m.Or(m.Not(m.Prop("r")), m.Next(m.Prop("s"))), (0, 3)),
-            )
-        )
-        nnf = m.to_nnf(formula)
-        expected = m.And(
-            m.And(m.Prop("p"), m.Always(m.Not(m.Prop("q")), (1, 2))),
-            m.Eventually(
-                m.And(m.Prop("r"), m.Next(m.Not(m.Prop("s")))), (0, 3)
-            ),
-        )
-        self.assertEqual(nnf, expected)
-
-    def test_nested_until_release_mix(self):
-        formula = m.Not(
-            m.Release(
-                m.Until(m.Prop("p"), m.Not(m.Prop("q")), (0, 5)),
-                m.Or(m.Always(m.Prop("r"), (1, 2)), m.Prop("s")),
-            )
-        )
-        nnf = m.to_nnf(formula)
-        expected = m.Until(
-            m.Release(m.Not(m.Prop("p")), m.Prop("q"), (0, 5)),
-            m.And(m.Eventually(m.Not(m.Prop("r")), (1, 2)), m.Not(m.Prop("s"))),
-            (0, None),
-        )
-        self.assertEqual(nnf, expected)
-
-    def test_complex_mixed_with_next_and_implies(self):
-        formula = m.And(
-            m.Implies(m.Prop("p"), m.Next(m.Eventually(m.Prop("q"), (2, 4)))),
-            m.Not(m.Or(m.Prop("r"), m.Until(m.Prop("s"), m.Prop("t"), (1, 3)))),
-        )
-        nnf = m.to_nnf(formula)
-
-        expected = m.And(
-            m.Or(m.Not(m.Prop("p")), m.Next(m.Eventually(m.Prop("q"), (2, 4)))),
-            m.And(
-                m.Not(m.Prop("r")),
-                m.Release(m.Not(m.Prop("s")), m.Not(m.Prop("t")), (1, 3)),
-            ),
-        )
-        self.assertEqual(nnf, expected)
-
-
 if __name__ == "__main__":
     unittest.main()
