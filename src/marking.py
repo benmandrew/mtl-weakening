@@ -292,14 +292,35 @@ class Marking:
                     else len(rights) - i
                 )
                 for j in range(i + f.interval[0], i + right_idx):
-                    if rights[self.trace.idx(j)]:
+                    k = self.trace.idx(j)
+                    if rights[k]:
                         bs[i] = True
                         break
-                    if not lefts[self.trace.idx(j)]:
+                    if not lefts[k]:
                         break
+        elif isinstance(f, m.Release):
+            rights = self[f.right]
+            lefts = self[f.left]
+            bs = [False] * len(rights)
+            for i in range(len(bs)):
+                right_idx = (
+                    f.interval[1] + 1
+                    if f.interval[1] is not None
+                    else len(rights) - i
+                )
+                satisfied = True
+                for j in range(i + f.interval[0], i + right_idx):
+                    k = self.trace.idx(j)
+                    if not rights[k]:
+                        satisfied = False
+                        break
+                    if lefts[k]:
+                        bs[i] = True
+                        break
+                else:
+                    bs[i] = satisfied
         else:
             raise ValueError(f"Unsupported MTL construct: {f}")
-
         self.markings[f] = bs
         return bs
 
