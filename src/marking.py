@@ -231,52 +231,38 @@ class Marking:
             raise ValueError(f"Proposition '{f}' not found in markings. ")
         if isinstance(f, m.Not):
             bs = [not v for v in self[f.operand]]
-            self.markings[f] = bs
-            return bs
-        if isinstance(f, m.And):
+        elif isinstance(f, m.And):
             bs = [
                 left and right
                 for left, right in zip(self[f.left], self[f.right])
             ]
-            self.markings[f] = bs
-            return bs
-        if isinstance(f, m.Or):
+        elif isinstance(f, m.Or):
             bs = [
                 left or right
                 for left, right in zip(self[f.left], self[f.right])
             ]
-            self.markings[f] = bs
-            return bs
-        if isinstance(f, m.Implies):
+        elif isinstance(f, m.Implies):
             bs = [
                 (not left) or right
                 for left, right in zip(self[f.left], self[f.right])
             ]
-            self.markings[f] = bs
-            return bs
-        if isinstance(f, m.Eventually):
+        elif isinstance(f, m.Eventually):
             vs = self[f.operand]
             bs = [False] * len(vs)
             for i in range(len(bs)):
                 right_idx = (
-                    f.interval[1] + 1
-                    if f.interval[1] is not None
-                    else len(vs) - i
+                    f.interval[1] + 1 if f.interval[1] is not None else len(vs)
                 )
                 bs[i] = any(
                     vs[self.trace.idx(j)]
                     for j in range(i + f.interval[0], i + right_idx)
                 )
-            self.markings[f] = bs
-            return bs
-        if isinstance(f, m.Always):
+        elif isinstance(f, m.Always):
             vs = self[f.operand]
             bs = [False] * len(vs)
             for i in range(len(bs)):
                 right_idx = (
-                    f.interval[1] + 1
-                    if f.interval[1] is not None
-                    else len(vs) - i
+                    f.interval[1] + 1 if f.interval[1] is not None else len(vs)
                 )
                 bs[i] = all(
                     vs[self.trace.idx(j)]
@@ -285,7 +271,24 @@ class Marking:
             self.markings[f] = bs
             return bs
         # if isinstance(f, m.Until):
-        raise ValueError(f"Unsupported MITL construct: {f}")
+        #     rights = self[f.right]
+        #     bs = [False] * len(rights)
+        #     for i in range(len(bs)):
+        #         right_idx = (
+        #             f.interval[1] + 1
+        #             if f.interval[1] is not None
+        #             else len(rights) - i
+        #         )
+        #         bs[i] = any(
+        #             rights[self.trace.idx(j)]
+        #             for j in range(i + f.interval[0], i + right_idx)
+        #         )
+        #         if self[f.left][self.trace.idx(i)]
+        else:
+            raise ValueError(f"Unsupported MITL construct: {f}")
+
+        self.markings[f] = bs
+        return bs
 
     def __str__(self) -> str:
         out = ""

@@ -38,24 +38,17 @@ def sed_escape(s: str) -> str:
 
 
 def main():
-
-    formula = mitl.Always(mitl.Eventually(mitl.Prop("p"), (3, 4)))
+    formula = mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 2))))
     trace = marking.Trace(
         [
             {"p": False},
             {"p": False},
-            {"p": False},
-            {"p": False},
-            {"p": True},
-            {"p": True},
-            {"p": True},
             {"p": True},
         ],
         0,
     )
     markings = marking.Marking(trace, formula)
-    print(markings)
-    formula = mitl.Always(mitl.Prop("p"), (2, 4))
+    formula = mitl.Not(mitl.Always(mitl.Eventually(mitl.Prop("p"), (0, 1))))
     markings[formula]
     print(markings)
     # w = weaken.Weaken(formula, indices, trace).weaken()

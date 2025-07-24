@@ -155,6 +155,16 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
     return result
 
 
+class DeBruijnIndexError(IndexError):
+    def __init__(self, indices: list[int], formula_idx: int, formula: Mitl):
+        super().__init__(
+            f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
+        )
+        self.indices = indices
+        self.formula_idx = formula_idx
+        self.formula = formula
+
+
 def get_de_bruijn(
     formula: Mitl,
     indices: list[int],
@@ -170,9 +180,7 @@ def get_de_bruijn(
             return formula.left
         if indices[formula_idx] == 1:
             return formula.right
-    raise IndexError(
-        f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
-    )
+    raise DeBruijnIndexError(indices, formula_idx, formula)
 
 
 def to_nnf_in_not(formula: Mitl) -> Mitl:
@@ -233,6 +241,93 @@ def to_nnf(formula: Mitl) -> Mitl:
     if isinstance(formula, Next):
         return Next(to_nnf(formula.operand))
     raise ValueError(f"Unknown MITL formula type: {type(formula)}")
+
+
+# def _convert_indices_to_nnf_not_aux(
+#     formula: Mitl, indices: list[int], formula_idx: int
+# ) -> list[int]:
+#     if isinstance(formula, Prop):
+#         return indices
+#     if isinstance(formula, Not):
+#         del indices[formula_idx - 1 : formula_idx + 1]
+#         return _convert_indices_to_nnf_aux(
+#             formula.operand, indices, formula_idx - 1
+#         )
+#     if isinstance(formula, (And, Or)):
+#         primary = get_de_bruijn(formula, indices, formula_idx)
+#         del indices[formula_idx]
+#         indices.insert(formula_idx + 1, 0)
+#         return _convert_indices_to_nnf_aux(primary, indices, formula_idx + 2)
+#     if isinstance(formula, Implies):
+#         del indices[formula_idx]
+#         if indices[formula_idx] == 0:
+#             return _convert_indices_to_nnf_aux(
+#                 formula.left, indices, formula_idx + 1
+#             )
+#         if indices[formula_idx] == 1:
+#             indices.insert(formula_idx + 1, 0)
+#             return _convert_indices_to_nnf_aux(
+#                 formula.right, indices, formula_idx + 2
+#             )
+#         raise IndexError(
+#             f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
+#         )
+#     if isinstance(formula, Eventually):
+#         return Always(to_nnf(Not(formula.operand)), formula.interval)
+#     if isinstance(formula, Always):
+#         return Eventually(to_nnf(Not(formula.operand)), formula.interval)
+#     if isinstance(formula, Until):
+#         return Release(
+#             to_nnf(Not(formula.left)),
+#             to_nnf(Not(formula.right)),
+#             formula.interval,
+#         )
+#     if isinstance(formula, Release):
+#         return Until(
+#             to_nnf(Not(formula.left)),
+#             to_nnf(Not(formula.right)),
+#             formula.interval,
+#         )
+#     if isinstance(formula, Next):
+#         return Next(to_nnf(Not(formula.operand)))
+#     raise ValueError(f"Unexpected formula in Not: {formula}")
+
+
+# def _convert_indices_to_nnf_aux(
+#     formula: Mitl, indices: list[int], formula_idx: int
+# ) -> list[int]:
+#     if isinstance(formula, Prop):
+#         return indices
+#     if isinstance(formula, Not):
+#         return _convert_indices_to_nnf_not_aux(
+#             formula.operand, indices, formula_idx + 1
+#         )
+#     if isinstance(formula, And):
+#         return And(to_nnf(formula.left), to_nnf(formula.right))
+#     if isinstance(formula, Or):
+#         return Or(to_nnf(formula.left), to_nnf(formula.right))
+#     if isinstance(formula, Implies):
+#         return Or(to_nnf(Not(formula.left)), to_nnf(formula.right))
+#     if isinstance(formula, Eventually):
+#         return Eventually(to_nnf(formula.operand), formula.interval)
+#     if isinstance(formula, Always):
+#         return Always(to_nnf(formula.operand), formula.interval)
+#     if isinstance(formula, Until):
+#         return Until(
+#             to_nnf(formula.left), to_nnf(formula.right), formula.interval
+#         )
+#     if isinstance(formula, Release):
+#         return Release(
+#             to_nnf(formula.left), to_nnf(formula.right), formula.interval
+#         )
+#     if isinstance(formula, Next):
+#         return Next(to_nnf(formula.operand))
+#     raise ValueError(f"Unknown MITL formula type: {type(formula)}")
+
+
+# # Convert De Bruijn indices of a formula to that of the NNF version.
+# def convert_indices_to_nnf(formula: Mitl, indices: list[int]) -> list[int]:
+#     return _convert_indices_to_nnf_aux(formula, indices, 0)
 
 
 def to_string(formula: Mitl) -> str:
