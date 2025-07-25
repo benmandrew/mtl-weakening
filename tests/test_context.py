@@ -18,9 +18,7 @@ class TestSplitFormula(unittest.TestCase):
         )
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
-        result_context, result_subf = ctx.split_formula(
-            expected_f, [0, 1, 0], 0
-        )
+        result_context, result_subf = ctx.split_formula(expected_f, [0, 1, 0])
         self.assertEqual(expected_context, result_context)
         self.assertEqual(expected_subf, result_subf)
 
@@ -45,7 +43,7 @@ class TestSplitFormula(unittest.TestCase):
         )
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
-        context, subf = ctx.split_formula(result_f, indices, 0)
+        context, subf = ctx.split_formula(result_f, indices)
         self.assertEqual(expected_context, context)
         self.assertEqual(expected_subf, subf)
 
@@ -87,7 +85,7 @@ class TestSplitFormula(unittest.TestCase):
         )
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
-        context, subf = ctx.split_formula(expected_f, indices, 0)
+        context, subf = ctx.split_formula(expected_f, indices)
         self.assertEqual(expected_context, context)
         self.assertEqual(expected_subf, subf)
 

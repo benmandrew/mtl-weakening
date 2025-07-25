@@ -156,7 +156,7 @@ def to_string(c: Ctx) -> str:
     raise ValueError(f"Unsupported MTL context construct: {c}")
 
 
-def split_formula(
+def _split_formula_aux(
     f: mtl.Mtl, indices: list[int], formula_idx: int
 ) -> tuple[Ctx, mtl.Mtl]:
     """
@@ -170,52 +170,56 @@ def split_formula(
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Not):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.operand, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.operand, indices, formula_idx + 1)
             return Not(ctx), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.And):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.left, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.left, indices, formula_idx + 1)
             return AndLeft(ctx, f.right), subf
         if indices[formula_idx] == 1:
-            ctx, subf = split_formula(f.right, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return AndRight(f.left, ctx), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Or):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.left, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.left, indices, formula_idx + 1)
             return OrLeft(ctx, f.right), subf
         if indices[formula_idx] == 1:
-            ctx, subf = split_formula(f.right, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return OrRight(f.left, ctx), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Implies):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.left, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.left, indices, formula_idx + 1)
             return ImpliesLeft(ctx, f.right), subf
         if indices[formula_idx] == 1:
-            ctx, subf = split_formula(f.right, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return ImpliesRight(f.left, ctx), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Eventually):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.operand, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.operand, indices, formula_idx + 1)
             return Eventually(ctx, f.interval), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Always):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.operand, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.operand, indices, formula_idx + 1)
             return Always(ctx, f.interval), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     if isinstance(f, mtl.Until):
         if indices[formula_idx] == 0:
-            ctx, subf = split_formula(f.left, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.left, indices, formula_idx + 1)
             return UntilLeft(ctx, f.right, f.interval), subf
         if indices[formula_idx] == 1:
-            ctx, subf = split_formula(f.right, indices, formula_idx + 1)
+            ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return UntilRight(f.left, ctx, f.interval), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     raise ValueError(f"Unsupported MTL construct: {f}")
+
+
+def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
+    return _split_formula_aux(formula, indices, 0)
 
 
 def get_de_bruijn(c: Ctx) -> list[int]:
