@@ -172,7 +172,6 @@ def fmt_interval(interval: Interval) -> str:
 
 
 def to_string(formula: Mtl) -> str:
-
     if isinstance(formula, Prop):
         return formula.name
     if isinstance(formula, Not):
