@@ -6,7 +6,6 @@ Interval = tuple[int, int | None]
 
 
 class Mtl:
-
     def __str__(self) -> str:
         return to_string(self)
 
@@ -66,11 +65,47 @@ class Until(Mtl):
     interval: Interval = (0, None)
 
 
-@dataclass(frozen=True, order=True, repr=False)
-class Release(Mtl):
-    left: Mtl
-    right: Mtl
-    interval: Interval = (0, None)
+def _mtl_to_ltl_eventually(formula: Eventually) -> ltl.Ltl:
+    a, b = formula.interval
+    subf = mtl_to_ltl(formula.operand)
+    out = subf
+    if b is None:
+        out = ltl.Eventually(subf)
+    else:
+        for _ in range(b - a):
+            out = ltl.Or(subf, ltl.Next(out))
+    for _ in range(a):
+        out = ltl.Next(out)
+    return out
+
+
+def _mtl_to_ltl_always(formula: Always) -> ltl.Ltl:
+    a, b = formula.interval
+    subf = mtl_to_ltl(formula.operand)
+    out = subf
+    if b is None:
+        out = ltl.Always(subf)
+    else:
+        for _ in range(b - a):
+            out = ltl.And(subf, ltl.Next(out))
+    for _ in range(a):
+        out = ltl.Next(out)
+    return out
+
+
+def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
+    a, b = formula.interval
+    left = mtl_to_ltl(formula.left)
+    right = mtl_to_ltl(formula.right)
+    if b is None:
+        return apply_next_k(ltl.Until(left, right), a)
+    terms = []
+    for i in range(b - a + 1):
+        out = right
+        for _ in range(i):
+            out = ltl.And(left, ltl.Next(out))
+        terms.append(out)
+    return apply_next_k(make_disjunction(terms), a)
 
 
 def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
@@ -85,47 +120,11 @@ def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
     if isinstance(formula, Implies):
         return ltl.Implies(mtl_to_ltl(formula.left), mtl_to_ltl(formula.right))
     if isinstance(formula, Eventually):
-        a, b = formula.interval
-        subf = mtl_to_ltl(formula.operand)
-        out = subf
-        if b is None:
-            out = ltl.Eventually(subf)
-        else:
-            for _ in range(b - a):
-                out = ltl.Or(subf, ltl.Next(out))
-        for _ in range(a):
-            out = ltl.Next(out)
-        return out
+        return _mtl_to_ltl_eventually(formula)
     if isinstance(formula, Always):
-        a, b = formula.interval
-        subf = mtl_to_ltl(formula.operand)
-        out = subf
-        if b is None:
-            out = ltl.Always(subf)
-        else:
-            for _ in range(b - a):
-                out = ltl.And(subf, ltl.Next(out))
-        for _ in range(a):
-            out = ltl.Next(out)
-        return out
+        return _mtl_to_ltl_always(formula)
     if isinstance(formula, Until):
-        a, b = formula.interval
-        left = mtl_to_ltl(formula.left)
-        right = mtl_to_ltl(formula.right)
-        if b is None:
-            return apply_next_k(ltl.Until(left, right), a)
-        terms = []
-        for i in range(b - a + 1):
-            out = right
-            for _ in range(i):
-                out = ltl.And(left, ltl.Next(out))
-            terms.append(out)
-        return apply_next_k(make_disjunction(terms), a)
-    if isinstance(formula, Release):
-        rewrite = Not(
-            Until(Not(formula.left), Not(formula.right), formula.interval)
-        )
-        return mtl_to_ltl(rewrite)
+        return _mtl_to_ltl_until(formula)
     raise ValueError("Unsupported MTL construct")
 
 
@@ -196,12 +195,6 @@ def to_string(formula: Mtl) -> str:
             f"U{fmt_interval(formula.interval)} "
             f"{to_string(formula.right)})"
         )
-    if isinstance(formula, Release):
-        return (
-            f"({to_string(formula.left)} "
-            f"R{fmt_interval(formula.interval)} "
-            f"{to_string(formula.right)})"
-        )
     if isinstance(formula, Next):
         return f"X ({to_string(formula.operand)})"
     raise ValueError(f"Unsupported MTL construct: {formula}")
@@ -233,7 +226,7 @@ def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
             pass
         elif isinstance(f, (Not, Eventually, Always)):
             aux(f.operand)
-        elif isinstance(f, (And, Or, Implies, Until, Release)):
+        elif isinstance(f, (And, Or, Implies, Until)):
             aux(f.left)
             aux(f.right)
         else:

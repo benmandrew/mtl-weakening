@@ -66,17 +66,6 @@ class TestMtlToString(unittest.TestCase):
             "!(((p & !(F[1, 2] (q))) -> G[0, 3] ((!(r) | X (s)))))",
         )
 
-    def test_nested_until_release_mix(self):
-        formula = m.Not(
-            m.Release(
-                m.Until(m.Prop("p"), m.Not(m.Prop("q")), (0, 5)),
-                m.Or(m.Always(m.Prop("r"), (1, 2)), m.Prop("s")),
-            )
-        )
-        self.assertEqual(
-            m.to_string(formula), "!(((p U[0, 5] !(q)) R (G[1, 2] (r) | s)))"
-        )
-
     def test_complex_mixed_with_next_and_implies(self):
         formula = m.And(
             m.Implies(m.Prop("p"), m.Next(m.Eventually(m.Prop("q"), (2, 4)))),

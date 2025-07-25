@@ -12,9 +12,7 @@ def get_subformula(formula: mtl.Mtl, indices: list[int]) -> mtl.Mtl:
                 formula = formula.operand
             else:
                 raise mtl.DeBruijnIndexError(indices, i, formula)
-        elif isinstance(
-            formula, (mtl.And, mtl.Or, mtl.Implies, mtl.Until, mtl.Release)
-        ):
+        elif isinstance(formula, (mtl.And, mtl.Or, mtl.Implies, mtl.Until)):
             formula, _ = get_de_bruijn_binary(formula, indices, i)
         else:
             raise ValueError(f"Unsupported MTL construct: {formula}")
@@ -22,7 +20,7 @@ def get_subformula(formula: mtl.Mtl, indices: list[int]) -> mtl.Mtl:
 
 
 def get_de_bruijn_binary(
-    formula: mtl.And | mtl.Or | mtl.Implies | mtl.Until | mtl.Release,
+    formula: mtl.And | mtl.Or | mtl.Implies | mtl.Until,
     indices: list[int],
     formula_idx: int,
 ) -> tuple[mtl.Mtl, mtl.Mtl]:
@@ -79,7 +77,7 @@ class Weaken:
         self.subformula = get_subformula(formula, indices)
         if isinstance(
             self.subformula,
-            (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
+            (mtl.Always, mtl.Eventually, mtl.Until),
         ):
             self.original_interval = self.subformula.interval
         else:
@@ -416,22 +414,6 @@ class Weaken:
             return self._naux_until_right(formula, trace_idx, formula_idx)
         raise mtl.DeBruijnIndexError(self.indices, formula_idx, formula)
 
-    def _aux_release(
-        self, formula: mtl.Release, trace_idx: int, formula_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside release operator.
-        """
-        raise NotImplementedError("")
-
-    def _naux_release(
-        self, formula: mtl.Release, trace_idx: int, formula_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside Release operator within negation.
-        """
-        raise NotImplementedError("")
-
     def _aux(
         self, formula: mtl.Mtl, trace_idx: int, formula_idx: int
     ) -> mtl.Interval | None:
@@ -461,8 +443,6 @@ class Weaken:
             return self._aux_always(formula, trace_idx, formula_idx)
         if isinstance(formula, mtl.Until):
             return self._aux_until(formula, trace_idx, formula_idx)
-        if isinstance(formula, mtl.Release):
-            return self._aux_release(formula, trace_idx, formula_idx)
         raise ValueError(f"Unsupported MTL construct: {formula}")
 
     def _naux(
@@ -494,8 +474,6 @@ class Weaken:
             return self._naux_always(formula, trace_idx, formula_idx)
         if isinstance(formula, mtl.Until):
             return self._naux_until(formula, trace_idx, formula_idx)
-        if isinstance(formula, mtl.Release):
-            return self._naux_release(formula, trace_idx, formula_idx)
         raise ValueError(f"Unsupported MTL construct: {formula}")
 
     def weaken(self) -> mtl.Interval | None:
