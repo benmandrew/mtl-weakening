@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src import ltl
+from src.logic import ltl
 
 Interval = tuple[int, int | None]
 
@@ -162,14 +162,16 @@ class DeBruijnIndexError(IndexError):
         self.formula = formula
 
 
+def fmt_interval(interval: Interval) -> str:
+    low, high = interval
+    if high is None:
+        if low == 0:
+            return ""
+        return f"[{low}, ∞)"
+    return f"[{low}, {high}]"
+
+
 def to_string(formula: Mtl) -> str:
-    def fmt_interval(interval: Interval) -> str:
-        low, high = interval
-        if high is None:
-            if low == 0:
-                return ""
-            return f"[{low}, ∞)"
-        return f"[{low}, {high}]"
 
     if isinstance(formula, Prop):
         return formula.name

@@ -1,7 +1,8 @@
 import textwrap
 import unittest
 
-from src import marking, mtl
+from src import marking
+from src.logic import mtl
 
 
 def format_expect(s: str) -> str:

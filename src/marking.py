@@ -1,8 +1,8 @@
 import collections
 from enum import Enum
 
-from src import mtl as m
 from src import util
+from src.logic import mtl as m
 
 
 class Trace:

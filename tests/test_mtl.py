@@ -1,7 +1,7 @@
 import unittest
 
-from src import ltl as l
-from src import mtl as m
+from src.logic import ltl as l
+from src.logic import mtl as m
 
 
 class TestMtlToLtl(unittest.TestCase):

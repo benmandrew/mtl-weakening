@@ -1,6 +1,7 @@
 from lark import Discard, Lark, Transformer
 
-from src import ltl, marking, mtl
+from src import marking
+from src.logic import ltl, mtl
 
 
 class TreeTransformer(Transformer):

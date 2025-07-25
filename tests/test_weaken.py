@@ -1,6 +1,7 @@
 import unittest
 
-from src import marking, mtl, weaken
+from src import marking, weaken
+from src.logic import mtl
 
 
 class TestWeaken(unittest.TestCase):

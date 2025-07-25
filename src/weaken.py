@@ -1,6 +1,7 @@
 from typing import cast
 
-from src import marking, mtl
+from src import marking
+from src.logic import mtl
 
 
 def get_subformula(formula: mtl.Mtl, indices: list[int]) -> mtl.Mtl:
