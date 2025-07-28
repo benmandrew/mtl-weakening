@@ -8,7 +8,6 @@ class Weaken:
     """
     Performs trace-guided interval weakening of MTL subformulas.
 
-    The subformula to weaken is identified by a De Bruijn index.
     Weakening is done by adjusting the interval so that the modified
     formula remains true over the given trace.
 
@@ -59,45 +58,25 @@ class Weaken:
             )
         return abs(interval[0] - self.original_interval[0]) + right
 
-    def _aux_and_left(
-        self, c: ctx.AndLeft, trace_idx: int
+    def _aux_and(
+        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
     ) -> mtl.Interval | None:
         """
         Weakening inside conjunction.
         """
-        if not self.markings.get(c.right, trace_idx):
+        if not self.markings.get(f, trace_idx):
             return None
-        return self._aux(c.left, trace_idx)
+        return self._aux(c, trace_idx)
 
-    def _aux_and_right(
-        self, c: ctx.AndRight, trace_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside conjunction.
-        """
-        if not self.markings.get(c.left, trace_idx):
-            return None
-        return self._aux(c.right, trace_idx)
-
-    def _aux_or_left(
-        self, c: ctx.OrLeft, trace_idx: int
+    def _aux_or(
+        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
     ) -> mtl.Interval | None:
         """
         Weakening inside disjunction.
         """
-        if self.markings.get(c.right, trace_idx):
+        if self.markings.get(f, trace_idx):
             return self.original_interval
-        return self._aux(c.left, trace_idx)
-
-    def _aux_or_right(
-        self, c: ctx.OrRight, trace_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside disjunction.
-        """
-        if self.markings.get(c.left, trace_idx):
-            return self.original_interval
-        return self._aux(c.right, trace_idx)
+        return self._aux(c, trace_idx)
 
     def _aux_implies_left(
         self, c: ctx.ImpliesLeft, trace_idx: int
@@ -105,9 +84,7 @@ class Weaken:
         """
         Weakening inside implication.
         """
-        return self._aux_or_left(
-            ctx.OrLeft(ctx.Not(c.left), c.right), trace_idx
-        )
+        return self._aux_or(ctx.Not(c.left), c.right, trace_idx)
 
     def _aux_implies_right(
         self, c: ctx.ImpliesRight, trace_idx: int
@@ -115,9 +92,7 @@ class Weaken:
         """
         Weakening inside implication.
         """
-        return self._aux_or_right(
-            ctx.OrRight(mtl.Not(c.left), c.right), trace_idx
-        )
+        return self._aux_or(c.right, mtl.Not(c.left), trace_idx)
 
     def _aux_eventually(
         self, c: ctx.Eventually, trace_idx: int
@@ -190,45 +165,25 @@ class Weaken:
             return None
         return min(intervals, key=self._interval_abs_diff)
 
-    def _naux_and_left(
-        self, c: ctx.AndLeft, trace_idx: int
+    def _naux_and(
+        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
     ) -> mtl.Interval | None:
         """
         Weakening inside conjunction in negative polarity.
         """
-        if self.markings.get(c.right, trace_idx):
+        if self.markings.get(f, trace_idx):
             return self.original_interval
-        return self._naux(c.left, trace_idx)
+        return self._naux(c, trace_idx)
 
-    def _naux_and_right(
-        self, c: ctx.AndRight, trace_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside conjunction in negative polarity.
-        """
-        if self.markings.get(c.left, trace_idx):
-            return self.original_interval
-        return self._naux(c.right, trace_idx)
-
-    def _naux_or_left(
-        self, c: ctx.OrLeft, trace_idx: int
+    def _naux_or(
+        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
     ) -> mtl.Interval | None:
         """
         Weakening inside disjunction in negative polarity.
         """
-        if not self.markings.get(c.right, trace_idx):
+        if not self.markings.get(f, trace_idx):
             return None
-        return self._aux(c.left, trace_idx)
-
-    def _naux_or_right(
-        self, c: ctx.OrRight, trace_idx: int
-    ) -> mtl.Interval | None:
-        """
-        Weakening inside disjunction in negative polarity.
-        """
-        if not self.markings.get(c.left, trace_idx):
-            return None
-        return self._aux(c.right, trace_idx)
+        return self._aux(c, trace_idx)
 
     def _naux_implies_left(
         self, c: ctx.ImpliesLeft, trace_idx: int
@@ -236,9 +191,7 @@ class Weaken:
         """
         Weakening inside implication implication in negative polarity by .
         """
-        return self._naux_or_left(
-            ctx.OrLeft(ctx.Not(c.left), c.right), trace_idx
-        )
+        return self._naux_or(ctx.Not(c.left), c.right, trace_idx)
 
     def _naux_implies_right(
         self, c: ctx.ImpliesRight, trace_idx: int
@@ -246,9 +199,7 @@ class Weaken:
         """
         Weakening inside implication implication in negative polarity by .
         """
-        return self._naux_or_right(
-            ctx.OrRight(mtl.Not(c.left), c.right), trace_idx
-        )
+        return self._naux_or(c.right, mtl.Not(c.left), trace_idx)
 
     def _naux_eventually(
         self, c: ctx.Eventually, trace_idx: int
@@ -417,13 +368,13 @@ class Weaken:
         if isinstance(c, ctx.Not):
             return self._naux(c.operand, trace_idx)
         if isinstance(c, ctx.AndLeft):
-            return self._aux_and_left(c, trace_idx)
+            return self._aux_and(c.left, c.right, trace_idx)
         if isinstance(c, ctx.AndRight):
-            return self._aux_and_right(c, trace_idx)
+            return self._aux_and(c.right, c.left, trace_idx)
         if isinstance(c, ctx.OrLeft):
-            return self._aux_or_left(c, trace_idx)
+            return self._aux_or(c.left, c.right, trace_idx)
         if isinstance(c, ctx.OrRight):
-            return self._aux_or_right(c, trace_idx)
+            return self._aux_or(c.right, c.left, trace_idx)
         if isinstance(c, ctx.ImpliesLeft):
             return self._aux_implies_left(c, trace_idx)
         if isinstance(c, ctx.ImpliesRight):
@@ -453,13 +404,13 @@ class Weaken:
         if isinstance(c, ctx.Not):
             return self._aux(c.operand, trace_idx)
         if isinstance(c, ctx.AndLeft):
-            return self._naux_and_left(c, trace_idx)
+            return self._naux_and(c.left, c.right, trace_idx)
         if isinstance(c, ctx.AndRight):
-            return self._naux_and_right(c, trace_idx)
+            return self._naux_and(c.right, c.left, trace_idx)
         if isinstance(c, ctx.OrLeft):
-            return self._naux_or_left(c, trace_idx)
+            return self._naux_or(c.left, c.right, trace_idx)
         if isinstance(c, ctx.OrRight):
-            return self._naux_or_right(c, trace_idx)
+            return self._naux_or(c.right, c.left, trace_idx)
         if isinstance(c, ctx.ImpliesLeft):
             return self._naux_implies_left(c, trace_idx)
         if isinstance(c, ctx.ImpliesRight):
