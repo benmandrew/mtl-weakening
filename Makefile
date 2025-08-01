@@ -1,4 +1,4 @@
-.PHONY: run test fmt fmt-ci lint ruff pylint
+.PHONY: run test fmt fmt-ci lint ruff pylint mypy bandit
 
 run:
 	python3 -m src.main
@@ -12,7 +12,7 @@ fmt:
 fmt-ci:
 	python3 -m black --check -l 80 .
 
-lint: ruff pylint mypy
+lint: ruff pylint mypy bandit
 
 ruff:
 	python3 -m ruff check
@@ -22,3 +22,6 @@ pylint:
 
 mypy:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m mypy --check-untyped-defs --ignore-missing-imports
+
+bandit:
+	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q

@@ -312,12 +312,13 @@ class Weaken:
         """
         a, b = f.interval
         right_idx = self.trace_len if b is None else b + 1
-        # Expand the interval until we find a state when the operand is false
+        # Expand the interval until we find a state when the operand is true
+        # then reduce the interval to just before that
         for i in range(a, right_idx):
-            if not self.markings.get(f.operand, trace_idx + i):
+            if self.markings.get(f.operand, trace_idx + i):
                 if i == a:
                     return None
-                return a, i
+                return a, i - 1
         return a, b
 
     def _nweaken_direct_always(

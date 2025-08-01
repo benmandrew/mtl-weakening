@@ -67,10 +67,26 @@ jobs:
       - name: Run mypy
         run: make mypy
 
+  bandit:
+    name: Security Check (bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run bandit
+        run: make bandit
+
   test:
     name: Unit Tests (unittest)
     runs-on: ubuntu-latest
-    needs: [fmt, ruff, pylint, mypy]
+    needs: [fmt, ruff, pylint, mypy, bandit]
     steps:
       - uses: actions/checkout@v3
 

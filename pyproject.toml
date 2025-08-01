@@ -15,3 +15,10 @@ lint.select = [
     "SIM", # flake8-simplify
     "TID", # flake8-tidy-imports
 ]
+
+[tool.bandit]
+skips = [
+    "B101",
+    "B404",
+    "B603",
+]
