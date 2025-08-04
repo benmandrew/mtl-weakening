@@ -201,6 +201,7 @@ class TestWeakenContext(unittest.TestCase):
             mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 2)))),
         )
         context, subformula = ctx.split_formula(formula, [0, 0, 0])
+        context = ctx.partial_nnf(context)
         trace = marking.Trace(
             [
                 {"p": False},
@@ -216,6 +217,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_nfg(self) -> None:
         formula = mtl.Not(mtl.Eventually(mtl.Always(mtl.Prop("p"), (0, 1))))
         context, subformula = ctx.split_formula(formula, [0, 0])
+        context = ctx.partial_nnf(context)
         trace = marking.Trace(
             [
                 {"p": False},
@@ -231,6 +233,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_ng(self) -> None:
         formula = mtl.Not(mtl.Always(mtl.Prop("p"), (0, 1)))
         context, subformula = ctx.split_formula(formula, [0])
+        context = ctx.partial_nnf(context)
         trace = marking.Trace(
             [
                 {"p": True},

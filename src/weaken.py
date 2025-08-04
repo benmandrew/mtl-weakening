@@ -168,92 +168,6 @@ class Weaken:
             return None
         return min(intervals, key=self._interval_abs_diff)
 
-    def _naux_and(
-        self,
-        c: ctx.Ctx,
-        f: mtl.Mtl,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside conjunction in negative polarity."""
-        if self.markings.get(f, trace_idx):
-            return self.original_interval
-        return self._naux(c, trace_idx)
-
-    def _naux_or(
-        self,
-        c: ctx.Ctx,
-        f: mtl.Mtl,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside disjunction in negative polarity."""
-        if not self.markings.get(f, trace_idx):
-            return None
-        return self._aux(c, trace_idx)
-
-    def _naux_implies_left(
-        self,
-        c: ctx.ImpliesLeft,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside implication implication in negative polarity by ."""
-        return self._naux_or(ctx.Not(c.left), c.right, trace_idx)
-
-    def _naux_implies_right(
-        self,
-        c: ctx.ImpliesRight,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside implication implication in negative polarity by ."""
-        return self._naux_or(c.right, mtl.Not(c.left), trace_idx)
-
-    def _naux_eventually(
-        self,
-        c: ctx.Eventually,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside eventually operator in negative polarity."""
-        a, b = c.interval
-        right_idx = self.trace_len if b is None else b + 1
-        intervals = []
-        for i in range(a, right_idx):
-            interval = self._naux(c.operand, trace_idx + i)
-            if interval is None:
-                return None
-            intervals.append(interval)
-        return max(intervals, key=self._interval_abs_diff)
-
-    def _naux_always(
-        self,
-        c: ctx.Always,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside always operator in negative polarity."""
-        a, b = c.interval
-        right_idx = self.trace_len if b is None else b + 1
-        all_intervals = [
-            self._naux(c.operand, trace_idx + i) for i in range(a, right_idx)
-        ]
-        intervals = [i for i in all_intervals if i is not None]
-        if intervals == []:
-            return None
-        return min(intervals, key=self._interval_abs_diff)
-
-    def _naux_until_left(
-        self,
-        c: ctx.UntilLeft,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside until operator in negative polarity."""
-        raise NotImplementedError
-
-    def _naux_until_right(
-        self,
-        c: ctx.UntilRight,
-        trace_idx: int,
-    ) -> mtl.Interval | None:
-        """Weakening inside until operator in negative polarity."""
-        raise NotImplementedError
-
     def _weaken_direct_eventually(
         self,
         f: mtl.Eventually,
@@ -377,7 +291,11 @@ class Weaken:
         if isinstance(c, ctx.Hole):
             return self._weaken_direct(trace_idx)
         if isinstance(c, ctx.Not):
-            return self._naux(c.operand, trace_idx)
+            assert isinstance(
+                c.operand,
+                ctx.Hole,
+            ), "Negation must be applied to a hole"
+            return self._nweaken_direct(trace_idx)
         if isinstance(c, ctx.AndLeft):
             return self._aux_and(c.left, c.right, trace_idx)
         if isinstance(c, ctx.AndRight):
@@ -398,42 +316,6 @@ class Weaken:
             return self._aux_until_left(c, trace_idx)
         if isinstance(c, ctx.UntilRight):
             return self._aux_until_right(c, trace_idx)
-        msg = f"Unsupported MTL context construct: {c}"
-        raise ValueError(msg)
-
-    def _naux(self, c: ctx.Ctx, trace_idx: int) -> mtl.Interval | None:
-        """Recursively weakens subformulas in negative polarity.
-
-        Operates under negation, treating each operator via `_naux_*`
-        methods. A nested negation flips polarity back to `_aux`.
-
-        This structure mirrors the NNF of the formula and ensures
-        dual-handling of temporal and boolean constructs.
-        """
-        if isinstance(c, ctx.Hole):
-            return self._nweaken_direct(trace_idx)
-        if isinstance(c, ctx.Not):
-            return self._aux(c.operand, trace_idx)
-        if isinstance(c, ctx.AndLeft):
-            return self._naux_and(c.left, c.right, trace_idx)
-        if isinstance(c, ctx.AndRight):
-            return self._naux_and(c.right, c.left, trace_idx)
-        if isinstance(c, ctx.OrLeft):
-            return self._naux_or(c.left, c.right, trace_idx)
-        if isinstance(c, ctx.OrRight):
-            return self._naux_or(c.right, c.left, trace_idx)
-        if isinstance(c, ctx.ImpliesLeft):
-            return self._naux_implies_left(c, trace_idx)
-        if isinstance(c, ctx.ImpliesRight):
-            return self._naux_implies_right(c, trace_idx)
-        if isinstance(c, ctx.Eventually):
-            return self._naux_eventually(c, trace_idx)
-        if isinstance(c, ctx.Always):
-            return self._naux_always(c, trace_idx)
-        if isinstance(c, ctx.UntilLeft):
-            return self._naux_until_left(c, trace_idx)
-        if isinstance(c, ctx.UntilRight):
-            return self._naux_until_right(c, trace_idx)
         msg = f"Unsupported MTL context construct: {c}"
         raise ValueError(msg)
 

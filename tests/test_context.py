@@ -105,9 +105,8 @@ class TestPartialNNF(unittest.TestCase):
             mtl.Not(mtl.Prop("p")),
             ctx.OrLeft(ctx.Hole(), mtl.Not(mtl.Prop("q"))),
         )
-        result, polarity = ctx.partial_nnf(context)
+        result = ctx.partial_nnf(context)
         self.assertEqual(result, expected_context)
-        self.assertTrue(polarity)
 
     def test_complex_implication_nnf(self) -> None:
         """Test NNF conversion for nested implication contexts."""
@@ -120,13 +119,12 @@ class TestPartialNNF(unittest.TestCase):
             ),
         )
         expected_context = ctx.ImpliesLeft(
-            ctx.Eventually(ctx.Hole(), (1, 5)),
+            ctx.Eventually(ctx.Not(ctx.Hole()), (1, 5)),
             mtl.Always(mtl.Prop("r")),
         )
 
-        result, polarity = ctx.partial_nnf(context)
+        result = ctx.partial_nnf(context)
         self.assertEqual(result, expected_context)
-        self.assertFalse(polarity)
 
     def test_complex_temporal_operators_nnf(self) -> None:
         """Test NNF conversion for complex temporal operator combinations."""
@@ -141,14 +139,13 @@ class TestPartialNNF(unittest.TestCase):
         )
         expected_context = ctx.Always(
             ctx.OrLeft(
-                ctx.Eventually(ctx.Hole(), (2, 8)),
+                ctx.Eventually(ctx.Not(ctx.Hole()), (2, 8)),
                 mtl.Not(mtl.Eventually(mtl.Prop("s"), (0, 3))),
             ),
             (0, None),
         )
-        result, polarity = ctx.partial_nnf(context)
+        result = ctx.partial_nnf(context)
         self.assertEqual(result, expected_context)
-        self.assertFalse(polarity)
 
 
 if __name__ == "__main__":
