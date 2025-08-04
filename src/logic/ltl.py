@@ -74,7 +74,8 @@ def to_nuxmv(formula: Ltl) -> str:
         return f"({to_nuxmv(formula.left)} -> {to_nuxmv(formula.right)})"
     if isinstance(formula, Until):
         return f"({to_nuxmv(formula.left)} U {to_nuxmv(formula.right)})"
-    raise ValueError(f"Unsupported LTL construct: {formula}")
+    msg = f"Unsupported LTL construct: {formula}"
+    raise ValueError(msg)
 
 
 def to_string(formula: Ltl) -> str:

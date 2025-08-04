@@ -3,17 +3,29 @@ line-length = 80
 
 [tool.ruff]
 lint.select = [
-    "E",   # pycodestyle (errors)s
-    "F",   # pyflakes
-    "W",   # pycodestyle (warnings)
-    "I",   # isort (import sorting)
-    "N",   # pep8-naming
-    "UP",  # pyupgrade (modern syntax)
-    "RET", # flake8-return (return statement style)
-    "RUF", # Ruff-specific rules
-    "B",   # flake8-bugbear (bug-prone patterns)
-    "SIM", # flake8-simplify
-    "TID", # flake8-tidy-imports
+    # "E",   # pycodestyle (errors)s
+    # "F",   # pyflakes
+    # "W",   # pycodestyle (warnings)
+    # "I",   # isort (import sorting)
+    # "N",   # pep8-naming
+    # "UP",  # pyupgrade (modern syntax)
+    # "RET", # flake8-return (return statement style)
+    # "RUF", # Ruff-specific rules
+    # "B",   # flake8-bugbear (bug-prone patterns)
+    # "SIM", # flake8-simplify
+    # "TID", # flake8-tidy-imports
+    "ALL"
+]
+
+lint.ignore = [
+    "S101",  # Allow assert
+    "S603",  # Allow subprocess calls
+    "PT009",  # Allow unittest asserts
+    "D",
+    "C901",
+    "PLR0911",
+    "PLR0912",
+    "ERA001",  # Allow commented-out code
 ]
 
 [tool.bandit]

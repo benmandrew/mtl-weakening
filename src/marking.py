@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import collections
+import pathlib
+import typing
 from enum import Enum
 
 from src import util
@@ -10,7 +14,7 @@ class Trace:
         self,
         trace: list[dict[str, bool | int]],
         loop_start: int | None = None,
-    ):
+    ) -> None:
         # NuXmv identifies loops by duplicating the state
         # at the start of the loop at the end of the trace
         if loop_start is None:
@@ -31,13 +35,14 @@ class Trace:
                 markings[f].append(v)
         return markings
 
-    def periodic_trace_idx(self, trace) -> int:
+    def periodic_trace_idx(self, trace: list[dict[str, bool | int]]) -> int:
         if len(trace) > 0:
             last = trace[-1]
             for i in range(len(trace) - 2, -1, -1):
                 if last == trace[i]:
                     return i
-        raise RuntimeError("Cannot identify loop in trace")
+        msg = "Cannot identify loop in trace"
+        raise RuntimeError(msg)
 
     def idx(self, i: int) -> int:
         if i >= len(self.trace):
@@ -48,10 +53,10 @@ class Trace:
     def __len__(self) -> int:
         return len(self.trace)
 
-    def __getitem__(self, i) -> dict[str, bool | int]:
+    def __getitem__(self, i: int) -> dict[str, bool | int]:
         return self.trace[self.idx(i)]
 
-    def __iter__(self):
+    def __iter__(self) -> typing.Iterator[dict[str, bool | int]]:
         return iter(self.trace)
 
 
@@ -82,14 +87,16 @@ def get_variable_types(
                     f"{min_val}..{max_val}",
                 )
         else:
+            msg = f"Mixed or unsupported types for variable '{var}': {values}"
             raise ValueError(
-                f"Mixed or unsupported types for variable '{var}': {values}"
+                msg,
             )
     return variable_types
 
 
 def generate_vars(
-    variable_types: dict[str, tuple[Mutability, str]], num_states: int
+    variable_types: dict[str, tuple[Mutability, str]],
+    num_states: int,
 ) -> list[str]:
     lines = ["VAR"]
     lines.append(f"  state : 0..{num_states - 1};")
@@ -104,10 +111,8 @@ def generate_defines(
 ) -> list[str]:
     lines = []
     if any(
-        [
-            mutability == Mutability.CONSTANT
-            for _, (mutability, _) in variable_types.items()
-        ]
+        mutability == Mutability.CONSTANT
+        for _, (mutability, _) in variable_types.items()
     ):
         lines.append("DEFINE")
         for var, (mutability, smv_type) in variable_types.items():
@@ -163,26 +168,32 @@ def generate_trace_smv(trace: Trace) -> str:
     return "\n".join(lines)
 
 
-def write_trace_smv(filepath: str, trace: Trace, formula: m.Mtl) -> list[m.Mtl]:
+def write_trace_smv(
+    filepath: pathlib.Path,
+    trace: Trace,
+    formula: m.Mtl,
+) -> list[m.Mtl]:
     trace_smv = generate_trace_smv(trace)
     ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
-    with open(filepath, "w") as f:
+    with filepath.open("w", encoding="utf-8") as f:
         f.write(trace_smv + "\n\n" + ltlspec_smv + "\n")
     return subformulae
 
 
 def parse_nuxmv_output(
-    output: str, subformulae: list[m.Mtl], num_states: int
+    output: str,
+    subformulae: list[m.Mtl],
+    num_states: int,
 ) -> dict[m.Mtl, list[bool]]:
     lines = output.split("\n")
     lines = list(
         filter(
             lambda line: line.startswith("-- ")
             and not line.startswith(
-                "-- as demonstrated by the following execution sequence"
+                "-- as demonstrated by the following execution sequence",
             ),
             lines,
-        )
+        ),
     )
     markings: dict[m.Mtl, list[bool]] = {}
     for i, f in enumerate(subformulae):
@@ -194,27 +205,31 @@ def parse_nuxmv_output(
             elif lines[idx].endswith("false"):
                 markings[f].append(False)
             else:
-                raise ValueError(f"line '{lines[idx]}' is malformed")
+                msg = f"line '{lines[idx]}' is malformed"
+                raise ValueError(msg)
     return markings
 
 
 class Marking:
     loop_str = "=Lasso="
 
-    def __init__(self, trace: Trace, formula: m.Mtl):
-        # self.markings = self.mark_trace(trace, formula)
+    def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
         self.loop_start = trace.loop_start
         self.markings = trace.to_markings()
         self[formula]
 
-    def mark_trace(
-        self, trace: Trace, formula: m.Mtl
+    def mark_trace_with_nusmv(
+        self,
+        trace: Trace,
+        formula: m.Mtl,
     ) -> dict[m.Mtl, list[bool]]:
-        subformulae = write_trace_smv("res/trace.smv", trace, formula)
-        out = util.run_and_capture(
-            ["nuXmv", "-source", "res/check_trace.txt"], output=False
+        subformulae = write_trace_smv(
+            pathlib.Path("res/trace.smv"),
+            trace,
+            formula,
         )
+        out = util.run_and_capture(["nuXmv", "-source", "res/check_trace.txt"])
         return parse_nuxmv_output(out, subformulae, len(trace))
 
     def add_loop_str(self, max_len: int) -> str:
@@ -239,7 +254,8 @@ class Marking:
         if f in self.markings:
             return self.markings[f]
         if isinstance(f, m.Prop):
-            raise ValueError(f"Proposition '{f}' not found in markings. ")
+            msg = f"Proposition '{f}' not found in markings. "
+            raise TypeError(msg)
         if isinstance(f, m.Not):
             bs = [not v for v in self[f.operand]]
         elif isinstance(f, m.And):
@@ -299,7 +315,8 @@ class Marking:
                     if not lefts[k]:
                         break
         else:
-            raise ValueError(f"Unsupported MTL construct: {f}")
+            msg = f"Unsupported MTL construct: {f}"
+            raise TypeError(msg)
         self.markings[f] = bs
         return bs
 
@@ -307,7 +324,8 @@ class Marking:
         out = ""
         subformulae = list(self.markings.keys())
         max_len = max(
-            len(self.loop_str), max(len(m.to_string(f)) for f in subformulae)
+            len(self.loop_str),
+            *(len(m.to_string(f)) for f in subformulae),
         )
         for f in reversed(subformulae):
             s = m.to_string(f)

@@ -115,7 +115,8 @@ def substitute(c: Ctx, f: mtl.Mtl) -> mtl.Mtl:
         return mtl.Until(substitute(c.left, f), c.right, c.interval)
     if isinstance(c, UntilRight):
         return mtl.Until(c.left, substitute(c.right, f), c.interval)
-    raise ValueError(f"Unsupported MTL context construct: {c}")
+    msg = f"Unsupported MTL context construct: {c}"
+    raise ValueError(msg)
 
 
 def to_string(c: Ctx) -> str:
@@ -153,14 +154,16 @@ def to_string(c: Ctx) -> str:
         )
     if isinstance(c, Next):
         return f"X ({to_string(c.operand)})"
-    raise ValueError(f"Unsupported MTL context construct: {c}")
+    msg = f"Unsupported MTL context construct: {c}"
+    raise ValueError(msg)
 
 
 def _split_formula_aux(
-    f: mtl.Mtl, indices: list[int], formula_idx: int
+    f: mtl.Mtl,
+    indices: list[int],
+    formula_idx: int,
 ) -> tuple[Ctx, mtl.Mtl]:
-    """
-    Split the formula `f` at the given De Bruijn indices into a
+    """Split the formula `f` at the given De Bruijn indices into a
     context and a formula. The context is the part of the formula
     that is not affected by the weakening.
     """
@@ -215,7 +218,8 @@ def _split_formula_aux(
             ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return UntilRight(f.left, ctx, f.interval), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
-    raise ValueError(f"Unsupported MTL construct: {f}")
+    msg = f"Unsupported MTL construct: {f}"
+    raise ValueError(msg)
 
 
 def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
@@ -223,9 +227,7 @@ def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
 
 
 def get_de_bruijn(c: Ctx) -> list[int]:
-    """
-    Get the De Bruijn indices of the context `c`.
-    """
+    """Get the De Bruijn indices of the context `c`."""
     if isinstance(c, Hole):
         return []
     if isinstance(c, (Not, Next, Eventually, Always)):
@@ -234,4 +236,5 @@ def get_de_bruijn(c: Ctx) -> list[int]:
         return [0, *get_de_bruijn(c.left)]
     if isinstance(c, (AndRight, OrRight, ImpliesRight, UntilRight)):
         return [1, *get_de_bruijn(c.right)]
-    raise ValueError(f"Unsupported MTL context construct: {c}")
+    msg = f"Unsupported MTL context construct: {c}"
+    raise ValueError(msg)

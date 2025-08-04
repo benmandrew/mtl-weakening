@@ -5,7 +5,7 @@ from src import marking as m
 
 class TestTrace(unittest.TestCase):
 
-    def test_lasso_indexing(self):
+    def test_lasso_indexing(self) -> None:
         trace = m.Trace([{"a": 5}, {"a": 10}, {"a": 2}], 1)
         self.assertEqual(trace[0]["a"], 5)
         self.assertEqual(trace[1]["a"], 10)

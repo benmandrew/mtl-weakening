@@ -125,7 +125,8 @@ def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
         return _mtl_to_ltl_always(formula)
     if isinstance(formula, Until):
         return _mtl_to_ltl_until(formula)
-    raise ValueError("Unsupported MTL construct")
+    msg = "Unsupported MTL construct"
+    raise TypeError(msg)
 
 
 def apply_next_k(formula: ltl.Ltl, k: int) -> ltl.Ltl:
@@ -153,9 +154,14 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
 
 
 class DeBruijnIndexError(IndexError):
-    def __init__(self, indices: list[int], formula_idx: int, formula: Mtl):
+    def __init__(
+        self,
+        indices: list[int],
+        formula_idx: int,
+        formula: Mtl,
+    ) -> None:
         super().__init__(
-            f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}"
+            f"De Bruijn index {indices} at i={formula_idx} invalid for {formula}",
         )
         self.indices = indices
         self.formula_idx = formula_idx
@@ -198,7 +204,8 @@ def to_string(formula: Mtl) -> str:
         )
     if isinstance(formula, Next):
         return f"X ({to_string(formula.operand)})"
-    raise ValueError(f"Unsupported MTL construct: {formula}")
+    msg = f"Unsupported MTL construct: {formula}"
+    raise TypeError(msg)
 
 
 def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
@@ -207,13 +214,13 @@ def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
     subformulae = []
     counter = 1
 
-    def get_label():
+    def get_label() -> str:
         nonlocal counter
         label = f"f{counter}"
         counter += 1
         return label
 
-    def aux(f: Mtl):
+    def aux(f: Mtl) -> str:
         subformulae.append(f)
         for i in range(num_states):
             g = Always(Implies(Prop(f"state = {i}"), f))
@@ -231,7 +238,8 @@ def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
             aux(f.left)
             aux(f.right)
         else:
-            raise ValueError(f"Unsupported MTL construct: {f}")
+            msg = f"Unsupported MTL construct: {f}"
+            raise TypeError(msg)
         return label
 
     aux(f)

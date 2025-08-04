@@ -12,10 +12,13 @@ fmt:
 fmt-ci:
 	python3 -m black --check -l 80 .
 
-lint: ruff pylint mypy bandit
+lint: ruff-fix pylint mypy bandit
 
 ruff:
 	python3 -m ruff check
+
+ruff-fix:
+	python3 -m ruff check --fix
 
 pylint:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m pylint --errors-only

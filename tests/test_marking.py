@@ -11,11 +11,11 @@ def format_expect(s: str) -> str:
 
 class TestMarking(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
-    def test_fmt_markings_gf(self):
+    def test_fmt_markings_gf(self) -> None:
         formula = mtl.Always(mtl.Eventually(mtl.Prop("trigger"), (0, 4)))
         trace = marking.Trace(
             [
@@ -35,7 +35,7 @@ class TestMarking(unittest.TestCase):
             F[0, 4] (trigger)     │ │ │●│●│●│●│●│
             trigger               │ │ │ │ │ │ │●│
             =Lasso=                  └─────────┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
@@ -56,12 +56,12 @@ class TestMarking(unittest.TestCase):
             F[0, 4] (a)     │●│●│●│●│●│
             a               │ │ │ │ │●│
             =Lasso=          └───────┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
-    def test_fmt_markings_f(self):
+    def test_fmt_markings_f(self) -> None:
         formula = mtl.Eventually(mtl.Or(mtl.Prop("a"), mtl.Prop("b")))
         trace = marking.Trace(
             [
@@ -77,14 +77,14 @@ class TestMarking(unittest.TestCase):
             b           │ │●│
             a           │●│ │
             =Lasso=      └─┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
-    def test_fmt_markings_gfg(self):
+    def test_fmt_markings_gfg(self) -> None:
         formula = mtl.Always(
-            mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)), (0, 4))
+            mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)), (0, 4)),
         )
         trace = marking.Trace(
             [
@@ -108,7 +108,7 @@ class TestMarking(unittest.TestCase):
             G[0, 2] (a)               │●│ │ │ │ │ │ │ │ │●│
             a                         │●│●│●│ │ │●│●│ │ │●│
             =Lasso=                                      ⊔
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
@@ -134,7 +134,7 @@ class TestMarking(unittest.TestCase):
             G[0, 2] (a)               │●│ │ │ │●│ │ │ │ │●│
             a                         │●│●│●│ │●│●│●│ │ │●│
             =Lasso=                                      ⊔
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
@@ -158,12 +158,12 @@ class TestMarking(unittest.TestCase):
             G[2, 5] (a)         │ │ │ │ │ │ │ │
             a                   │ │●│●│ │ │ │●│
             =Lasso=                  └───────┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
-    def test_fmt_markings_fg(self):
+    def test_fmt_markings_fg(self) -> None:
         formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 1)))
         trace = marking.Trace(
             [
@@ -185,14 +185,15 @@ class TestMarking(unittest.TestCase):
             G[0, 1] (a)     │ │ │ │●│ │
             a               │ │ │ │●│●│
             =Lasso=          └───────┘
-        """
+        """,
         )
         markings[formula]
         self.assertEqual(str(markings), expected)
 
-    def test_fmt_markings_fu(self):
+    def test_fmt_markings_fu(self) -> None:
         formula = mtl.Eventually(
-            mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 2)), (0, 2)
+            mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 2)),
+            (0, 2),
         )
         trace = marking.Trace(
             [
@@ -210,14 +211,14 @@ class TestMarking(unittest.TestCase):
             q                       │ │ │●│ │
             p                       │●│●│●│ │
             =Lasso=                  └─────┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
-    def test_fmt_markings_ngu(self):
+    def test_fmt_markings_ngu(self) -> None:
         formula = mtl.Not(
-            mtl.Always(mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 3)), (0, 3))
+            mtl.Always(mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 3)), (0, 3)),
         )
         trace = marking.Trace(
             [
@@ -237,7 +238,7 @@ class TestMarking(unittest.TestCase):
             q                          │ │ │●│ │ │
             p                          │●│●│●│●│ │
             =Lasso=                     └───────┘
-        """
+        """,
         )
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)

@@ -4,7 +4,7 @@ from src.logic import ctx, mtl
 
 
 class TestSplitFormula(unittest.TestCase):
-    def test_deeply_nested_and_or(self):
+    def test_deeply_nested_and_or(self) -> None:
         expected_context = ctx.AndLeft(
             ctx.OrRight(mtl.Prop("a"), ctx.Not(ctx.Hole())),
             mtl.Eventually(mtl.Prop("c")),
@@ -22,7 +22,7 @@ class TestSplitFormula(unittest.TestCase):
         self.assertEqual(expected_context, result_context)
         self.assertEqual(expected_subf, result_subf)
 
-    def test_deeply_nested_until_and(self):
+    def test_deeply_nested_until_and(self) -> None:
         expected_context = ctx.UntilLeft(
             ctx.AndRight(mtl.Prop("a"), ctx.Hole()),
             mtl.Or(mtl.Prop("c"), mtl.Prop("d")),
@@ -31,7 +31,9 @@ class TestSplitFormula(unittest.TestCase):
         indices = ctx.get_de_bruijn(expected_context)
         self.assertEqual(indices, [0, 1])
         expected_subf = mtl.Until(
-            mtl.Eventually(mtl.Prop("b")), mtl.Prop("e"), (0, 3)
+            mtl.Eventually(mtl.Prop("b")),
+            mtl.Prop("e"),
+            (0, 3),
         )
         expected_f = mtl.Until(
             mtl.And(
@@ -47,7 +49,7 @@ class TestSplitFormula(unittest.TestCase):
         self.assertEqual(expected_context, context)
         self.assertEqual(expected_subf, subf)
 
-    def test_deeply_nested_temporal_and_complex_subformula(self):
+    def test_deeply_nested_temporal_and_complex_subformula(self) -> None:
         expected_context = ctx.Eventually(
             ctx.AndLeft(
                 ctx.UntilRight(mtl.Prop("a"), ctx.Hole(), (1, 3)),
@@ -61,7 +63,7 @@ class TestSplitFormula(unittest.TestCase):
             mtl.And(
                 mtl.Until(mtl.Prop("c"), mtl.Eventually(mtl.Prop("d")), (2, 4)),
                 mtl.Or(mtl.Prop("e"), mtl.Prop("f")),
-            )
+            ),
         )
         expected_f = mtl.Eventually(
             mtl.And(
@@ -75,7 +77,7 @@ class TestSplitFormula(unittest.TestCase):
                                 (2, 4),
                             ),
                             mtl.Or(mtl.Prop("e"), mtl.Prop("f")),
-                        )
+                        ),
                     ),
                     (1, 3),
                 ),

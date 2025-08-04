@@ -1,12 +1,13 @@
-from typing import cast
+from __future__ import annotations
+
+from typing import NoReturn, cast
 
 from src import marking
 from src.logic import ctx, mtl
 
 
 class Weaken:
-    """
-    Performs trace-guided interval weakening of MTL subformulas.
+    """Performs trace-guided interval weakening of MTL subformulas.
 
     Weakening is done by adjusting the interval so that the modified
     formula remains true over the given trace.
@@ -25,7 +26,7 @@ class Weaken:
         subformula: mtl.Mtl,
         trace: marking.Trace,
         markings: marking.Marking | None = None,
-    ):
+    ) -> None:
         self.context = context
         self.subformula = subformula
         self.trace = trace
@@ -42,7 +43,8 @@ class Weaken:
         ):
             self.original_interval = self.subformula.interval
         else:
-            raise ValueError(f"Cannot weaken MTL subformula: {self.subformula}")
+            msg = f"Cannot weaken MTL subformula: {self.subformula}"
+            raise TypeError(msg)
 
     def _interval_abs_diff(
         self,
@@ -51,55 +53,58 @@ class Weaken:
         if self.original_interval[1] is None and interval[1] is None:
             right = 0
         elif self.original_interval[1] is None:
-            right = -cast(int, interval[1])
+            right = -cast("int", interval[1])
         else:
             right = abs(
-                cast(int, interval[1]) - cast(int, self.original_interval[1])
+                cast("int", interval[1])
+                - cast("int", self.original_interval[1]),
             )
         return abs(interval[0] - self.original_interval[0]) + right
 
     def _aux_and(
-        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
+        self,
+        c: ctx.Ctx,
+        f: mtl.Mtl,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside conjunction.
-        """
+        """Weakening inside conjunction."""
         if not self.markings.get(f, trace_idx):
             return None
         return self._aux(c, trace_idx)
 
     def _aux_or(
-        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
+        self,
+        c: ctx.Ctx,
+        f: mtl.Mtl,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside disjunction.
-        """
+        """Weakening inside disjunction."""
         if self.markings.get(f, trace_idx):
             return self.original_interval
         return self._aux(c, trace_idx)
 
     def _aux_implies_left(
-        self, c: ctx.ImpliesLeft, trace_idx: int
+        self,
+        c: ctx.ImpliesLeft,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside implication.
-        """
+        """Weakening inside implication."""
         return self._aux_or(ctx.Not(c.left), c.right, trace_idx)
 
     def _aux_implies_right(
-        self, c: ctx.ImpliesRight, trace_idx: int
+        self,
+        c: ctx.ImpliesRight,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside implication.
-        """
+        """Weakening inside implication."""
         return self._aux_or(c.right, mtl.Not(c.left), trace_idx)
 
     def _aux_eventually(
-        self, c: ctx.Eventually, trace_idx: int
+        self,
+        c: ctx.Eventually,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside eventually operator.
-        """
+        """Weakening inside eventually operator."""
         a, b = c.interval
         right_idx = self.trace_len if b is None else b + 1
         all_intervals = [
@@ -111,9 +116,7 @@ class Weaken:
         return min(intervals, key=self._interval_abs_diff)
 
     def _aux_always(self, c: ctx.Always, trace_idx: int) -> mtl.Interval | None:
-        """
-        Weakening inside always operator.
-        """
+        """Weakening inside always operator."""
         a, b = c.interval
         right_idx = self.trace_len if b is None else b + 1
         intervals = []
@@ -125,11 +128,11 @@ class Weaken:
         return max(intervals, key=self._interval_abs_diff)
 
     def _aux_until_left(
-        self, c: ctx.UntilLeft, trace_idx: int
+        self,
+        c: ctx.UntilLeft,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside until operator.
-        """
+        """Weakening inside until operator."""
         a, b = c.interval
         right_idx = self.trace_len * 2 if b is None else b + 1
         all_intervals = [
@@ -148,11 +151,11 @@ class Weaken:
         return max(intervals, key=self._interval_abs_diff)
 
     def _aux_until_right(
-        self, c: ctx.UntilRight, trace_idx: int
+        self,
+        c: ctx.UntilRight,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside until operator.
-        """
+        """Weakening inside until operator."""
         a, b = c.interval
         right_idx = self.trace_len * 2 if b is None else b + 1
         valid_intervals: list[mtl.Interval | None] = []
@@ -166,47 +169,49 @@ class Weaken:
         return min(intervals, key=self._interval_abs_diff)
 
     def _naux_and(
-        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
+        self,
+        c: ctx.Ctx,
+        f: mtl.Mtl,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside conjunction in negative polarity.
-        """
+        """Weakening inside conjunction in negative polarity."""
         if self.markings.get(f, trace_idx):
             return self.original_interval
         return self._naux(c, trace_idx)
 
     def _naux_or(
-        self, c: ctx.Ctx, f: mtl.Mtl, trace_idx: int
+        self,
+        c: ctx.Ctx,
+        f: mtl.Mtl,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside disjunction in negative polarity.
-        """
+        """Weakening inside disjunction in negative polarity."""
         if not self.markings.get(f, trace_idx):
             return None
         return self._aux(c, trace_idx)
 
     def _naux_implies_left(
-        self, c: ctx.ImpliesLeft, trace_idx: int
+        self,
+        c: ctx.ImpliesLeft,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside implication implication in negative polarity by .
-        """
+        """Weakening inside implication implication in negative polarity by ."""
         return self._naux_or(ctx.Not(c.left), c.right, trace_idx)
 
     def _naux_implies_right(
-        self, c: ctx.ImpliesRight, trace_idx: int
+        self,
+        c: ctx.ImpliesRight,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside implication implication in negative polarity by .
-        """
+        """Weakening inside implication implication in negative polarity by ."""
         return self._naux_or(c.right, mtl.Not(c.left), trace_idx)
 
     def _naux_eventually(
-        self, c: ctx.Eventually, trace_idx: int
+        self,
+        c: ctx.Eventually,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside eventually operator in negative polarity.
-        """
+        """Weakening inside eventually operator in negative polarity."""
         a, b = c.interval
         right_idx = self.trace_len if b is None else b + 1
         intervals = []
@@ -218,11 +223,11 @@ class Weaken:
         return max(intervals, key=self._interval_abs_diff)
 
     def _naux_always(
-        self, c: ctx.Always, trace_idx: int
+        self,
+        c: ctx.Always,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside always operator in negative polarity.
-        """
+        """Weakening inside always operator in negative polarity."""
         a, b = c.interval
         right_idx = self.trace_len if b is None else b + 1
         all_intervals = [
@@ -234,30 +239,31 @@ class Weaken:
         return min(intervals, key=self._interval_abs_diff)
 
     def _naux_until_left(
-        self, c: ctx.UntilLeft, trace_idx: int
+        self,
+        c: ctx.UntilLeft,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside until operator in negative polarity.
-        """
-        raise NotImplementedError()
+        """Weakening inside until operator in negative polarity."""
+        raise NotImplementedError
 
     def _naux_until_right(
-        self, c: ctx.UntilRight, trace_idx: int
+        self,
+        c: ctx.UntilRight,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Weakening inside until operator in negative polarity.
-        """
-        raise NotImplementedError()
+        """Weakening inside until operator in negative polarity."""
+        raise NotImplementedError
 
     def _weaken_direct_eventually(
-        self, f: mtl.Eventually, trace_idx: int
+        self,
+        f: mtl.Eventually,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Directly weaken interval of eventually operator.
-        """
+        """Directly weaken interval of eventually operator."""
         a, b = f.interval
         if b is None:
-            raise ValueError(f"Cannot weaken interval of F[{a}, ∞)")
+            msg = f"Cannot weaken interval of F[{a}, ∞)"
+            raise ValueError(msg)
         # Expand the interval until we find a state when the operand is true
         for i in range(a, self.trace_len * 2):
             if self.markings.get(f.operand, trace_idx + i):
@@ -265,11 +271,11 @@ class Weaken:
         return None
 
     def _weaken_direct_always(
-        self, f: mtl.Always, trace_idx: int
+        self,
+        f: mtl.Always,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Directly weaken interval of always operator.
-        """
+        """Directly weaken interval of always operator."""
         a, b = f.interval
         right_idx = self.trace_len if b is None else b + 1
         # Expand the interval until we find a state when the operand is false,
@@ -281,13 +287,16 @@ class Weaken:
                 return a, i - 1
         return a, b
 
-    def _weaken_direct_until(self, f: mtl.Until, trace_idx: int):
-        """
-        Directly weaken interval of until operator.
-        """
+    def _weaken_direct_until(
+        self,
+        f: mtl.Until,
+        trace_idx: int,
+    ) -> mtl.Interval | None:
+        """Directly weaken interval of until operator."""
         a, b = f.interval
         if b is None:
-            raise ValueError(f"Cannot weaken interval of U[{a}, ∞)")
+            msg = f"Cannot weaken interval of U[{a}, ∞)"
+            raise ValueError(msg)
         for i in range(a, self.trace_len * 2):
             if self.markings.get(f.right, trace_idx + i):
                 return a, max(b, i)
@@ -302,14 +311,15 @@ class Weaken:
             return self._weaken_direct_always(self.subformula, trace_idx)
         if isinstance(self.subformula, mtl.Until):
             return self._weaken_direct_until(self.subformula, trace_idx)
-        raise ValueError(f"Cannot weaken MTL subformula: {self.subformula}")
+        msg = f"Cannot weaken MTL subformula: {self.subformula}"
+        raise ValueError(msg)
 
     def _nweaken_direct_eventually(
-        self, f: mtl.Eventually, trace_idx: int
+        self,
+        f: mtl.Eventually,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Directly weaken interval of eventually operator in negative polarity.
-        """
+        """Directly weaken interval of eventually operator in negative polarity."""
         a, b = f.interval
         right_idx = self.trace_len if b is None else b + 1
         # Expand the interval until we find a state when the operand is true
@@ -322,15 +332,16 @@ class Weaken:
         return a, b
 
     def _nweaken_direct_always(
-        self, f: mtl.Always, trace_idx: int
+        self,
+        f: mtl.Always,
+        trace_idx: int,
     ) -> mtl.Interval | None:
-        """
-        Directly weaken interval of always operator in negative polarity.
-        """
+        """Directly weaken interval of always operator in negative polarity."""
         a, b = f.interval
         if b is None:
+            msg = f"Cannot weaken interval of G[{a}, ∞) in negative polarity"
             raise ValueError(
-                f"Cannot weaken interval of G[{a}, ∞) in negative polarity"
+                msg,
             )
         # Expand the interval until we find a state when the operand is true,
         # then reduce the interval to just before that
@@ -339,11 +350,10 @@ class Weaken:
                 return a, max(b, i)
         return None
 
-    def _nweaken_direct_until(self, f: mtl.Until, trace_idx: int):
-        """
-        Directly weaken interval of until operator in negative polarity.
-        """
-        raise NotImplementedError("")
+    def _nweaken_direct_until(self, f: mtl.Until, trace_idx: int) -> NoReturn:
+        """Directly weaken interval of until operator in negative polarity."""
+        msg = ""
+        raise NotImplementedError(msg)
 
     def _nweaken_direct(self, trace_idx: int) -> mtl.Interval | None:
         if isinstance(self.subformula, mtl.Eventually):
@@ -352,11 +362,11 @@ class Weaken:
             return self._nweaken_direct_always(self.subformula, trace_idx)
         if isinstance(self.subformula, mtl.Until):
             return self._nweaken_direct_until(self.subformula, trace_idx)
-        raise ValueError(f"Cannot weaken MTL subformula: {self.subformula}")
+        msg = f"Cannot weaken MTL subformula: {self.subformula}"
+        raise ValueError(msg)
 
     def _aux(self, c: ctx.Ctx, trace_idx: int) -> mtl.Interval | None:
-        """
-        Recursively weakens subformulas in positive polarity.
+        """Recursively weakens subformulas in positive polarity.
 
         Follows the De Bruijn index to the target subformula. If the
         index matches, the corresponding `_weaken_*` method is applied.
@@ -388,11 +398,11 @@ class Weaken:
             return self._aux_until_left(c, trace_idx)
         if isinstance(c, ctx.UntilRight):
             return self._aux_until_right(c, trace_idx)
-        raise ValueError(f"Unsupported MTL context construct: {c}")
+        msg = f"Unsupported MTL context construct: {c}"
+        raise ValueError(msg)
 
     def _naux(self, c: ctx.Ctx, trace_idx: int) -> mtl.Interval | None:
-        """
-        Recursively weakens subformulas in negative polarity.
+        """Recursively weakens subformulas in negative polarity.
 
         Operates under negation, treating each operator via `_naux_*`
         methods. A nested negation flips polarity back to `_aux`.
@@ -424,7 +434,8 @@ class Weaken:
             return self._naux_until_left(c, trace_idx)
         if isinstance(c, ctx.UntilRight):
             return self._naux_until_right(c, trace_idx)
-        raise ValueError(f"Unsupported MTL context construct: {c}")
+        msg = f"Unsupported MTL context construct: {c}"
+        raise ValueError(msg)
 
     def weaken(self) -> mtl.Interval | None:
         return self._aux(self.context, 0)
