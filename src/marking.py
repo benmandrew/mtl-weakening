@@ -50,6 +50,13 @@ class Trace:
             return j + self.loop_start
         return i
 
+    def right_idx(self, a: int) -> int:
+        """Get the index of the right side of the trace."""
+        if a < self.loop_start:
+            return len(self.trace) - 1
+        suf_len = len(self.trace) - self.loop_start
+        return a + suf_len - 1
+
     def __len__(self) -> int:
         return len(self.trace)
 
@@ -313,6 +320,23 @@ class Marking:
                         bs[i] = True
                         break
                     if not lefts[k]:
+                        break
+        elif isinstance(f, m.Release):
+            rights = self[f.right]
+            lefts = self[f.left]
+            bs = [False] * len(rights)
+            for i in range(len(bs)):
+                right_idx = (
+                    f.interval[1] + 1
+                    if f.interval[1] is not None
+                    else len(rights) - i
+                )
+                for j in range(i + f.interval[0], i + right_idx):
+                    k = self.trace.idx(j)
+                    if not rights[k]:
+                        break
+                    if lefts[k]:
+                        bs[i] = True
                         break
         else:
             msg = f"Unsupported MTL construct: {f}"

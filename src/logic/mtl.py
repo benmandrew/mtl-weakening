@@ -65,6 +65,13 @@ class Until(Mtl):
     interval: Interval = (0, None)
 
 
+@dataclass(frozen=True, order=True, repr=False)
+class Release(Mtl):
+    left: Mtl
+    right: Mtl
+    interval: Interval = (0, None)
+
+
 def _mtl_to_ltl_eventually(formula: Eventually) -> ltl.Ltl:
     a, b = formula.interval
     subf = mtl_to_ltl(formula.operand)
@@ -200,6 +207,12 @@ def to_string(formula: Mtl) -> str:
         return (
             f"({to_string(formula.left)} "
             f"U{fmt_interval(formula.interval)} "
+            f"{to_string(formula.right)})"
+        )
+    if isinstance(formula, Release):
+        return (
+            f"({to_string(formula.left)} "
+            f"R{fmt_interval(formula.interval)} "
             f"{to_string(formula.right)})"
         )
     if isinstance(formula, Next):

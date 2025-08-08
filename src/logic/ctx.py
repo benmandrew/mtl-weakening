@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from src.logic import mtl
@@ -83,6 +85,20 @@ class UntilLeft(Ctx):
 
 @dataclass(frozen=True, order=True, repr=False)
 class UntilRight(Ctx):
+    left: mtl.Mtl
+    right: Ctx
+    interval: mtl.Interval = (0, None)
+
+
+@dataclass(frozen=True, order=True, repr=False)
+class ReleaseLeft(Ctx):
+    left: Ctx
+    right: mtl.Mtl
+    interval: mtl.Interval = (0, None)
+
+
+@dataclass(frozen=True, order=True, repr=False)
+class ReleaseRight(Ctx):
     left: mtl.Mtl
     right: Ctx
     interval: mtl.Interval = (0, None)
@@ -218,6 +234,14 @@ def _split_formula_aux(
             ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
             return UntilRight(f.left, ctx, f.interval), subf
         raise mtl.DeBruijnIndexError(indices, formula_idx, f)
+    if isinstance(f, mtl.Release):
+        if indices[formula_idx] == 0:
+            ctx, subf = _split_formula_aux(f.left, indices, formula_idx + 1)
+            return ReleaseLeft(ctx, f.right, f.interval), subf
+        if indices[formula_idx] == 1:
+            ctx, subf = _split_formula_aux(f.right, indices, formula_idx + 1)
+            return ReleaseRight(f.left, ctx, f.interval), subf
+        raise mtl.DeBruijnIndexError(indices, formula_idx, f)
     msg = f"Unsupported MTL construct: {f}"
     raise ValueError(msg)
 
@@ -226,74 +250,135 @@ def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
     return _split_formula_aux(formula, indices, 0)
 
 
-def _partial_nnf_neg(c: Ctx) -> Ctx:
+def _partial_nnf_ctx_neg(c: Ctx) -> tuple[Ctx, bool]:
     """Convert the negation of the context `c` to partial negation normal form (NNF)."""
 
     if isinstance(c, Hole):
-        return Not(c)
+        return c, False
     if isinstance(c, Not):
-        return partial_nnf(c.operand)
+        operand, polarity = partial_nnf_ctx(c.operand)
+        return operand, polarity
     if isinstance(c, AndLeft):
-        return OrLeft(partial_nnf(Not(c.left)), mtl.Not(c.right))
+        left, polarity = _partial_nnf_ctx_neg(c.left)
+        return OrLeft(left, mtl.Not(c.right)), polarity
     if isinstance(c, OrLeft):
-        return AndLeft(partial_nnf(Not(c.left)), mtl.Not(c.right))
+        left, polarity = _partial_nnf_ctx_neg(c.left)
+        return AndLeft(left, mtl.Not(c.right)), polarity
     if isinstance(c, ImpliesLeft):
-        return AndLeft(partial_nnf(c.left), mtl.Not(c.right))
+        left, polarity = partial_nnf_ctx(c.left)
+        return AndLeft(left, mtl.Not(c.right)), polarity
     if isinstance(c, UntilLeft):
-        raise NotImplementedError
-        # left, polarity = partial_nnf(Not(c.left))
-        # return UntilLeft(left, Not(c.right), c.interval), polarity
+        left, polarity = _partial_nnf_ctx_neg(c.left)
+        return ReleaseLeft(left, mtl.Not(c.right), c.interval), polarity
+    if isinstance(c, ReleaseLeft):
+        left, polarity = _partial_nnf_ctx_neg(c.left)
+        return UntilLeft(left, mtl.Not(c.right), c.interval), polarity
     if isinstance(c, AndRight):
-        return OrRight(mtl.Not(c.left), partial_nnf(Not(c.right)))
+        right, polarity = _partial_nnf_ctx_neg(c.right)
+        return OrRight(mtl.Not(c.left), right), polarity
     if isinstance(c, OrRight):
-        return AndRight(mtl.Not(c.left), partial_nnf(Not(c.right)))
+        right, polarity = _partial_nnf_ctx_neg(c.right)
+        return AndRight(mtl.Not(c.left), right), polarity
     if isinstance(c, ImpliesRight):
-        return AndRight(c.left, partial_nnf(Not(c.right)))
+        right, polarity = _partial_nnf_ctx_neg(c.right)
+        return AndRight(c.left, right), polarity
     if isinstance(c, UntilRight):
-        raise NotImplementedError
-        # right, polarity = partial_nnf(Not(c.right))
-        # return UntilRight(c.left, right, c.interval), polarity
+        right, polarity = _partial_nnf_ctx_neg(c.right)
+        return ReleaseRight(mtl.Not(c.left), right, c.interval), polarity
+    if isinstance(c, ReleaseRight):
+        right, polarity = _partial_nnf_ctx_neg(c.right)
+        return UntilRight(mtl.Not(c.left), right, c.interval), polarity
     if isinstance(c, Next):
-        return Next(partial_nnf(Not(c.operand)))
+        operand, polarity = _partial_nnf_ctx_neg(c.operand)
+        return Next(operand), polarity
     if isinstance(c, Eventually):
-        return Always(partial_nnf(Not(c.operand)), c.interval)
+        operand, polarity = _partial_nnf_ctx_neg(c.operand)
+        return Always(operand, c.interval), polarity
     if isinstance(c, Always):
-        return Eventually(partial_nnf(Not(c.operand)), c.interval)
+        operand, polarity = _partial_nnf_ctx_neg(c.operand)
+        return Eventually(operand, c.interval), polarity
     msg = f"Unsupported MTL context construct: {c}"
     raise ValueError(msg)
 
 
-def partial_nnf(c: Ctx) -> Ctx:
+def partial_nnf_ctx(c: Ctx) -> tuple[Ctx, bool]:
     """Convert the context `c` to partial negation normal form (NNF)."""
 
     if isinstance(c, Hole):
-        return c
+        return c, True
     if isinstance(c, Not):
-        return _partial_nnf_neg(c.operand)
+        operand, polarity = _partial_nnf_ctx_neg(c.operand)
+        return operand, polarity
     if isinstance(c, AndLeft):
-        return AndLeft(partial_nnf(c.left), c.right)
+        left, polarity = partial_nnf_ctx(c.left)
+        return AndLeft(left, c.right), polarity
     if isinstance(c, OrLeft):
-        return OrLeft(partial_nnf(c.left), c.right)
+        left, polarity = partial_nnf_ctx(c.left)
+        return OrLeft(left, c.right), polarity
     if isinstance(c, ImpliesLeft):
-        return ImpliesLeft(partial_nnf(c.left), c.right)
+        left, polarity = _partial_nnf_ctx_neg(c.left)
+        return OrLeft(left, c.right), polarity
     if isinstance(c, UntilLeft):
-        return UntilLeft(partial_nnf(c.left), c.right, c.interval)
+        left, polarity = partial_nnf_ctx(c.left)
+        return UntilLeft(left, c.right, c.interval), polarity
+    if isinstance(c, ReleaseLeft):
+        left, polarity = partial_nnf_ctx(c.left)
+        return ReleaseLeft(left, c.right, c.interval), polarity
     if isinstance(c, AndRight):
-        return AndRight(c.left, partial_nnf(c.right))
+        right, polarity = partial_nnf_ctx(c.right)
+        return AndRight(c.left, right), polarity
     if isinstance(c, OrRight):
-        return OrRight(c.left, partial_nnf(c.right))
+        right, polarity = partial_nnf_ctx(c.right)
+        return OrRight(c.left, right), polarity
     if isinstance(c, ImpliesRight):
-        return ImpliesRight(c.left, partial_nnf(c.right))
+        right, polarity = partial_nnf_ctx(c.right)
+        return OrRight(mtl.Not(c.left), right), polarity
     if isinstance(c, UntilRight):
-        return UntilRight(c.left, partial_nnf(c.right), c.interval)
+        right, polarity = partial_nnf_ctx(c.right)
+        return UntilRight(c.left, right, c.interval), polarity
+    if isinstance(c, ReleaseRight):
+        right, polarity = partial_nnf_ctx(c.right)
+        return ReleaseRight(c.left, right, c.interval), polarity
     if isinstance(c, Next):
-        return Next(partial_nnf(c.operand))
+        operand, polarity = partial_nnf_ctx(c.operand)
+        return Next(operand), polarity
     if isinstance(c, Eventually):
-        return Eventually(partial_nnf(c.operand), c.interval)
+        operand, polarity = partial_nnf_ctx(c.operand)
+        return Eventually(operand, c.interval), polarity
     if isinstance(c, Always):
-        return Always(partial_nnf(c.operand), c.interval)
+        operand, polarity = partial_nnf_ctx(c.operand)
+        return Always(operand, c.interval), polarity
     msg = f"Unsupported MTL context construct: {c}"
     raise ValueError(msg)
+
+
+def partial_nnf(
+    c: Ctx,
+    subf: mtl.Always | mtl.Eventually | mtl.Until | mtl.Release,
+) -> tuple[Ctx, mtl.Mtl]:
+    """Convert the context `c` and the subformula `subf` to partial negation
+    normal form (PNNF). The returned context and subformula are logically
+    equivalent to the original ones.
+    """
+
+    ctx, polarity = partial_nnf_ctx(c)
+    if polarity:
+        return ctx, subf
+    if isinstance(subf, mtl.Always):
+        return ctx, mtl.Eventually(mtl.Not(subf.operand), subf.interval)
+    if isinstance(subf, mtl.Eventually):
+        return ctx, mtl.Always(mtl.Not(subf.operand), subf.interval)
+    if isinstance(subf, mtl.Until):
+        return ctx, mtl.Release(
+            mtl.Not(subf.left),
+            mtl.Not(subf.right),
+            subf.interval,
+        )
+    return ctx, mtl.Until(
+        mtl.Not(subf.left),
+        mtl.Not(subf.right),
+        subf.interval,
+    )
 
 
 def get_de_bruijn(c: Ctx) -> list[int]:
@@ -302,9 +387,12 @@ def get_de_bruijn(c: Ctx) -> list[int]:
         return []
     if isinstance(c, (Not, Next, Eventually, Always)):
         return [0, *get_de_bruijn(c.operand)]
-    if isinstance(c, (AndLeft, OrLeft, ImpliesLeft, UntilLeft)):
+    if isinstance(c, (AndLeft, OrLeft, ImpliesLeft, UntilLeft, ReleaseLeft)):
         return [0, *get_de_bruijn(c.left)]
-    if isinstance(c, (AndRight, OrRight, ImpliesRight, UntilRight)):
+    if isinstance(
+        c,
+        (AndRight, OrRight, ImpliesRight, UntilRight, ReleaseRight),
+    ):
         return [1, *get_de_bruijn(c.right)]
     msg = f"Unsupported MTL context construct: {c}"
     raise ValueError(msg)

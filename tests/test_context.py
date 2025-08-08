@@ -92,7 +92,7 @@ class TestSplitFormula(unittest.TestCase):
         self.assertEqual(expected_subf, subf)
 
 
-class TestPartialNNF(unittest.TestCase):
+class TestPartialNNFContext(unittest.TestCase):
     def test_complex_boolean_operators_nnf(self) -> None:
         """Test NNF conversion for complex nested boolean operators."""
         context = ctx.Not(
@@ -105,8 +105,9 @@ class TestPartialNNF(unittest.TestCase):
             mtl.Not(mtl.Prop("p")),
             ctx.OrLeft(ctx.Hole(), mtl.Not(mtl.Prop("q"))),
         )
-        result = ctx.partial_nnf(context)
-        self.assertEqual(result, expected_context)
+        result_context, polarity = ctx.partial_nnf_ctx(context)
+        self.assertEqual(result_context, expected_context)
+        self.assertTrue(polarity)
 
     def test_complex_implication_nnf(self) -> None:
         """Test NNF conversion for nested implication contexts."""
@@ -118,13 +119,13 @@ class TestPartialNNF(unittest.TestCase):
                 ),
             ),
         )
-        expected_context = ctx.ImpliesLeft(
-            ctx.Eventually(ctx.Not(ctx.Hole()), (1, 5)),
+        expected_context = ctx.OrLeft(
+            ctx.Always(ctx.Hole(), (1, 5)),
             mtl.Always(mtl.Prop("r")),
         )
-
-        result = ctx.partial_nnf(context)
-        self.assertEqual(result, expected_context)
+        result_context, polarity = ctx.partial_nnf_ctx(context)
+        self.assertEqual(result_context, expected_context)
+        self.assertTrue(polarity)
 
     def test_complex_temporal_operators_nnf(self) -> None:
         """Test NNF conversion for complex temporal operator combinations."""
@@ -139,13 +140,24 @@ class TestPartialNNF(unittest.TestCase):
         )
         expected_context = ctx.Always(
             ctx.OrLeft(
-                ctx.Eventually(ctx.Not(ctx.Hole()), (2, 8)),
+                ctx.Eventually(ctx.Hole(), (2, 8)),
                 mtl.Not(mtl.Eventually(mtl.Prop("s"), (0, 3))),
             ),
             (0, None),
         )
-        result = ctx.partial_nnf(context)
-        self.assertEqual(result, expected_context)
+        result_context, polarity = ctx.partial_nnf_ctx(context)
+        self.assertEqual(result_context, expected_context)
+        self.assertFalse(polarity)
+
+
+class TestPartialNNF(unittest.TestCase):
+    def test_pnnf_subformula(self) -> None:
+        context = ctx.Not(ctx.Hole())
+        subformula = mtl.Always(mtl.Prop("a"), (1, 5))
+        expected_subformula = mtl.Eventually(mtl.Not(mtl.Prop("a")), (1, 5))
+        result_context, result_subformula = ctx.partial_nnf(context, subformula)
+        self.assertEqual(result_subformula, expected_subformula)
+        self.assertEqual(result_context, ctx.Hole())
 
 
 if __name__ == "__main__":

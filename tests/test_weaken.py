@@ -201,7 +201,11 @@ class TestWeakenContext(unittest.TestCase):
             mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 2)))),
         )
         context, subformula = ctx.split_formula(formula, [0, 0, 0])
-        context = ctx.partial_nnf(context)
+        assert isinstance(
+            subformula,
+            (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
+        )
+        context, subformula = ctx.partial_nnf(context, subformula)
         trace = marking.Trace(
             [
                 {"p": False},
@@ -217,7 +221,11 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_nfg(self) -> None:
         formula = mtl.Not(mtl.Eventually(mtl.Always(mtl.Prop("p"), (0, 1))))
         context, subformula = ctx.split_formula(formula, [0, 0])
-        context = ctx.partial_nnf(context)
+        assert isinstance(
+            subformula,
+            (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
+        )
+        context, subformula = ctx.partial_nnf(context, subformula)
         trace = marking.Trace(
             [
                 {"p": False},
@@ -233,7 +241,11 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_ng(self) -> None:
         formula = mtl.Not(mtl.Always(mtl.Prop("p"), (0, 1)))
         context, subformula = ctx.split_formula(formula, [0])
-        context = ctx.partial_nnf(context)
+        assert isinstance(
+            subformula,
+            (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
+        )
+        context, subformula = ctx.partial_nnf(context, subformula)
         trace = marking.Trace(
             [
                 {"p": True},
@@ -245,6 +257,50 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 2))
+
+
+class TestWeakenDirect(unittest.TestCase):
+
+    def test_weaken_direct_release_1(self) -> None:
+        formula = mtl.Release(mtl.Prop("b"), mtl.Prop("a"), (0, 2))
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": False, "b": False},
+            ],
+            0,
+        )
+        result = weaken.Weaken(
+            ctx.Hole(),
+            formula,
+            trace,
+        ).weaken()
+        self.assertEqual(result, (0, 1))
+        formula = mtl.Release(mtl.Prop("a"), mtl.Prop("b"), (0, 2))
+        result = weaken.Weaken(
+            ctx.Hole(),
+            formula,
+            trace,
+        ).weaken()
+        self.assertIsNone(result)
+
+    def test_weaken_direct_release_2(self) -> None:
+        formula = mtl.Release(mtl.Prop("b"), mtl.Prop("a"), (0, 2))
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": True},
+                {"a": False, "b": False},
+            ],
+            0,
+        )
+        result = weaken.Weaken(
+            ctx.Hole(),
+            formula,
+            trace,
+        ).weaken()
+        self.assertEqual(result, (0, 2))
 
 
 if __name__ == "__main__":

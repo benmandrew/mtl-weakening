@@ -20,7 +20,7 @@ lint.select = [
 lint.ignore = [
     "S101",  # Allow assert
     "S603",  # Allow subprocess calls
-    "PT009",  # Allow unittest asserts
+    "PT",    # Ignore all pytest rules (using unittest instead)
     "D",
     "C901",
     "PLR0911",
