@@ -90,9 +90,9 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weakening inside eventually operator."""
         a, b = c.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace.right_idx(a) if b is None else b
         all_intervals = [
-            self._aux(c.operand, trace_idx + i) for i in range(a, right_idx)
+            self._aux(c.operand, trace_idx + i) for i in range(a, right_idx + 1)
         ]
         intervals = [i for i in all_intervals if i is not None]
         if intervals == []:
@@ -102,9 +102,9 @@ class Weaken:
     def _aux_always(self, c: ctx.Always, trace_idx: int) -> mtl.Interval | None:
         """Weakening inside always operator."""
         a, b = c.interval
-        right_idx = self.trace_len if b is None else b + 1
+        right_idx = self.trace.right_idx(a) if b is None else b
         intervals = []
-        for i in range(a, right_idx):
+        for i in range(a, right_idx + 1):
             interval = self._aux(c.operand, trace_idx + i)
             if interval is None:
                 return None
@@ -118,9 +118,9 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weakening inside until operator."""
         a, b = c.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
+        right_idx = self.trace.right_idx(a) if b is None else b
         all_intervals = [
-            self._aux(c.left, trace_idx + i) for i in range(a, right_idx)
+            self._aux(c.left, trace_idx + i) for i in range(a, right_idx + 1)
         ]
         valid_intervals = []
         for i, interval in enumerate(all_intervals):
@@ -141,9 +141,9 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weakening inside until operator."""
         a, b = c.interval
-        right_idx = self.trace_len * 2 if b is None else b + 1
+        right_idx = self.trace.right_idx(a) if b is None else b
         valid_intervals: list[mtl.Interval | None] = []
-        for i in range(a, right_idx):
+        for i in range(a, right_idx + 1):
             valid_intervals.append(self._aux(c.right, trace_idx + i))
             if not self.markings.get(c.left, trace_idx + i):
                 break
@@ -177,7 +177,7 @@ class Weaken:
             msg = f"Cannot weaken interval of F[{a}, ∞)"
             raise ValueError(msg)
         # Expand the interval until we find a state when the operand is true
-        for i in range(a, self.trace_len * 2):
+        for i in range(a, self.trace.right_idx(a) + 1):
             if self.markings.get(f.operand, trace_idx + i):
                 return a, max(b, i)
         return None
@@ -191,8 +191,8 @@ class Weaken:
         a, b = f.interval
         # Expand the interval until we find a state when the operand is false,
         # then reduce the interval to just before that
-        right_idx = self.trace.right_idx(a) if b is None else b + 1
-        for i in range(a, right_idx):
+        right_idx = self.trace.right_idx(a) if b is None else b
+        for i in range(a, right_idx + 1):
             if not self.markings.get(f.operand, trace_idx + i):
                 if i == a:
                     return None
@@ -209,7 +209,7 @@ class Weaken:
         if b is None:
             msg = f"Cannot weaken interval of U[{a}, ∞)"
             raise ValueError(msg)
-        for i in range(a, self.trace_len * 2):
+        for i in range(a, self.trace.right_idx(a) + 1):
             if self.markings.get(f.right, trace_idx + i):
                 return a, max(b, i)
             if not self.markings.get(f.left, trace_idx + i):
@@ -223,8 +223,8 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Directly weaken interval of release operator."""
         a, b = f.interval
-        right_idx = self.trace.right_idx(a) if b is None else b + 1
-        for i in range(a, right_idx):
+        right_idx = self.trace.right_idx(a) if b is None else b
+        for i in range(a, right_idx + 1):
             if not self.markings.get(f.right, trace_idx + i):
                 if i == a:
                     return None
