@@ -131,6 +131,10 @@ def substitute(c: Ctx, f: mtl.Mtl) -> mtl.Mtl:
         return mtl.Until(substitute(c.left, f), c.right, c.interval)
     if isinstance(c, UntilRight):
         return mtl.Until(c.left, substitute(c.right, f), c.interval)
+    if isinstance(c, ReleaseLeft):
+        return mtl.Release(substitute(c.left, f), c.right, c.interval)
+    if isinstance(c, ReleaseRight):
+        return mtl.Release(c.left, substitute(c.right, f), c.interval)
     msg = f"Unsupported MTL context construct: {c}"
     raise ValueError(msg)
 
@@ -166,6 +170,18 @@ def to_string(c: Ctx) -> str:
         return (
             f"({mtl.to_string(c.left)} "
             f"U{mtl.fmt_interval(c.interval)} "
+            f"{to_string(c.right)})"
+        )
+    if isinstance(c, ReleaseLeft):
+        return (
+            f"({to_string(c.left)} "
+            f"R{mtl.fmt_interval(c.interval)} "
+            f"{mtl.to_string(c.right)})"
+        )
+    if isinstance(c, ReleaseRight):
+        return (
+            f"({mtl.to_string(c.left)} "
+            f"R{mtl.fmt_interval(c.interval)} "
             f"{to_string(c.right)})"
         )
     if isinstance(c, Next):
