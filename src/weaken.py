@@ -158,12 +158,13 @@ class Weaken:
     ) -> mtl.Interval | None:
         a, b = c.interval
         right_idx = self.trace.right_idx(a) if b is None else b
-        valid_intervals: list[mtl.Interval | None] = []
+        intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             if not self.markings.get(c.right, trace_idx + i):
                 break
-            valid_intervals.append(self._aux(c.left, trace_idx + i))
-        intervals = [i for i in valid_intervals if i is not None]
+            interval = self._aux(c.left, trace_idx + i)
+            if interval is not None:
+                intervals.append(interval)
         if not intervals:
             return None
         return min(intervals, key=self._interval_abs_diff)
@@ -175,11 +176,9 @@ class Weaken:
     ) -> mtl.Interval | None:
         a, b = c.interval
         right_idx = self.trace.right_idx(a) if b is None else b
-        all_intervals: list[mtl.Interval | None] = [
-            self._aux(c.right, trace_idx + i) for i in range(a, right_idx + 1)
-        ]
         intervals: list[mtl.Interval] = []
-        for i, interval in enumerate(all_intervals):
+        for i in range(a, right_idx + 1):
+            interval = self._aux(c.right, trace_idx + i)
             if interval is None or self.markings.get(c.left, trace_idx + i + a):
                 break
             intervals.append(interval)
