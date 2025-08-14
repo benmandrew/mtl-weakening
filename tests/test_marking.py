@@ -321,6 +321,49 @@ class TestMarking(unittest.TestCase):
         result = str(marking.Marking(trace, formula))
         self.assertEqual(result, expected)
 
+    def test_fmt_markings_ugf(self) -> None:
+        formula = mtl.Until(
+            mtl.Always(mtl.Eventually(mtl.Prop("b"), (0, 1))),
+            mtl.Prop("a"),
+        )
+        trace = marking.Trace(
+            [
+                {"a": False, "b": False},
+                {"a": False, "b": True},
+                {"a": False, "b": False},
+                {"a": False, "b": True},
+                {"a": True, "b": False},
+            ],
+            4,
+        )
+        expected = format_expect(
+            """
+        (G (F[0, 1] (b)) U a) │ │ │ │ │●│
+        G (F[0, 1] (b))       │ │ │ │ │ │
+        F[0, 1] (b)           │●│●│●│●│ │
+        b                     │ │●│ │●│ │
+        a                     │ │ │ │ │●│
+        =Lasso=                        ⊔
+        """,
+        )
+        result = str(marking.Marking(trace, formula))
+        self.assertEqual(result, expected)
+        formula = mtl.Until(
+            mtl.Eventually(mtl.Prop("b"), (0, 1)),
+            mtl.Prop("a"),
+        )
+        expected = format_expect(
+            """
+        (F[0, 1] (b) U a) │●│●│●│●│●│
+        F[0, 1] (b)       │●│●│●│●│ │
+        b                 │ │●│ │●│ │
+        a                 │ │ │ │ │●│
+        =Lasso=                    ⊔
+        """,
+        )
+        result = str(marking.Marking(trace, formula))
+        self.assertEqual(result, expected)
+
 
 if __name__ == "__main__":
     unittest.main()
