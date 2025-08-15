@@ -21,6 +21,7 @@ class Trace:
             self.loop_start = self.periodic_trace_idx(trace)
             self.trace = trace[:-1]
         else:
+            assert loop_start < len(trace)
             self.loop_start = loop_start
             self.trace = trace
 

@@ -37,14 +37,13 @@ class Weaken:
             else markings
         )
         self.trace_len = len(trace)
-        if isinstance(
+        if not isinstance(
             self.subformula,
             (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
         ):
-            self.original_interval = self.subformula.interval
-        else:
             msg = f"Cannot weaken MTL subformula: {self.subformula}"
             raise TypeError(msg)
+        self.original_interval = self.subformula.interval
 
     def _interval_abs_diff(
         self,
@@ -122,14 +121,13 @@ class Weaken:
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             interval = self._aux(c.left, trace_idx + i)
-            if interval is None or self.markings.get(
-                c.right,
-                trace_idx + i + a,
-            ):
+            if interval is None:
+                return None
+            if self.markings.get(c.right, trace_idx + i):
                 break
             intervals.append(interval)
         if not intervals:
-            return None
+            return self.original_interval
         return max(intervals, key=self._interval_abs_diff)
 
     def _aux_until_right(
