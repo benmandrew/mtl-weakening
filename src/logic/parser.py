@@ -65,40 +65,21 @@ class MTLTransformer(lark.Transformer):
     def next(self, phi: mtl.Mtl) -> mtl.Next:
         return mtl.Next(phi)
 
-    def until(self, left: mtl.Mtl, *rest: mtl.Interval | mtl.Mtl) -> mtl.Until:
-        """
-        Handles left-associative chaining of Until operators:
-        - until φ U ψ
-        - until φ U[0,4] ψ
-        - until φ U ψ U[1,3] χ
-        etc.
-        """
-        node = left
-        it = iter(rest)
-        while True:
-            try:
-                first = next(it)
-            except StopIteration:
-                break
-            try:
-                second = next(it)
-            except StopIteration:
-                assert isinstance(first, mtl.Mtl), "Expected an MTL node"
-                rhs = first
-                interval: mtl.Interval = (0, None)
-            else:
-                if isinstance(first, tuple):
-                    assert isinstance(second, mtl.Mtl), "Expected an MTL node"
-                    interval = first
-                    rhs = second
-                else:
-                    interval = (0, None)
-                    rhs = first
-                    # put `second` back into iterator
-                    it = (x for x in (second, *it))
-            node = mtl.Until(node, rhs, interval)
-        assert isinstance(node, mtl.Until), "Expected an MTL Until node"
-        return node
+    def until(
+        self,
+        left: mtl.Mtl,
+        *args: mtl.Mtl | tuple[mtl.Interval, mtl.Mtl],
+    ) -> mtl.Until:
+        interval, right = self._split_interval_args(args)
+        return mtl.Until(left, right, interval)
+
+    def release(
+        self,
+        left: mtl.Mtl,
+        *args: mtl.Mtl | tuple[mtl.Interval, mtl.Mtl],
+    ) -> mtl.Release:
+        interval, right = self._split_interval_args(args)
+        return mtl.Release(left, right, interval)
 
     def _split_interval_args(
         self,

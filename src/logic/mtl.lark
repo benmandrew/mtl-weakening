@@ -11,8 +11,11 @@ start: formula
 ?conjunction: until
             | conjunction "&" until -> conjunction
 
-?until: unary
-      | until "U" interval? unary -> until
+?until: release
+      | until "U" interval? release -> until
+
+?release: unary
+      | release "R" interval? unary -> release
 
 ?unary: "!" unary -> neg
       | "G" interval? unary -> always

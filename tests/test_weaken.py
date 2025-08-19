@@ -260,7 +260,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 2))
 
     def test_weakening_rg_left(self) -> None:
-        formula = mtl.Release(mtl.Always(mtl.Prop("a"), (0, 2)), mtl.Prop("b"))
+        formula = parser.parse_mtl("G[0,2] a R b")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -275,10 +275,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_rf_right(self) -> None:
-        formula = mtl.Release(
-            mtl.Prop("a"),
-            mtl.Eventually(mtl.Prop("b"), (0, 1)),
-        )
+        formula = parser.parse_mtl("a R F[0,1] b")
         context, subformula = ctx.split_formula(formula, [1])
         trace = marking.Trace(
             [
@@ -298,7 +295,7 @@ class TestWeakenContext(unittest.TestCase):
 class TestWeakenDirect(unittest.TestCase):
 
     def test_weaken_direct_release_1(self) -> None:
-        formula = mtl.Release(mtl.Prop("b"), mtl.Prop("a"), (0, 2))
+        formula = parser.parse_mtl("b R[0,2] a")
         trace = marking.Trace(
             [
                 {"a": True, "b": False},
@@ -313,7 +310,7 @@ class TestWeakenDirect(unittest.TestCase):
             trace,
         ).weaken()
         self.assertEqual(result, (0, 1))
-        formula = mtl.Release(mtl.Prop("a"), mtl.Prop("b"), (0, 2))
+        formula = parser.parse_mtl("a R[0,2] b")
         result = weaken.Weaken(
             ctx.Hole(),
             formula,
@@ -322,7 +319,7 @@ class TestWeakenDirect(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_weaken_direct_release_2(self) -> None:
-        formula = mtl.Release(mtl.Prop("b"), mtl.Prop("a"), (0, 2))
+        formula = parser.parse_mtl("b R[0,2] a")
         trace = marking.Trace(
             [
                 {"a": True, "b": False},

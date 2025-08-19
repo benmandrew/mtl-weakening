@@ -29,6 +29,11 @@ class TestParseMtl(unittest.TestCase):
         )
         self.assertEqual(formula, expected)
 
+    def test_parse_release(self) -> None:
+        formula = parser.parse_mtl("a R[0,2] b")
+        expected = mtl.Release(mtl.Prop("a"), mtl.Prop("b"), (0, 2))
+        self.assertEqual(formula, expected)
+
     def test_parse_temporal_precedence(self) -> None:
         formula = parser.parse_mtl("a U F[2,3] b")
         expected: mtl.Mtl = mtl.Until(
