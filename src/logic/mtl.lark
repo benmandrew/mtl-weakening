@@ -1,0 +1,34 @@
+start: formula
+
+?formula: implication
+
+?implication: disjunction
+            | disjunction "->" implication -> implies
+
+?disjunction: conjunction
+            | disjunction "|" conjunction -> disjunction
+
+?conjunction: until
+            | conjunction "&" until -> conjunction
+
+?until: unary
+      | until "U" interval? unary -> until
+
+?unary: "!" unary -> neg
+      | "G" interval? unary -> always
+      | "F" interval? unary -> eventually
+      | "X" unary -> next
+      | atom
+      | "(" formula ")"
+
+atom: CNAME -> ap
+
+interval: "[" INT "," maybe_infinity "]"
+
+maybe_infinity: INT
+              | "∞"
+
+%import common.CNAME
+%import common.INT
+%import common.WS
+%ignore WS
