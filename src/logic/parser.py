@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pathlib
-import typing
 
 import lark
 
@@ -49,7 +48,6 @@ class MTLTransformer(lark.Transformer):
             )
         return (m, n)
 
-    # Unary temporal
     def always(
         self,
         *args: mtl.Mtl | tuple[mtl.Interval, mtl.Mtl],
@@ -68,18 +66,38 @@ class MTLTransformer(lark.Transformer):
         return mtl.Next(phi)
 
     def until(self, left: mtl.Mtl, *rest: mtl.Interval | mtl.Mtl) -> mtl.Until:
-        # Handles left-associative chaining: (((l U_I1 r1) U_I2 r2) ...)
+        """
+        Handles left-associative chaining of Until operators:
+        - until φ U ψ
+        - until φ U[0,4] ψ
+        - until φ U ψ U[1,3] χ
+        etc.
+        """
         node = left
         it = iter(rest)
-        for maybe_interval, right in zip(it, it):
-            if isinstance(maybe_interval, tuple):
-                interval = maybe_interval
-                rhs = typing.cast("mtl.Mtl", right)
+        while True:
+            try:
+                first = next(it)
+            except StopIteration:
+                break
+            try:
+                second = next(it)
+            except StopIteration:
+                assert isinstance(first, mtl.Mtl), "Expected an MTL node"
+                rhs = first
+                interval: mtl.Interval = (0, None)
             else:
-                interval = (0, None)
-                rhs = maybe_interval
+                if isinstance(first, tuple):
+                    assert isinstance(second, mtl.Mtl), "Expected an MTL node"
+                    interval = first
+                    rhs = second
+                else:
+                    interval = (0, None)
+                    rhs = first
+                    # put `second` back into iterator
+                    it = (x for x in (second, *it))
             node = mtl.Until(node, rhs, interval)
-        assert isinstance(node, mtl.Until), "Expected a valid MTL Until node"
+        assert isinstance(node, mtl.Until), "Expected an MTL Until node"
         return node
 
     def _split_interval_args(
@@ -103,7 +121,7 @@ with PARSER_PATH.open(encoding="utf-8") as f:
 MTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 
 
-def parse_mtl(text: str) -> dict:
+def parse_mtl(text: str) -> mtl.Mtl:
     """
     Parse an MTL formula string into a validated AST.
     Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.

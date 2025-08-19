@@ -1,13 +1,13 @@
 import unittest
 
 from src import marking, weaken
-from src.logic import ctx, mtl
+from src.logic import ctx, mtl, parser
 
 
 class TestWeakenContext(unittest.TestCase):
 
     def test_weakening_fg(self) -> None:
-        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)))
+        formula = parser.parse_mtl("F G[0,2] a")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -24,7 +24,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gf(self) -> None:
-        formula = mtl.Always(mtl.Eventually(mtl.Prop("a"), (0, 4)))
+        formula = parser.parse_mtl("G F[0,4] a")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -52,9 +52,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_weakening_ff(self) -> None:
-        formula = mtl.Eventually(
-            mtl.And(mtl.Prop("a"), mtl.Eventually(mtl.Prop("b"), (0, 2))),
-        )
+        formula = parser.parse_mtl("F (a & F[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
         trace = marking.Trace(
             [
@@ -72,9 +70,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 4))
 
     def test_weakening_gg(self) -> None:
-        formula = mtl.Always(
-            mtl.Or(mtl.Prop("a"), mtl.Always(mtl.Prop("b"), (0, 2))),
-        )
+        formula = parser.parse_mtl("G (a | G[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
         trace = marking.Trace(
             [
@@ -96,7 +92,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gfg(self) -> None:
-        formula = mtl.Always(mtl.Eventually(mtl.Always(mtl.Prop("a"), (2, 5))))
+        formula = parser.parse_mtl("G F G[2,5] a")
         context, subformula = ctx.split_formula(formula, [0, 0])
         trace = marking.Trace(
             [
@@ -115,7 +111,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (2, 3))
 
     def test_weakening_gu(self) -> None:
-        formula = mtl.Always(mtl.Until(mtl.Prop("a"), mtl.Prop("b"), (0, 2)))
+        formula = parser.parse_mtl("G (a U[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -133,10 +129,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 5))
 
     def test_weakening_uf_right(self) -> None:
-        formula = mtl.Until(
-            mtl.Prop("a"),
-            mtl.Eventually(mtl.Prop("b"), (2, 3)),
-        )
+        formula = parser.parse_mtl("a U F[2,3] b")
         context, subformula = ctx.split_formula(formula, [1])
         trace = marking.Trace(
             [
@@ -159,10 +152,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (2, 7))
 
     def test_weakening_uf_left_1(self) -> None:
-        formula = mtl.Until(
-            mtl.Eventually(mtl.Prop("b"), (0, 1)),
-            mtl.Prop("a"),
-        )
+        formula = parser.parse_mtl("F[0,1] b U a")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -178,10 +168,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 2))
 
     def test_weakening_uf_left_2(self) -> None:
-        formula = mtl.Until(
-            mtl.Eventually(mtl.Prop("b"), (0, 1)),
-            mtl.Prop("a"),
-        )
+        formula = parser.parse_mtl("F[0,1] b U a")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
@@ -196,9 +183,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_weakening_gug_right(self) -> None:
-        formula = mtl.Always(
-            mtl.Until(mtl.Prop("a"), mtl.Always(mtl.Prop("b"), (1, 4))),
-        )
+        formula = parser.parse_mtl("G (a U G[1,4] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
         trace = marking.Trace(
             [
@@ -215,9 +200,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (1, 2))
 
     def test_weakening_gngf(self) -> None:
-        formula = mtl.Always(
-            mtl.Not(mtl.Always(mtl.Eventually(mtl.Prop("p"), (0, 2)))),
-        )
+        formula = parser.parse_mtl("G ! G F[0,2] p")
         context, subformula = ctx.split_formula(formula, [0, 0, 0])
         assert isinstance(
             subformula,
@@ -237,7 +220,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_nfg(self) -> None:
-        formula = mtl.Not(mtl.Eventually(mtl.Always(mtl.Prop("p"), (0, 1))))
+        formula = parser.parse_mtl("! F G[0,1] p")
         context, subformula = ctx.split_formula(formula, [0, 0])
         assert isinstance(
             subformula,
@@ -257,7 +240,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 2))
 
     def test_weakening_ng(self) -> None:
-        formula = mtl.Not(mtl.Always(mtl.Prop("p"), (0, 1)))
+        formula = parser.parse_mtl("! G[0,1] p")
         context, subformula = ctx.split_formula(formula, [0])
         assert isinstance(
             subformula,
