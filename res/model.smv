@@ -4,6 +4,16 @@
 --   Journal of Automated Reasoning, 64(8), 1553–1610.
 --   https://doi.org/10.1007/s10817-020-09541-4
 
+MODULE main
+
+DEFINE
+  TIME_R := 5;
+  TIME_D := 5;
+
+VAR
+  state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
+  timer : 1..100;
+
 -- Assumptions encoded in the state machine:
 --   G (resting -> F[1,TIME_R] leavingHome)
 --   G (leavingHome -> F[2,3] randomWalk)
@@ -15,116 +25,40 @@
 --   G (deposit -> F[3,4] resting)
 --   G (homing -> F[1,TIME_D] resting)
 
-MODULE main
-
-DEFINE
-  TIME_R := 5;
-  TIME_D := 5;
-
-VAR
-  rCounter : 0..TIME_R; -- resting counter
-  r : boolean;          -- resting
-  lhCounter : 0..3;     -- leavingHome counter
-  lh : boolean;         -- leavingHome
-  rwCounter : 0..1;     -- randomWalk counter
-  rw : boolean;         -- randomWalk
-  mtfCounter : 0..1;    -- moveToFood counter
-  mtf : boolean;        -- moveToFood
-  hCounter : 0..TIME_D; -- homing counter
-  h : boolean;          -- homing
-  saCounter : 0..1;     -- scanArena counter
-  sa : boolean;         -- scanArena
-
 ASSIGN
+  init(state) := resting;
+  next(state) :=
+    case
+      state = resting & timer < TIME_R : { resting, leavingHome };
+      state = resting & timer = TIME_R : leavingHome;
 
-  -- Counters
-  init(rCounter) := 0;
-  next(rCounter) := case
-    r && rCounter < TIME_R : rCounter + 1;
-    lh : 0;
-    TRUE : 0;
-  esac;
+      state = leavingHome & timer = 2 : {leavingHome, randomWalk };
+      state = leavingHome & timer = 3 : randomWalk;
 
-  init(lhCounter) := 0;
-  next(lhCounter) := case
-    lh && lhCounter < 3 : lhCounter + 1;
-    rw : 0;
-    TRUE : 0;
-  esac;
+      state = randomWalk : { homing, moveToFood };
 
-  init(rwCounter) := 0;
-  next(rwCounter) := case
-    rw && rwCounter < 1 : rwCounter + 1;
-    !rw : 0;
-    TRUE : 1;
-  esac;
+      state = moveToFood : { grabFood, homing, scanArena };
 
-  init(mtfCounter) := 0;
-  next(mtfCounter) := case
-    mtf && mtfCounter < 1 : mtfCounter + 1;
-    !mtf : 0;
-    TRUE : 1;
-  esac;
+      state = scanArena : { randomWalk, moveToFood, homing };
 
-  init(saCounter) := 0;
-  next(saCounter) := case
-    sa && saCounter < 1 : saCounter + 1;
-    !sa : 0;
-    TRUE : 1;
-  esac;
+      state = grabFood & timer = 2 : {grabFood, moveToHome };
+      state = grabFood & timer = 3 : moveToHome;
 
-  init(gfCounter) := 0;
-  next(gfCounter) := case
-    gf && gfCounter < 3 : gfCounter + 1;
-    TRUE : 0;
+      state = moveToHome & timer < TIME_D : { moveToHome, deposit };
+      state = moveToHome & timer = TIME_D : deposit;
 
-  init(mthCounter) := 0;
-  next(mthCounter) := case
-    mth && mthCounter < TIME_D : mthCounter + 1;
-    TRUE : 0;
+      state = deposit & timer = 3 : { deposit, resting };
+      state = deposit & timer = 4 : resting;
 
-  init(dCounter) := 0;
-  next(dCounter) := case
-    d && dCounter < 4 : dCounter + 1;
-    TRUE : 0;
-  esac;
+      state = homing & timer < TIME_D : { homing, resting };
+      state = homing & timer = TIME_D : resting;
 
-  init(hCounter) := 0;
-  next(hCounter) := case
-    h && hCounter < TIME_D : hCounter + 1;
-    TRUE : 0;
+      TRUE : state; -- Shouldn't happen
+    esac;
 
-  -- States
-  init(r) := TRUE;
-  next(r) := !next(lh);
-
-  init(lh) := FALSE;
-  next(lh) := case
-    r && rCounter >= 1 && rCounter < TIME_R : {TRUE, FALSE};
-    r && rCounter = TIME_R : TRUE;
-    TRUE : FALSE;
-
-  init(rw) := FALSE;
-  next(rw) := case
-    lh && lhCounter >= 2 && lhCounter < 3 : {TRUE, FALSE};
-    lh && lhCounter < 3 : TRUE;
-    TRUE : FALSE;
-  esac;
-
-  init(mtf) := FALSE;
-  next(mtf) := case
-    rw && rwCounter >= 1 : {TRUE, FALSE};
-    TRUE : FALSE;
-  esac;
-
-  init(h) := FALSE;
-  next(h) := case
-    rw && rwCounter >= 1 : {TRUE, FALSE};
-    TRUE : FALSE;
-  esac;
-
-  init(sa) := FALSE;
-  next(sa) := case
-    mtf && mtfCounter >= 1 : {TRUE, FALSE};
-    TRUE : FALSE;
-  esac;
+  init(timer) := 0;
+  next(timer) :=
+    case
+      next(state) != state : 0;         -- reset timer on state change
+      TRUE : timer + 1;                 -- otherwise increment
+    esac;
