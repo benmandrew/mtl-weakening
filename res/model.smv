@@ -1,21 +1,130 @@
+-- Model adapted from the Foraging Robots example in:
+--   Hustadt, U., Ozaki, A., & Dixon, C. (2020).
+--   Theorem Proving for Pointwise Metric Temporal Logic Over the Naturals via Translations.
+--   Journal of Automated Reasoning, 64(8), 1553–1610.
+--   https://doi.org/10.1007/s10817-020-09541-4
+
+-- Assumptions encoded in the state machine:
+--   G (resting -> F[1,TIME_R] leavingHome)
+--   G (leavingHome -> F[2,3] randomWalk)
+--   G (randomWalk -> F[1,∞] homing | moveToFood)
+--   G (moveToFood -> F[1,∞] grabFood | homing | scanArena)
+--   G (scanArena -> F[1,∞] randomWalk | moveToFood | homing)
+--   G (grabFood -> F[2,3] moveToHome)
+--   G (moveToHome -> F[1,TIME_D] deposit)
+--   G (deposit -> F[3,4] resting)
+--   G (homing -> F[1,TIME_D] resting)
+
 MODULE main
 
 DEFINE
-  N := 5;  -- Customize this to change delay (e.g., 3, 10, etc.)
+  TIME_R := 5;
+  TIME_D := 5;
 
 VAR
-  counter : 0..N;
-  trigger : boolean;
+  rCounter : 0..TIME_R; -- resting counter
+  r : boolean;          -- resting
+  lhCounter : 0..3;     -- leavingHome counter
+  lh : boolean;         -- leavingHome
+  rwCounter : 0..1;     -- randomWalk counter
+  rw : boolean;         -- randomWalk
+  mtfCounter : 0..1;    -- moveToFood counter
+  mtf : boolean;        -- moveToFood
+  hCounter : 0..TIME_D; -- homing counter
+  h : boolean;          -- homing
+  saCounter : 0..1;     -- scanArena counter
+  sa : boolean;         -- scanArena
 
 ASSIGN
-  init(counter) := 0;
-  next(counter) := case
-    counter < N : counter + 1;
-    TRUE        : 0;
+
+  -- Counters
+  init(rCounter) := 0;
+  next(rCounter) := case
+    r && rCounter < TIME_R : rCounter + 1;
+    lh : 0;
+    TRUE : 0;
   esac;
 
-  init(trigger) := FALSE;
-  next(trigger) := case
-    counter = N : TRUE;
-    TRUE        : FALSE;
+  init(lhCounter) := 0;
+  next(lhCounter) := case
+    lh && lhCounter < 3 : lhCounter + 1;
+    rw : 0;
+    TRUE : 0;
+  esac;
+
+  init(rwCounter) := 0;
+  next(rwCounter) := case
+    rw && rwCounter < 1 : rwCounter + 1;
+    !rw : 0;
+    TRUE : 1;
+  esac;
+
+  init(mtfCounter) := 0;
+  next(mtfCounter) := case
+    mtf && mtfCounter < 1 : mtfCounter + 1;
+    !mtf : 0;
+    TRUE : 1;
+  esac;
+
+  init(saCounter) := 0;
+  next(saCounter) := case
+    sa && saCounter < 1 : saCounter + 1;
+    !sa : 0;
+    TRUE : 1;
+  esac;
+
+  init(gfCounter) := 0;
+  next(gfCounter) := case
+    gf && gfCounter < 3 : gfCounter + 1;
+    TRUE : 0;
+
+  init(mthCounter) := 0;
+  next(mthCounter) := case
+    mth && mthCounter < TIME_D : mthCounter + 1;
+    TRUE : 0;
+
+  init(dCounter) := 0;
+  next(dCounter) := case
+    d && dCounter < 4 : dCounter + 1;
+    TRUE : 0;
+  esac;
+
+  init(hCounter) := 0;
+  next(hCounter) := case
+    h && hCounter < TIME_D : hCounter + 1;
+    TRUE : 0;
+
+  -- States
+  init(r) := TRUE;
+  next(r) := !next(lh);
+
+  init(lh) := FALSE;
+  next(lh) := case
+    r && rCounter >= 1 && rCounter < TIME_R : {TRUE, FALSE};
+    r && rCounter = TIME_R : TRUE;
+    TRUE : FALSE;
+
+  init(rw) := FALSE;
+  next(rw) := case
+    lh && lhCounter >= 2 && lhCounter < 3 : {TRUE, FALSE};
+    lh && lhCounter < 3 : TRUE;
+    TRUE : FALSE;
+  esac;
+
+  init(mtf) := FALSE;
+  next(mtf) := case
+    rw && rwCounter >= 1 : {TRUE, FALSE};
+    TRUE : FALSE;
+  esac;
+
+  init(h) := FALSE;
+  next(h) := case
+    rw && rwCounter >= 1 : {TRUE, FALSE};
+    TRUE : FALSE;
+  esac;
+
+  init(sa) := FALSE;
+  next(sa) := case
+    mtf && mtfCounter >= 1 : {TRUE, FALSE};
+    TRUE : FALSE;
   esac;
