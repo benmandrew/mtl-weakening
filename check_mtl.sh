@@ -8,6 +8,12 @@ fi
 
 tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 
+# cat > "$tempdir/commands.txt" <<EOL
+# go_bmc
+# check_ltlspec_bmc_inc -k 50
+# quit
+# EOL
+
 # Generate LTL from MTL
 ltlspec=$(python3 -m src.mtl2ltlspec "$*")
 

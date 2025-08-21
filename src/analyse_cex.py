@@ -7,7 +7,8 @@ import sys
 import lark
 
 from src import marking
-from src.logic import parser
+from src.logic import parser, ctx
+from src import weaken
 
 
 class Namespace(argparse.Namespace):
@@ -66,10 +67,12 @@ def main() -> None:
         and not line.startswith("Trace ")
     ]
     parsetree = model_parser.parse("".join(nuxmv_output))
-    cex: marking.Trace = TreeTransformer().transform(parsetree)
-    markings = marking.Marking(cex, formula)
-    print(markings)  # noqa: T201
-
+    cex_trace: marking.Trace = TreeTransformer().transform(parsetree)
+    c, subf = ctx.split_formula(formula, [0, 1])
+    c, subf = ctx.partial_nnf(c, subf)
+    w = weaken.Weaken(c, subf, cex_trace)
+    print(w.markings)
+    print(w.weaken())
 
 if __name__ == "__main__":
     main()
