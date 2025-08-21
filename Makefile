@@ -1,7 +1,4 @@
-.PHONY: run test fmt fmt-ci lint ruff pylint mypy bandit
-
-run:
-	python3 -m src.main
+.PHONY: test fmt fmt-ci lint ruff pylint mypy bandit
 
 test:
 	PYTHONPATH=src python3 -m unittest discover -s tests -p "test_*.py"

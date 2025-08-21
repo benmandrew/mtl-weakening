@@ -1,15 +1,16 @@
 ?start: state*
 
-state: "-> State:" INT "." INT "<-" NL var+
-var: WORD "=" expr NL
-expr: INT | bool
+state: "-> State:" INT "." INT "<-" NEWLINE var+
+var: CNAME "=" expr NEWLINE
+expr: INT | bool | CNAME
 bool: "TRUE" -> true
     | "FALSE" -> false
 
 %import common.INT
-%import common.WORD
-%import common.NEWLINE -> NL
+// %import common.WORD
+%import common.CNAME
+%import common.NEWLINE
 %import common.WS_INLINE
 
-%ignore "-- Loop starts here" NL
+%ignore "-- Loop starts here" NEWLINE
 %ignore WS_INLINE

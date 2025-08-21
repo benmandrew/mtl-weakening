@@ -9,12 +9,29 @@ from src import util
 from src.logic import mtl as m
 
 
+def expand_nuxmv_trace(
+    trace: list[dict[str, bool | int | str]],
+) -> list[dict[str, bool | int | str]]:
+    """
+    NuXmv gives traces in a compact form, where if a variable does not change
+    then its value is not included in the state. We expand the trace to
+    include all variable assignments at each step.
+    """
+    variables = trace[0].keys()
+    for i, state in enumerate(trace):
+        for var in variables:
+            if var not in state:
+                state[var] = trace[i - 1][var]
+    return trace
+
+
 class Trace:
     def __init__(
         self,
-        trace: list[dict[str, bool | int]],
+        trace: list[dict[str, bool | int | str]],
         loop_start: int | None = None,
     ) -> None:
+        trace = expand_nuxmv_trace(trace)
         # NuXmv identifies loops by duplicating the state
         # at the start of the loop at the end of the trace
         if loop_start is None:
@@ -29,14 +46,18 @@ class Trace:
         markings: dict[m.Mtl, list[bool]] = {}
         for state in self.trace:
             for k, v in state.items():
+                if type(v) is not bool:
+                    continue
                 f = m.Prop(k)
                 if f not in markings:
                     markings[f] = []
-                assert type(v) is bool
                 markings[f].append(v)
         return markings
 
-    def periodic_trace_idx(self, trace: list[dict[str, bool | int]]) -> int:
+    def periodic_trace_idx(
+        self,
+        trace: list[dict[str, bool | int | str]],
+    ) -> int:
         if len(trace) > 0:
             last = trace[-1]
             for i in range(len(trace) - 2, -1, -1):
@@ -61,10 +82,10 @@ class Trace:
     def __len__(self) -> int:
         return len(self.trace)
 
-    def __getitem__(self, i: int) -> dict[str, bool | int]:
+    def __getitem__(self, i: int) -> dict[str, bool | int | str]:
         return self.trace[self.idx(i)]
 
-    def __iter__(self) -> typing.Iterator[dict[str, bool | int]]:
+    def __iter__(self) -> typing.Iterator[dict[str, bool | int | str]]:
         return iter(self.trace)
 
 
