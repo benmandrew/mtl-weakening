@@ -12,7 +12,18 @@ DEFINE
 
 VAR
   state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
-  timer : 1..100;
+  timer : 0..10; -- Should be the maximum time that any transition can take
+
+DEFINE
+  resting_p := state = resting;
+  leavingHome_p := state = leavingHome;
+  randomWalk_p := state = randomWalk;
+  moveToFood_p := state = moveToFood;
+  scanArena_p := state = scanArena;
+  grabFood_p := state = grabFood;
+  moveToHome_p := state = moveToHome;
+  deposit_p := state = deposit;
+  homing_p := state = homing;
 
 -- Assumptions encoded in the state machine:
 --   G (resting -> F[1,TIME_R] leavingHome)
@@ -59,6 +70,9 @@ ASSIGN
   init(timer) := 0;
   next(timer) :=
     case
-      next(state) != state : 0;         -- reset timer on state change
-      TRUE : timer + 1;                 -- otherwise increment
+      next(state) != state : 0; -- Reset timer on state change
+      timer < 10 : timer + 1;   -- Otherwise increment
+      TRUE : timer;             -- Saturate timer
     esac;
+
+LTLSPEC G ((leavingHome_p -> F (resting_p)));
