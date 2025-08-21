@@ -71,4 +71,5 @@ ASSIGN
       TRUE : timer;             -- Saturate timer
     esac;
 
-LTLSPEC G ((leavingHome_p -> F (resting_p)));
+-- The LTL specification is provided externally;
+LTLSPEC $LTLSPEC;
