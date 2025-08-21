@@ -8,11 +8,11 @@ fi
 
 tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 
-# cat > "$tempdir/commands.txt" <<EOL
-# go_bmc
-# check_ltlspec_bmc_inc -k 50
-# quit
-# EOL
+cat > "$tempdir/commands.txt" <<EOL
+go_bmc
+check_ltlspec_bmc_onepb -k 30
+quit
+EOL
 
 # Generate LTL from MTL
 ltlspec=$(python3 -m src.mtl2ltlspec "$*")
@@ -21,7 +21,8 @@ ltlspec=$(python3 -m src.mtl2ltlspec "$*")
 sed "s/\$LTLSPEC/$ltlspec/g" res/model.in.smv > "$tempdir/model.smv"
 
 # Run NuXmv
-nuxmv_output=$(nuXmv "$tempdir/model.smv" | grep -Fv "*** ")
+nuxmv_output=$(nuXmv -source "$tempdir/commands.txt" "$tempdir/model.smv" | grep -Fv "*** ")
+# nuxmv_output=$(nuXmv "$tempdir/model.smv" | grep -Fv "*** ")
 
 # Analyse counterexample
 python3 -m src.analyse_cex "$*" <<< "$nuxmv_output"
