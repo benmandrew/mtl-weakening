@@ -11,7 +11,7 @@ DEFINE
   TIME_D := 5;
 
 VAR
-  state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
+  state : { resting, leavingHome, randomWalk, moveToFood, grabFood, moveToHome, deposit, homing };
   timer : 0..10; -- Should be the maximum time that any transition can take
 
 DEFINE
@@ -19,7 +19,6 @@ DEFINE
   leavingHome_p := state = leavingHome;
   randomWalk_p := state = randomWalk;
   moveToFood_p := state = moveToFood;
-  scanArena_p := state = scanArena;
   grabFood_p := state = grabFood;
   moveToHome_p := state = moveToHome;
   deposit_p := state = deposit;
@@ -29,8 +28,7 @@ DEFINE
 --   G (resting -> F[1,TIME_R] leavingHome)
 --   G (leavingHome -> F[2,3] randomWalk)
 --   G (randomWalk -> F[1,∞] homing | moveToFood)
---   G (moveToFood -> F[1,∞] grabFood | homing | scanArena)
---   G (scanArena -> F[1,∞] randomWalk | moveToFood | homing)
+--   G (moveToFood -> F[1,∞] grabFood | homing)
 --   G (grabFood -> F[2,3] moveToHome)
 --   G (moveToHome -> F[1,TIME_D] deposit)
 --   G (deposit -> F[3,4] resting)
@@ -48,9 +46,7 @@ ASSIGN
 
       state = randomWalk : { homing, moveToFood };
 
-      state = moveToFood : { grabFood, homing, scanArena };
-
-      state = scanArena : { randomWalk, moveToFood, homing };
+      state = moveToFood : { grabFood, homing };
 
       state = grabFood & timer = 2 : {grabFood, moveToHome };
       state = grabFood & timer = 3 : moveToHome;
