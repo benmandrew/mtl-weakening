@@ -36,5 +36,5 @@ if [ "$2" = "cex" ]; then
     echo "$nuxmv_output"
 else
     # Analyse counterexample
-    python3 -m src.analyse_cex "$*" <<< "$nuxmv_output"
+    python3 -m src.analyse_cex "$*" --debug <<< "$nuxmv_output"
 fi

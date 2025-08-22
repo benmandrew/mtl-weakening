@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import collections
+import logging
 import typing
 from dataclasses import dataclass
 from enum import Enum
 
 from src.logic import mtl as m
+
+logger = logging.getLogger(__name__)
 
 
 def expand_nuxmv_trace(
@@ -85,8 +88,7 @@ class Trace:
             for i in range(len(trace) - 2, -1, -1):
                 if last == trace[i]:
                     return i
-        # msg = "Cannot identify loop in trace"
-        # raise RuntimeError(msg)
+        logger.debug("Cannot identify loop in trace, assuming finite")
         return None
 
     def idx(self, i: int) -> int:
