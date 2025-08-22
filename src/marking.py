@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import collections
-import pathlib
 import typing
+from dataclasses import dataclass
 from enum import Enum
 
-from src import util
 from src.logic import mtl as m
 
 
@@ -25,6 +24,19 @@ def expand_nuxmv_trace(
     return trace
 
 
+@dataclass
+class Finite:
+    pass
+
+
+@dataclass
+class Lasso:
+    loop_start: int
+
+
+Finiteness = Finite | Lasso
+
+
 class Trace:
     def __init__(
         self,
@@ -32,14 +44,17 @@ class Trace:
         loop_start: int | None = None,
     ) -> None:
         trace = expand_nuxmv_trace(trace)
-        # NuXmv identifies loops by duplicating the state
-        # at the start of the loop at the end of the trace
         if loop_start is None:
-            self.loop_start = self.periodic_trace_idx(trace)
-            self.trace = trace[:-1]
+            loop_start = self.periodic_trace_idx(trace)
+            if loop_start is None:
+                self.finiteness: Finiteness = Finite()
+                self.trace = trace
+            else:
+                self.finiteness = Lasso(loop_start)
+                self.trace = trace[:-1]
         else:
             assert loop_start < len(trace)
-            self.loop_start = loop_start
+            self.finiteness = Lasso(loop_start)
             self.trace = trace
 
     def to_markings(self) -> dict[m.Mtl, list[bool]]:
@@ -57,26 +72,42 @@ class Trace:
     def periodic_trace_idx(
         self,
         trace: list[dict[str, bool | int | str]],
-    ) -> int:
+    ) -> int | None:
+        """
+        Attempts to find the start of a loop in the trace.
+        If none is found, then None is returned.
+
+        NuXmv identifies loops by duplicating the state
+        at the start of the loop at the end of the trace.
+        """
         if len(trace) > 0:
             last = trace[-1]
             for i in range(len(trace) - 2, -1, -1):
                 if last == trace[i]:
                     return i
-        msg = "Cannot identify loop in trace"
-        raise RuntimeError(msg)
+        # msg = "Cannot identify loop in trace"
+        # raise RuntimeError(msg)
+        return None
 
     def idx(self, i: int) -> int:
+        if isinstance(self.finiteness, Finite):
+            assert i < len(self.trace)
+            return i
         if i >= len(self.trace):
-            j = (i - self.loop_start) % (len(self.trace) - self.loop_start)
-            return j + self.loop_start
+            j = (i - self.finiteness.loop_start) % (
+                len(self.trace) - self.finiteness.loop_start
+            )
+            return j + self.finiteness.loop_start
         return i
 
     def right_idx(self, a: int) -> int:
         """Get the index of the right side of the trace."""
-        if a < self.loop_start:
+        if (
+            isinstance(self.finiteness, Finite)
+            or a < self.finiteness.loop_start
+        ):
             return len(self.trace) - 1
-        suf_len = len(self.trace) - self.loop_start
+        suf_len = len(self.trace) - self.finiteness.loop_start
         return a + suf_len - 1
 
     def __len__(self) -> int:
@@ -123,92 +154,6 @@ def get_variable_types(
     return variable_types
 
 
-def generate_vars(
-    variable_types: dict[str, tuple[Mutability, str]],
-    num_states: int,
-) -> list[str]:
-    lines = ["VAR"]
-    lines.append(f"  state : 0..{num_states - 1};")
-    for var, (mutability, smv_type) in variable_types.items():
-        if mutability == Mutability.VARIABLE:
-            lines.append(f"  {var} : {smv_type};")
-    return lines
-
-
-def generate_defines(
-    variable_types: dict[str, tuple[Mutability, str]],
-) -> list[str]:
-    lines = []
-    if any(
-        mutability == Mutability.CONSTANT
-        for _, (mutability, _) in variable_types.items()
-    ):
-        lines.append("DEFINE")
-        for var, (mutability, smv_type) in variable_types.items():
-            if mutability == Mutability.CONSTANT:
-                lines.append(f"  {var} := {smv_type};")
-    return lines
-
-
-def generate_assignments(
-    trace: Trace,
-    variable_types: dict[str, tuple[Mutability, str]],
-    num_states: int,
-) -> list[str]:
-    lines = ["ASSIGN"]
-    lines.append("  init(state) := 0;")
-    lines.append("  next(state) := case")
-    for i in range(num_states):
-        next_state = i + 1 if i < num_states - 1 else trace.loop_start
-        lines.append(f"    state = {i} : {next_state};")
-    lines.append("    TRUE : state;")
-    lines.append("  esac;")
-    variables = {
-        var
-        for var, (mutability, _) in variable_types.items()
-        if mutability == Mutability.VARIABLE
-    }
-    for var in variables:
-        val = trace[0][var]
-        val_str = (
-            "TRUE" if val is True else "FALSE" if val is False else str(val)
-        )
-        lines.append(f"  init({var}) := {val_str};")
-        lines.append(f"  next({var}) := case")
-        for i, state in enumerate(trace):
-            im = (i - 1) % num_states
-            val = state[var]
-            val_str = (
-                "TRUE" if val is True else "FALSE" if val is False else str(val)
-            )
-            lines.append(f"    state = {im} : {val_str};")
-        lines.append(f"    TRUE : {val_str};")
-        lines.append("  esac;")
-    return lines
-
-
-def generate_trace_smv(trace: Trace) -> str:
-    num_states = len(trace)
-    variable_types = get_variable_types(trace)
-    lines = ["MODULE main"]
-    lines += generate_vars(variable_types, num_states)
-    lines += generate_defines(variable_types)
-    lines += generate_assignments(trace, variable_types, num_states)
-    return "\n".join(lines)
-
-
-def write_trace_smv(
-    filepath: pathlib.Path,
-    trace: Trace,
-    formula: m.Mtl,
-) -> list[m.Mtl]:
-    trace_smv = generate_trace_smv(trace)
-    ltlspec_smv, subformulae = m.generate_subformulae_smv(formula, len(trace))
-    with filepath.open("w", encoding="utf-8") as f:
-        f.write(trace_smv + "\n\n" + ltlspec_smv + "\n")
-    return subformulae
-
-
 def parse_nuxmv_output(
     output: str,
     subformulae: list[m.Mtl],
@@ -244,33 +189,21 @@ class Marking:
 
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
-        self.loop_start = trace.loop_start
         self.markings = trace.to_markings()
         self[formula]
 
-    def mark_trace_with_nusmv(
-        self,
-        trace: Trace,
-        formula: m.Mtl,
-    ) -> dict[m.Mtl, list[bool]]:
-        subformulae = write_trace_smv(
-            pathlib.Path("res/trace.smv"),
-            trace,
-            formula,
-        )
-        out = util.run_and_capture(["nuXmv", "-source", "res/check_trace.txt"])
-        return parse_nuxmv_output(out, subformulae, len(trace))
-
     def add_loop_str(self, max_len: int) -> str:
+        assert isinstance(self.trace.finiteness, Lasso)
         out = f"{self.loop_str:<{max_len}}  "
+        loop_start = self.trace.finiteness.loop_start
         for i in range(len(self.trace)):
-            if i == self.loop_start and i == len(self.trace) - 1:
+            if i == loop_start and i == len(self.trace) - 1:
                 out += "⊔"
-            elif i == self.loop_start:
+            elif i == loop_start:
                 out += "└─"
             elif i == len(self.trace) - 1:
                 out += "┘"
-            elif i > self.loop_start:
+            elif i > loop_start:
                 out += "──"
             else:
                 out += "  "
@@ -382,5 +315,6 @@ class Marking:
                 else:
                     out += "│ "
             out += "│\n"
-        out += self.add_loop_str(max_len)
+        if isinstance(self.trace.finiteness, Lasso):
+            out += self.add_loop_str(max_len)
         return out
