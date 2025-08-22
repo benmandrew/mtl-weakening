@@ -1,13 +1,15 @@
 #!/bin/bash
 
-if [ $# -lt 1 ]
-  then
-    echo "No arguments supplied"
-    exit 1
+if [ $# -lt 1 ]; then
+	echo "No arguments supplied"
+	exit 1
 fi
 
 # Use path relative to script
-parent_path=$( (cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1) ; pwd -P )
+parent_path=$(
+	(cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1)
+	pwd -P
+)
 cd "$parent_path" || exit 1
 
 tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
@@ -15,15 +17,15 @@ tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 input_smv_file=models/foraging-robots.smv
 temp_smv_file="$tempdir/model.smv"
 
-if ! nuXmv "$input_smv_file" > /dev/null; then
-    echo "SMV file failed to parse"
-    exit 1
+if ! nuXmv "$input_smv_file" >/dev/null; then
+	echo "SMV file failed to parse"
+	exit 1
 fi
 
 # Write commands file
-cat > "$tempdir/commands.txt" <<EOL
+cat >"$tempdir/commands.txt" <<EOL
 go_bmc
-check_ltlspec_bmc_onepb -k 20
+check_ltlspec_bmc_onepb -k "$2"
 quit
 EOL
 
@@ -32,17 +34,15 @@ ltlspec=$(python3 -m src.mtl2ltlspec "$1")
 
 # Append LTL specification to model file
 cp "$input_smv_file" "$temp_smv_file"
-echo "LTLSPEC $ltlspec;" >> "$temp_smv_file"
+echo "LTLSPEC $ltlspec;" >>"$temp_smv_file"
 
 # Run NuXmv, kill after 60s to handle syntax
 # errors that drop into the interactive shell
-nuxmv_output=$(timeout --signal=KILL 60s nuXmv \
-    -source "$tempdir/commands.txt" "$temp_smv_file" \
-    | grep -Fv "*** ")
+nuxmv_output=$(nuXmv \
+	-source "$tempdir/commands.txt" "$temp_smv_file" 2>/dev/null |
+	grep -Fv "*** ")
 
-if [ "$2" = "cex" ]; then
-    echo "$nuxmv_output"
-else
-    # Analyse counterexample
-    python3 -m src.analyse_cex "$*" --debug <<< "$nuxmv_output"
-fi
+# echo "$nuxmv_output"
+
+# Analyse counterexample
+python3 -m src.analyse_cex "$1" <<<"$nuxmv_output"

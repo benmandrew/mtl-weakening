@@ -37,7 +37,7 @@ def parse_args() -> Namespace:
         dest="log_level",
         const=logging.DEBUG,
     )
-    parser.set_defaults(log_level=logging.INFO)
+    parser.set_defaults(log_level=logging.WARNING)
     return parser.parse_args(namespace=Namespace())
 
 
