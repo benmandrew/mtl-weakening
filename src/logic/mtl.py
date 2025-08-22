@@ -72,6 +72,9 @@ class Release(Mtl):
     interval: Interval = (0, None)
 
 
+Temporal = Eventually | Always | Until | Release
+
+
 def _mtl_to_ltl_eventually(formula: Eventually) -> ltl.Ltl:
     a, b = formula.interval
     subf = mtl_to_ltl(formula.operand)

@@ -3,12 +3,12 @@ from __future__ import annotations
 import argparse
 import pathlib
 import sys
+import typing
 
 import lark
 
-from src import marking
-from src.logic import parser, ctx
-from src import weaken
+from src import marking, weaken
+from src.logic import ctx, mtl, parser
 
 
 class Namespace(argparse.Namespace):
@@ -20,6 +20,7 @@ def parse_args() -> Namespace:
         description="Analyse NuXmv output.",
     )
     parser.add_argument("mtl", type=str, help="MTL specification")
+
     return parser.parse_args(namespace=Namespace())
 
 
@@ -69,10 +70,11 @@ def main() -> None:
     parsetree = model_parser.parse("".join(nuxmv_output))
     cex_trace: marking.Trace = TreeTransformer().transform(parsetree)
     c, subf = ctx.split_formula(formula, [0, 1])
-    c, subf = ctx.partial_nnf(c, subf)
+    c, subf = ctx.partial_nnf(c, typing.cast("mtl.Temporal", subf))
     w = weaken.Weaken(c, subf, cex_trace)
-    print(w.markings)
-    print(w.weaken())
+    print(w.markings)  # noqa: T201
+    print(w.weaken())  # noqa: T201
+
 
 if __name__ == "__main__":
     main()
