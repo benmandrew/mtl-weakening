@@ -49,7 +49,9 @@ class TreeTransformer(lark.Transformer):
     NEWLINE = lambda _self, _: lark.Discard  # noqa: E731
 
     def start(self, tok: list) -> marking.Trace:
-        return marking.Trace(tok)
+        trace = marking.Trace(tok)
+        trace.find_loop()
+        return trace
 
     def expr(self, tok: list[int | bool | str]) -> int | bool | str:
         return tok[0]

@@ -48,17 +48,20 @@ class Trace:
     ) -> None:
         trace = expand_nuxmv_trace(trace)
         if loop_start is None:
-            loop_start = self.periodic_trace_idx(trace)
-            if loop_start is None:
-                self.finiteness: Finiteness = Finite()
-                self.trace = trace
-            else:
-                self.finiteness = Lasso(loop_start)
-                self.trace = trace[:-1]
+            self.finiteness: Finiteness = Finite()
+            self.trace = trace
         else:
             assert loop_start < len(trace)
             self.finiteness = Lasso(loop_start)
             self.trace = trace
+
+    def find_loop(self) -> None:
+        loop_start = self.periodic_trace_idx(self.trace)
+        if loop_start is None:
+            self.finiteness = Finite()
+        else:
+            self.finiteness = Lasso(loop_start)
+            self.trace = self.trace[:-1]
 
     def to_markings(self) -> dict[m.Mtl, list[bool]]:
         markings: dict[m.Mtl, list[bool]] = {}
@@ -88,7 +91,7 @@ class Trace:
             for i in range(len(trace) - 2, -1, -1):
                 if last == trace[i]:
                     return i
-        logger.debug("Cannot identify loop in trace, assuming finite")
+        logger.info("Cannot identify loop in trace, assuming finite")
         return None
 
     def idx(self, i: int) -> int:
@@ -194,23 +197,6 @@ class Marking:
         self.markings = trace.to_markings()
         self[formula]
 
-    def add_loop_str(self, max_len: int) -> str:
-        assert isinstance(self.trace.finiteness, Lasso)
-        out = f"{self.loop_str:<{max_len}}  "
-        loop_start = self.trace.finiteness.loop_start
-        for i in range(len(self.trace)):
-            if i == loop_start and i == len(self.trace) - 1:
-                out += "⊔"
-            elif i == loop_start:
-                out += "└─"
-            elif i == len(self.trace) - 1:
-                out += "┘"
-            elif i > loop_start:
-                out += "──"
-            else:
-                out += "  "
-        return out
-
     def get(self, f: m.Mtl, i: int) -> bool:
         return self[f][self.trace.idx(i)]
 
@@ -234,6 +220,11 @@ class Marking:
         bs = [False] * len(vs)
         for i in range(len(bs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
+            if isinstance(
+                self.trace.finiteness,
+                Finite,
+            ) and i + right_idx > len(vs):
+                right_idx = len(vs) - i
             bs[i] = any(
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
@@ -245,6 +236,11 @@ class Marking:
         bs = [False] * len(vs)
         for i in range(len(bs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
+            if isinstance(
+                self.trace.finiteness,
+                Finite,
+            ) and i + right_idx > len(vs):
+                right_idx = len(vs) - i
             bs[i] = all(
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
@@ -339,6 +335,24 @@ class Marking:
                 else:
                     out += "│ "
             out += "│\n"
+        out = out[:-1]
         if isinstance(self.trace.finiteness, Lasso):
             out += self.add_loop_str(max_len)
+        return out
+
+    def add_loop_str(self, max_len: int) -> str:
+        assert isinstance(self.trace.finiteness, Lasso)
+        out = f"\n{self.loop_str:<{max_len}}  "
+        loop_start = self.trace.finiteness.loop_start
+        for i in range(len(self.trace)):
+            if i == loop_start and i == len(self.trace) - 1:
+                out += "⊔"
+            elif i == loop_start:
+                out += "└─"
+            elif i == len(self.trace) - 1:
+                out += "┘"
+            elif i > loop_start:
+                out += "──"
+            else:
+                out += "  "
         return out
