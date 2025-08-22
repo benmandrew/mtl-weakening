@@ -1,7 +1,7 @@
 import json
 import logging.config
-import pathlib
 import subprocess as sp
+from pathlib import Path
 
 
 def run_and_capture(cmd: list[str]) -> str:
@@ -26,7 +26,7 @@ def run_and_capture(cmd: list[str]) -> str:
 
 
 def setup_logging(loglevel: str) -> None:
-    config_file = pathlib.Path("logging.conf")
+    config_file = Path(__file__).parent / ".." / "logging.conf"
     with config_file.open(encoding="utf-8") as f:
         config = json.load(f)
     config["loggers"]["root"]["level"] = loglevel

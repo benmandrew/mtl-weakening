@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import argparse
 import logging
-import pathlib
 import sys
 import typing
+from pathlib import Path
 
 import lark
 
@@ -68,7 +68,7 @@ class TreeTransformer(lark.Transformer):
 
 
 def get_model_parser() -> lark.Lark:
-    parser_path = pathlib.Path("res/check_model.lark")
+    parser_path = Path(__file__).parent / "check_model.lark"
     with parser_path.open(encoding="utf-8") as f:
         return lark.Lark(f.read(), parser="lalr")
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pathlib
+from pathlib import Path
 
 import lark
 
@@ -96,7 +96,7 @@ class MTLTransformer(lark.Transformer):
         raise ValueError(msg)
 
 
-PARSER_PATH = pathlib.Path("src/logic/mtl.lark")
+PARSER_PATH = Path(__file__).parent / "mtl.lark"
 with PARSER_PATH.open(encoding="utf-8") as f:
     grammar = f.read()
 MTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
