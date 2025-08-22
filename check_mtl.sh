@@ -12,10 +12,18 @@ cd "$parent_path" || exit 1
 
 tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 
+input_smv_file=models/foraging-robots.smv
+temp_smv_file="$tempdir/model.smv"
+
+if ! nuXmv "$input_smv_file" > /dev/null; then
+    echo "SMV file failed to parse"
+    exit 1
+fi
+
 # Write commands file
 cat > "$tempdir/commands.txt" <<EOL
 go_bmc
-check_ltlspec_bmc_onepb -k 30
+check_ltlspec_bmc_onepb -k 20
 quit
 EOL
 
@@ -23,13 +31,13 @@ EOL
 ltlspec=$(python3 -m src.mtl2ltlspec "$1")
 
 # Append LTL specification to model file
-cp res/model.smv "$tempdir/model.smv"
-echo "LTLSPEC $ltlspec;" >> "$tempdir/model.smv"
+cp "$input_smv_file" "$temp_smv_file"
+echo "LTLSPEC $ltlspec;" >> "$temp_smv_file"
 
 # Run NuXmv, kill after 60s to handle syntax
 # errors that drop into the interactive shell
 nuxmv_output=$(timeout --signal=KILL 60s nuXmv \
-    -source "$tempdir/commands.txt" "$tempdir/model.smv" \
+    -source "$tempdir/commands.txt" "$temp_smv_file" \
     | grep -Fv "*** ")
 
 if [ "$2" = "cex" ]; then

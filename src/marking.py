@@ -56,12 +56,18 @@ class Trace:
             self.trace = trace
 
     def find_loop(self) -> None:
-        loop_start = self.periodic_trace_idx(self.trace)
-        if loop_start is None:
+        loop = self.periodic_trace_idx(self.trace)
+        if loop is None:
             self.finiteness = Finite()
         else:
-            self.finiteness = Lasso(loop_start)
-            self.trace = self.trace[:-1]
+            logger.info(
+                "Trace of len %d has loop indices (%d, %d)",
+                len(self.trace),
+                loop[0],
+                loop[1],
+            )
+            self.finiteness = Lasso(loop[0])
+            self.trace = self.trace[: loop[1]]
 
     def to_markings(self) -> dict[m.Mtl, list[bool]]:
         markings: dict[m.Mtl, list[bool]] = {}
@@ -78,20 +84,21 @@ class Trace:
     def periodic_trace_idx(
         self,
         trace: list[dict[str, bool | int | str]],
-    ) -> int | None:
+    ) -> tuple[int, int] | None:
         """
-        Attempts to find the start of a loop in the trace.
+        Attempts to find the indices of a loop in the trace.
         If none is found, then None is returned.
 
-        NuXmv identifies loops by duplicating the state
-        at the start of the loop at the end of the trace.
+        Loops are found by checking for repeated states,
+        and we return the coincident indices as a tuple.
         """
-        if len(trace) > 0:
-            last = trace[-1]
-            for i in range(len(trace) - 2, -1, -1):
-                if last == trace[i]:
-                    return i
-        logger.info("Cannot identify loop in trace, assuming finite")
+        if not trace:
+            return None
+        for j, back in reversed(list(enumerate(trace))):
+            for i in range(j - 1, -1, -1):
+                if back == trace[i]:
+                    return i, j
+        logger.error("Cannot identify loop in trace, assuming finite")
         return None
 
     def idx(self, i: int) -> int:

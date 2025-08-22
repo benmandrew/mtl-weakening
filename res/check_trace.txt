@@ -1,5 +1,0 @@
-read_model -i res/trace.smv
-set use_coi_size_sorting 0
-go
-check_ltlspec
-quit
