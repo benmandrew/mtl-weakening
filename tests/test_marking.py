@@ -70,13 +70,14 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                   0 1 2 3 4 5 6
             G (F[0, 4] (trigger)) │ │ │ │ │ │ │ │
             F[0, 4] (trigger)     │ │ │●│●│●│●│●│
             trigger               │ │ │ │ │ │ │●│
             =Lasso=                  └─────────┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         formula = mtl.Always(mtl.Eventually(mtl.Prop("a"), (0, 4)))
         trace = marking.Trace(
@@ -91,13 +92,14 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                             0 1 2 3 4
             G (F[0, 4] (a)) │●│●│●│●│●│
             F[0, 4] (a)     │●│●│●│●│●│
             a               │ │ │ │ │●│
             =Lasso=          └───────┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_f(self) -> None:
@@ -111,6 +113,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                         0 1
             F ((a | b)) │●│●│
             (a | b)     │●│●│
             b           │ │●│
@@ -118,7 +121,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=      └─┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_gfg(self) -> None:
@@ -142,6 +145,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                       0 1 2 3 4 5 6 7 8 9
             G (F[0, 4] (G[0, 2] (a))) │ │ │ │ │ │●│●│●│●│●│
             F[0, 4] (G[0, 2] (a))     │●│ │ │ │ │●│●│●│●│●│
             G[0, 2] (a)               │●│ │ │ │ │ │ │ │ │●│
@@ -149,7 +153,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=                                      ⊔
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         trace = marking.Trace(
             [
@@ -168,6 +172,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                       0 1 2 3 4 5 6 7 8 9
             G (F[0, 4] (G[0, 2] (a))) │●│●│●│●│●│●│●│●│●│●│
             F[0, 4] (G[0, 2] (a))     │●│●│●│●│●│●│●│●│●│●│
             G[0, 2] (a)               │●│ │ │ │●│ │ │ │ │●│
@@ -175,7 +180,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=                                      ⊔
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         formula = mtl.Always(mtl.Eventually(mtl.Always(mtl.Prop("a"), (2, 5))))
         trace = marking.Trace(
@@ -192,6 +197,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                 0 1 2 3 4 5 6
             G (F (G[2, 5] (a))) │ │ │ │ │ │ │ │
             F (G[2, 5] (a))     │ │ │ │ │ │ │ │
             G[2, 5] (a)         │ │ │ │ │ │ │ │
@@ -199,7 +205,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=                  └───────┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_fg(self) -> None:
@@ -218,6 +224,7 @@ class TestMarkingLasso(unittest.TestCase):
         formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)))
         expected = format_expect(
             """
+                             0 1 2 3 4
             F (G[0, 2] (a)) │ │ │ │ │ │
             G[0, 2] (a)     │ │ │ │ │ │
             F (G[0, 1] (a)) │●│●│●│●│●│
@@ -227,7 +234,7 @@ class TestMarkingLasso(unittest.TestCase):
         """,
         )
         markings[formula]
-        self.assertEqual(str(markings), expected)
+        self.assertEqual(format_expect(str(markings)), expected)
 
     def test_fmt_markings_fu(self) -> None:
         formula = mtl.Eventually(
@@ -245,6 +252,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                     0 1 2 3
             F[0, 2] ((p U[1, 2] q)) │●│●│●│●│
             (p U[1, 2] q)           │●│●│ │ │
             q                       │ │ │●│ │
@@ -252,7 +260,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=                  └─────┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_ngu(self) -> None:
@@ -271,6 +279,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                        0 1 2 3 4
             !(G[0, 3] ((p U[1, 3] q))) │●│●│●│●│●│
             G[0, 3] ((p U[1, 3] q))    │ │ │ │ │ │
             (p U[1, 3] q)              │●│●│ │ │●│
@@ -279,7 +288,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=                     └───────┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_r(self) -> None:
@@ -294,13 +303,14 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                           0 1 2
             (b R[0, 2] a) │ │ │ │
             b             │ │ │ │
             a             │●│●│ │
             =Lasso=        └───┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         trace = marking.Trace(
             [
@@ -312,13 +322,14 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                           0 1 2
             (b R[0, 2] a) │●│●│ │
             b             │ │●│ │
             a             │●│●│ │
             =Lasso=        └───┘
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_ugf(self) -> None:
@@ -338,6 +349,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                               0 1 2 3 4
         (G (F[0, 1] (b)) U a) │ │ │ │ │●│
         G (F[0, 1] (b))       │ │ │ │ │ │
         F[0, 1] (b)           │●│●│●│●│ │
@@ -346,7 +358,7 @@ class TestMarkingLasso(unittest.TestCase):
         =Lasso=                        ⊔
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         formula = mtl.Until(
             mtl.Eventually(mtl.Prop("b"), (0, 1)),
@@ -354,6 +366,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         expected = format_expect(
             """
+                           0 1 2 3 4
         (F[0, 1] (b) U a) │●│●│●│●│●│
         F[0, 1] (b)       │●│●│●│●│ │
         b                 │ │●│ │●│ │
@@ -361,7 +374,7 @@ class TestMarkingLasso(unittest.TestCase):
         =Lasso=                    ⊔
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
 
@@ -380,11 +393,12 @@ class TestMarkingFinite(unittest.TestCase):
         )
         expected = format_expect(
             """
+                         0 1
             G[0, 2] (a) │●│●│
             a           │●│●│
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_f(self) -> None:
@@ -396,11 +410,12 @@ class TestMarkingFinite(unittest.TestCase):
         )
         expected = format_expect(
             """
+                         0
             F[0, 2] (a) │●│
             a           │●│
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
     def test_fmt_markings_ugf(self) -> None:
@@ -419,6 +434,7 @@ class TestMarkingFinite(unittest.TestCase):
         )
         expected = format_expect(
             """
+                                   0 1 2 3 4
             (G (F[0, 1] (b)) U a) │ │ │ │ │●│
             G (F[0, 1] (b))       │ │ │ │ │ │
             F[0, 1] (b)           │●│●│●│●│ │
@@ -426,7 +442,7 @@ class TestMarkingFinite(unittest.TestCase):
             a                     │ │ │ │ │●│
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
         formula = mtl.Until(
             mtl.Eventually(mtl.Prop("b"), (0, 1)),
@@ -434,13 +450,14 @@ class TestMarkingFinite(unittest.TestCase):
         )
         expected = format_expect(
             """
+                           0 1 2 3 4
         (F[0, 1] (b) U a) │●│●│●│●│●│
         F[0, 1] (b)       │●│●│●│●│ │
         b                 │ │●│ │●│ │
         a                 │ │ │ │ │●│
         """,
         )
-        result = str(marking.Marking(trace, formula))
+        result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
 

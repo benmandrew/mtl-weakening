@@ -15,7 +15,7 @@ tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 # Write commands file
 cat > "$tempdir/commands.txt" <<EOL
 go_bmc
-check_ltlspec_bmc_onepb -k 5
+check_ltlspec_bmc_onepb -k 30
 quit
 EOL
 

@@ -320,12 +320,12 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        out = ""
         subformulae = list(self.markings.keys())
         max_len = max(
             len(self.loop_str),
             *(len(m.to_string(f)) for f in subformulae),
         )
+        out = self.get_trace_indices_str(max_len)
         for f in reversed(subformulae):
             s = m.to_string(f)
             out += f"{s:<{max_len}} "
@@ -337,10 +337,16 @@ class Marking:
             out += "│\n"
         out = out[:-1]
         if isinstance(self.trace.finiteness, Lasso):
-            out += self.add_loop_str(max_len)
+            out += self.get_loop_str(max_len)
         return out
 
-    def add_loop_str(self, max_len: int) -> str:
+    def get_trace_indices_str(self, max_len: int) -> str:
+        out = "\n " + " " * max_len
+        for i in range(len(self.trace)):
+            out += f" {i % 10}"
+        return out + "\n"
+
+    def get_loop_str(self, max_len: int) -> str:
         assert isinstance(self.trace.finiteness, Lasso)
         out = f"\n{self.loop_str:<{max_len}}  "
         loop_start = self.trace.finiteness.loop_start

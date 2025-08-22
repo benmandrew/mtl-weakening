@@ -76,7 +76,7 @@ def get_model_parser() -> lark.Lark:
 def parse_nuxmv_output(
     model_parser: lark.Lark,
     lines: list[str],
-) -> marking.Trace:
+) -> marking.Trace | None:
     filtered_lines = [
         line
         for line in lines
@@ -85,6 +85,8 @@ def parse_nuxmv_output(
         and not line.startswith("-- ")
         and not line.startswith("Trace ")
     ]
+    if not filtered_lines:
+        return None
     parsetree = model_parser.parse("".join(filtered_lines))
     return TreeTransformer().transform(parsetree)
 
@@ -96,6 +98,9 @@ def main() -> None:
     model_parser = get_model_parser()
     lines = sys.stdin.readlines()
     cex_trace = parse_nuxmv_output(model_parser, lines)
+    if cex_trace is None:
+        logger.error("No counterexample trace found.")
+        sys.exit(1)
     context, subformula = ctx.split_formula(formula, [0, 1])
     context, subformula = ctx.partial_nnf(
         context,
