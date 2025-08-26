@@ -48,9 +48,10 @@ class TreeTransformer(lark.Transformer):
     false = lambda _self, _: False  # noqa: E731
     NEWLINE = lambda _self, _: lark.Discard  # noqa: E731
 
-    def start(self, tok: list) -> marking.Trace:
+    def start(self, tok: list) -> marking.Trace | None:
         trace = marking.Trace(tok)
-        trace.find_loop()
+        if not trace.find_loop():
+            return None
         return trace
 
     def expr(self, tok: list[int | bool | str]) -> int | bool | str:
@@ -99,7 +100,6 @@ def main() -> None:
     lines = sys.stdin.readlines()
     cex_trace = parse_nuxmv_output(model_parser, lines)
     if cex_trace is None:
-        logger.error("No counterexample trace found.")
         sys.exit(1)
     context, subformula = ctx.split_formula(formula, [0, 1])
     context, subformula = ctx.partial_nnf(
@@ -107,8 +107,9 @@ def main() -> None:
         typing.cast("mtl.Temporal", subformula),
     )
     w = weaken.Weaken(context, subformula, cex_trace)
-    print(w.markings)  # noqa: T201
-    print(w.weaken())  # noqa: T201
+    # print(w.markings)  # noqa: T201
+    interval = w.weaken()
+    print(str(interval).replace(" ", ""))  # noqa: T201
 
 
 if __name__ == "__main__":

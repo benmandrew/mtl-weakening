@@ -36,8 +36,7 @@ ltlspec=$(python3 -m src.mtl2ltlspec "$1")
 cp "$input_smv_file" "$temp_smv_file"
 echo "LTLSPEC $ltlspec;" >>"$temp_smv_file"
 
-# Run NuXmv, kill after 60s to handle syntax
-# errors that drop into the interactive shell
+# Run NuXmv
 nuxmv_output=$(nuXmv \
 	-source "$tempdir/commands.txt" "$temp_smv_file" 2>/dev/null |
 	grep -Fv "*** ")
@@ -45,4 +44,4 @@ nuxmv_output=$(nuXmv \
 # echo "$nuxmv_output"
 
 # Analyse counterexample
-python3 -m src.analyse_cex "$1" <<<"$nuxmv_output"
+python3 -m src.analyse_cex "$1" --quiet <<<"$nuxmv_output"

@@ -88,7 +88,7 @@ class Trace:
             for i in range(j - 1, -1, -1):
                 if back == trace[i]:
                     return i, j
-        logger.error("Cannot identify loop in trace")
+        logger.warning("Cannot identify loop in trace")
         return None
 
     def idx(self, i: int) -> int:
