@@ -151,7 +151,7 @@ class TestWeakenContext(unittest.TestCase):
         assert result is not None
         self.assertTupleEqual(result, (2, 7))
 
-    def test_weakening_uf_left_1(self) -> None:
+    def test_weakening_uf_left(self) -> None:
         formula = parser.parse_mtl("F[0,1] b U a")
         context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
@@ -166,10 +166,6 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 2))
-
-    def test_weakening_uf_left_2(self) -> None:
-        formula = parser.parse_mtl("F[0,1] b U a")
-        context, subformula = ctx.split_formula(formula, [0])
         trace = marking.Trace(
             [
                 {"a": False, "b": True},
@@ -181,6 +177,15 @@ class TestWeakenContext(unittest.TestCase):
         )
         result = weaken.Weaken(context, subformula, trace).weaken()
         self.assertIsNone(result)
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+            ],
+            0,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_gug_right(self) -> None:
         formula = parser.parse_mtl("G (a U G[1,4] b)")

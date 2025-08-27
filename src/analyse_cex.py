@@ -107,7 +107,7 @@ def main() -> None:
         typing.cast("mtl.Temporal", subformula),
     )
     w = weaken.Weaken(context, subformula, cex_trace)
-    # print(w.markings)  # noqa: T201
+    # print(w.markings)
     interval = w.weaken()
     print(str(interval).replace(" ", ""))  # noqa: T201
 

@@ -120,11 +120,11 @@ class Weaken:
         right_idx = self.trace.right_idx(a) if b is None else b
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
+            if self.markings.get(c.right, trace_idx + i):
+                break
             interval = self._aux(c.left, trace_idx + i)
             if interval is None:
                 return None
-            if self.markings.get(c.right, trace_idx + i):
-                break
             intervals.append(interval)
         if not intervals:
             return self.original_interval
