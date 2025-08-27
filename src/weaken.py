@@ -60,8 +60,7 @@ class Weaken:
             right = -cast("int", interval[1])
         else:
             right = abs(
-                cast("int", interval[1])
-                - cast("int", self.original_interval[1]),
+                cast("int", interval[1]) - self.original_interval[1],
             )
         return abs(interval[0] - self.original_interval[0]) + right
 
