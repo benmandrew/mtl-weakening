@@ -34,3 +34,6 @@ skips = [
     "B404",
     "B603",
 ]
+
+[tool.pylint.basic]
+no-docstring-rgx = ".*"

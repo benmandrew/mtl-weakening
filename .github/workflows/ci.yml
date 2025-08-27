@@ -49,7 +49,7 @@ jobs:
         run: pip install pylint lark matplotlib numpy
 
       - name: Run pylint (errors only)
-        run: make pylint
+        run: make pylint-ci
 
   mypy:
     name: Lint (mypy)
