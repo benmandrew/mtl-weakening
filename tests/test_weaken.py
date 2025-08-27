@@ -295,6 +295,26 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 3))
+        trace = marking.Trace(
+            [
+                {"a": False, "b": True},
+                {"a": False, "b": False},
+            ],
+            1,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        self.assertIsNone(result)
+        trace = marking.Trace(
+            [
+                {"a": False, "b": False},
+                {"a": False, "b": False},
+                {"a": True, "b": True},
+            ],
+            1,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 2))
 
 
 class TestWeakenDirect(unittest.TestCase):
