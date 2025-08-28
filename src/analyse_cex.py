@@ -60,9 +60,9 @@ class TreeTransformer(lark.Transformer[lark.Token, marking.Trace | None]):
     def expr(self, tok: list[Value]) -> Value:
         return tok[0]
 
-    def state(self, tok: list) -> dict:
-        expr: list[lark.tree.Tree] = list(
-            filter(lambda x: type(x) is not int, tok),
+    def state(self, tok: list[typing.Any]) -> dict[str, Value]:
+        expr: list[typing.Any] = list(
+            filter(lambda x: not isinstance(x, int), tok),
         )
         d = {}
         for e in expr:
