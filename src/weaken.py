@@ -189,8 +189,7 @@ class Weaken:
             intervals.append(interval)
             if self.markings.get(c.left, trace_idx + i + a):
                 break
-        if not intervals:
-            return None
+        assert intervals != []
         return max(intervals, key=self._interval_abs_diff)
 
     def _weaken_direct_eventually(
