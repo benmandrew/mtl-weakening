@@ -41,25 +41,28 @@ def parse_args() -> Namespace:
     return parser.parse_args(namespace=Namespace())
 
 
-class TreeTransformer(lark.Transformer):
+Value = int | bool | str
+
+
+class TreeTransformer(lark.Transformer[lark.Token, marking.Trace | None]):
     INT = int
     CNAME = str
     true = lambda _self, _: True  # noqa: E731
     false = lambda _self, _: False  # noqa: E731
     NEWLINE = lambda _self, _: lark.Discard  # noqa: E731
 
-    def start(self, tok: list) -> marking.Trace | None:
+    def start(self, tok: list[dict[str, Value]]) -> marking.Trace | None:
         trace = marking.Trace(tok)
         if not trace.find_loop():
             return None
         return trace
 
-    def expr(self, tok: list[int | bool | str]) -> int | bool | str:
+    def expr(self, tok: list[Value]) -> Value:
         return tok[0]
 
-    def state(self, tok: list) -> dict:
-        expr: list[lark.tree.Tree] = list(
-            filter(lambda x: type(x) is not int, tok),
+    def state(self, tok: list[typing.Any]) -> dict[str, Value]:
+        expr: list[typing.Any] = list(
+            filter(lambda x: not isinstance(x, int), tok),
         )
         d = {}
         for e in expr:

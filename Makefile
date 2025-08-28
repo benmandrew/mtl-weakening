@@ -24,7 +24,7 @@ pylint-ci:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m pylint --errors-only
 
 mypy:
-	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m mypy --check-untyped-defs --ignore-missing-imports
+	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m mypy --strict
 
 bandit:
 	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q

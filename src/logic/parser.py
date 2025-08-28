@@ -8,7 +8,7 @@ from src.logic import mtl
 
 
 @lark.v_args(inline=True)
-class MTLTransformer(lark.Transformer):
+class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
     def start(self, *args: mtl.Mtl) -> mtl.Mtl:
         return args[0]
 
@@ -83,14 +83,22 @@ class MTLTransformer(lark.Transformer):
 
     def _split_interval_args(
         self,
-        args: tuple,
+        args: tuple[mtl.Mtl | tuple[mtl.Interval, mtl.Mtl], ...],
     ) -> tuple[mtl.Interval, mtl.Mtl]:
+        # Craziness to get the mypy type checker happy
         if len(args) == 1:
+            assert isinstance(args[0], mtl.Mtl)
             return (0, None), args[0]
         if len(args) == 2:  # noqa: PLR2004
             interval, phi = args
             if not isinstance(interval, tuple):
                 return (0, None), interval
+            assert (
+                isinstance(interval, tuple)
+                and isinstance(interval[0], int)
+                and isinstance(interval[1], int | None)
+            )
+            assert isinstance(phi, mtl.Mtl)
             return interval, phi
         msg = "Unexpected arity for temporal operator."
         raise ValueError(msg)
