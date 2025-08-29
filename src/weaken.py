@@ -7,6 +7,9 @@ from src.logic import ctx, mtl
 
 
 def min_option(a: int, b: int | None) -> int:
+    """
+    Get the minimum of two integers, treating `b` as infinity if `b` is None.
+    """
     if b is None:
         return a
     return min(a, b)
@@ -131,14 +134,14 @@ class Weaken:
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             if self.markings.get(c.right, trace_idx + i):
-                break
+                if i == a:
+                    return self.original_interval
+                return max(intervals, key=self._interval_abs_diff)
             interval = self._aux(c.left, trace_idx + i)
             if interval is None:
                 return None
             intervals.append(interval)
-        if not intervals:
-            return self.original_interval
-        return max(intervals, key=self._interval_abs_diff)
+        return None
 
     def _aux_until_right(
         self,
