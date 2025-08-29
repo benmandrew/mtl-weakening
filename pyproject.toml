@@ -37,3 +37,7 @@ skips = [
 
 [tool.pylint.basic]
 no-docstring-rgx = ".*"
+
+[[tool.mypy.overrides]]
+module = ["timeout_decorator.*"]
+ignore_missing_imports = true

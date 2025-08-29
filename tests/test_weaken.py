@@ -1,5 +1,7 @@
 import unittest
 
+import timeout_decorator
+
 from src import marking, weaken
 from src.logic import ctx, mtl, parser
 
@@ -50,6 +52,31 @@ class TestWeakenContext(unittest.TestCase):
         )
         result = weaken.Weaken(context, subformula, trace).weaken()
         self.assertIsNone(result)
+
+    @timeout_decorator.timeout(1)  # type: ignore[misc]
+    def test_weakening_gf_timeout(self) -> None:
+        """
+        Weakening should use the minimum of the interval and the trace length.
+        If there is a timeout, it means we're probably
+        trying to explore the entire interval here
+        """
+        formula = parser.parse_mtl("G[0,9999999999999999999] F[0,4] a")
+        context, subformula = ctx.split_formula(formula, [0])
+        trace = marking.Trace(
+            [
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+            ],
+            1,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 6))
 
     def test_weakening_ff(self) -> None:
         formula = parser.parse_mtl("F (a & F[0,2] b)")

@@ -6,6 +6,12 @@ from src import marking
 from src.logic import ctx, mtl
 
 
+def min_option(a: int, b: int | None) -> int:
+    if b is None:
+        return a
+    return min(a, b)
+
+
 class Weaken:
     """Performs trace-guided interval weakening of MTL subformulas.
 
@@ -93,7 +99,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weaken an interval within the Always operator"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         all_intervals = [
             self._aux(c.operand, trace_idx + i) for i in range(a, right_idx + 1)
         ]
@@ -105,7 +111,7 @@ class Weaken:
     def _aux_always(self, c: ctx.Always, trace_idx: int) -> mtl.Interval | None:
         """Weaken an interval within the Always operator"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         intervals = []
         for i in range(a, right_idx + 1):
             interval = self._aux(c.operand, trace_idx + i)
@@ -121,7 +127,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weaken an interval within the Until operator on the left"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             if self.markings.get(c.right, trace_idx + i):
@@ -141,7 +147,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weaken an interval within the Until operator on the right"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             interval = self._aux(c.right, trace_idx + i)
@@ -160,7 +166,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weaken an interval within the Release operator on the left"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             if not self.markings.get(c.right, trace_idx + i):
@@ -179,7 +185,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Weaken an interval within the Release operator on the right"""
         a, b = c.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         intervals: list[mtl.Interval] = []
         for i in range(a, right_idx + 1):
             interval = self._aux(c.right, trace_idx + i)
@@ -216,7 +222,7 @@ class Weaken:
         a, b = f.interval
         # Expand the interval until we find a state when the operand is false,
         # then reduce the interval to just before that
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         for i in range(a, right_idx + 1):
             if not self.markings.get(f.operand, trace_idx + i):
                 if i == a:
@@ -248,7 +254,7 @@ class Weaken:
     ) -> mtl.Interval | None:
         """Directly weaken interval of Release operator."""
         a, b = f.interval
-        right_idx = self.trace.right_idx(a) if b is None else b
+        right_idx = min_option(self.trace.right_idx(a), b)
         for i in range(a, right_idx + 1):
             if not self.markings.get(f.right, trace_idx + i):
                 if i == a:
