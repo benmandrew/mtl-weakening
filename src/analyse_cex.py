@@ -9,7 +9,10 @@ from pathlib import Path
 import lark
 
 from src import marking, util, weaken
-from src.logic import ctx, mtl, parser
+from src.logic import ctx, parser
+
+if typing.TYPE_CHECKING:
+    from src.logic import mtl
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +23,11 @@ class Namespace(argparse.Namespace):
 
 
 def parse_args() -> Namespace:
-    parser = argparse.ArgumentParser(
+    arg_parser = argparse.ArgumentParser(
         description="Analyse NuXmv output.",
     )
-    parser.add_argument("mtl", type=str, help="MTL specification")
-    group = parser.add_mutually_exclusive_group()
+    arg_parser.add_argument("mtl", type=str, help="MTL specification")
+    group = arg_parser.add_mutually_exclusive_group()
     group.add_argument(
         "--quiet",
         action="store_const",
@@ -37,8 +40,8 @@ def parse_args() -> Namespace:
         dest="log_level",
         const=logging.DEBUG,
     )
-    parser.set_defaults(log_level=logging.WARNING)
-    return parser.parse_args(namespace=Namespace())
+    arg_parser.set_defaults(log_level=logging.WARNING)
+    return arg_parser.parse_args(namespace=Namespace())
 
 
 Value = int | bool | str
@@ -47,9 +50,15 @@ Value = int | bool | str
 class TreeTransformer(lark.Transformer[lark.Token, marking.Trace | None]):
     INT = int
     CNAME = str
-    true = lambda _self, _: True  # noqa: E731
-    false = lambda _self, _: False  # noqa: E731
-    NEWLINE = lambda _self, _: lark.Discard  # noqa: E731
+
+    def true(self, _: lark.Token) -> bool:
+        return True
+
+    def false(self, _: lark.Token) -> bool:
+        return False
+
+    def NEWLINE(self, _: lark.Token) -> object:  # noqa: N802
+        return lark.Discard
 
     def start(self, tok: list[dict[str, Value]]) -> marking.Trace | None:
         trace = marking.Trace(tok)

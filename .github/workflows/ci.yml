@@ -50,8 +50,8 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run pylint (errors only)
-        run: make pylint-ci
+      - name: Run pylint
+        run: make pylint
 
   mypy:
     name: Lint (mypy)

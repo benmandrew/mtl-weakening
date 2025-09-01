@@ -63,7 +63,7 @@ class Trace:
         markings: dict[m.Mtl, list[bool]] = {}
         for state in self.trace:
             for k, v in state.items():
-                if type(v) is not bool:
+                if not isinstance(v, bool):
                     continue
                 f = m.Prop(k)
                 if f not in markings:
@@ -184,7 +184,7 @@ class Marking:
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
         self.markings = trace.to_markings()
-        self[formula]
+        self[formula]  # pylint: disable=pointless-statement
 
     def get(self, f: m.Mtl, i: int) -> bool:
         return self[f][self.trace.idx(i)]
@@ -207,7 +207,7 @@ class Marking:
     ) -> list[bool]:
         vs = self[operand]
         bs = [False] * len(vs)
-        for i in range(len(bs)):
+        for i in range(len(vs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
             bs[i] = any(
                 vs[self.trace.idx(j)]
@@ -218,7 +218,7 @@ class Marking:
     def _get_always(self, operand: m.Mtl, interval: m.Interval) -> list[bool]:
         vs = self[operand]
         bs = [False] * len(vs)
-        for i in range(len(bs)):
+        for i in range(len(vs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
             bs[i] = all(
                 vs[self.trace.idx(j)]
@@ -235,7 +235,7 @@ class Marking:
         rights = self[right]
         lefts = self[left]
         bs = [False] * len(rights)
-        for i in range(len(bs)):
+        for i in range(len(rights)):
             right_idx = (
                 interval[1] + 1 if interval[1] is not None else len(rights) - i
             )
@@ -257,7 +257,7 @@ class Marking:
         rights = self[right]
         lefts = self[left]
         bs = [False] * len(rights)
-        for i in range(len(bs)):
+        for i in range(len(rights)):
             right_idx = (
                 interval[1] + 1 if interval[1] is not None else len(rights) - i
             )

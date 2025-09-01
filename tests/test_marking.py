@@ -233,7 +233,7 @@ class TestMarkingLasso(unittest.TestCase):
             =Lasso=          └───────┘
         """,
         )
-        markings[formula]
+        markings[formula]  # pylint: disable=pointless-statement
         self.assertEqual(format_expect(str(markings)), expected)
 
     def test_fmt_markings_fu(self) -> None:

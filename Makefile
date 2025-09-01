@@ -20,9 +20,6 @@ ruff-fix:
 pylint:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m pylint
 
-pylint-ci:
-	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m pylint --errors-only
-
 mypy:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m mypy --strict
 
