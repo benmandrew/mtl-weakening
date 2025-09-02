@@ -47,7 +47,15 @@ def parse_args() -> Namespace:
 Value = int | bool | str
 
 
-class TreeTransformer(lark.Transformer[lark.Token, marking.Trace | None]):
+class NoCounterexampleError(Exception):
+    pass
+
+
+class NoLoopError(Exception):
+    pass
+
+
+class TreeTransformer(lark.Transformer[lark.Token, marking.Trace]):
     INT = int
     CNAME = str
 
@@ -60,10 +68,10 @@ class TreeTransformer(lark.Transformer[lark.Token, marking.Trace | None]):
     def NEWLINE(self, _: lark.Token) -> object:  # noqa: N802
         return lark.Discard
 
-    def start(self, tok: list[dict[str, Value]]) -> marking.Trace | None:
+    def start(self, tok: list[dict[str, Value]]) -> marking.Trace:
         trace = marking.Trace(tok)
         if not trace.find_loop():
-            return None
+            raise NoLoopError
         return trace
 
     def expr(self, tok: list[Value]) -> Value:
@@ -89,7 +97,7 @@ def get_model_parser() -> lark.Lark:
 def parse_nuxmv_output(
     model_parser: lark.Lark,
     lines: list[str],
-) -> marking.Trace | None:
+) -> marking.Trace:
     filtered_lines = [
         line
         for line in lines
@@ -99,9 +107,16 @@ def parse_nuxmv_output(
         and not line.startswith("Trace ")
     ]
     if not filtered_lines:
-        return None
+        raise NoCounterexampleError
     parsetree = model_parser.parse("".join(filtered_lines))
-    return TreeTransformer().transform(parsetree)
+    try:
+        result = TreeTransformer().transform(parsetree)
+    except lark.exceptions.VisitError as exn:
+        if isinstance(exn.__context__, BaseException):
+            # Reraise the original exception
+            raise exn.__context__ from exn
+        raise
+    return result
 
 
 def main() -> None:
@@ -110,8 +125,13 @@ def main() -> None:
     formula = parser.parse_mtl(args.mtl)
     model_parser = get_model_parser()
     lines = sys.stdin.readlines()
-    cex_trace = parse_nuxmv_output(model_parser, lines)
-    if cex_trace is None:
+    try:
+        cex_trace = parse_nuxmv_output(model_parser, lines)
+    except NoLoopError:
+        print("No loop exists in the counterexample")  # noqa: T201
+        sys.exit(1)
+    except NoCounterexampleError:
+        print("Property is valid")  # noqa: T201
         sys.exit(1)
     context, subformula = ctx.split_formula(formula, [0, 1])
     context, subformula = ctx.partial_nnf(

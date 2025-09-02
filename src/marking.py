@@ -273,6 +273,10 @@ class Marking:
     def __getitem__(self, f: m.Mtl) -> list[bool]:
         if f in self.markings:
             return self.markings[f]
+        if isinstance(f, m.TrueBool):
+            return [True] * len(self.trace)
+        if isinstance(f, m.FalseBool):
+            return [False] * len(self.trace)
         if isinstance(f, m.Prop):
             msg = f"Proposition '{f}' not found in markings. "
             raise TypeError(msg)

@@ -270,7 +270,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (0, 1))
 
     def test_weakening_nfg(self) -> None:
-        formula = parser.parse_mtl("! F G[0,1] p")
+        formula = parser.parse_mtl("! F G[0,1] (p | false)")
         context, subformula = ctx.split_formula(formula, [0, 0])
         assert isinstance(
             subformula,

@@ -15,6 +15,12 @@ class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
     def INT(self, value: lark.Token) -> int:  # noqa: N802
         return int(str(value))
 
+    def true(self) -> mtl.TrueBool:
+        return mtl.TrueBool()
+
+    def false(self) -> mtl.FalseBool:
+        return mtl.FalseBool()
+
     def ap(self, name: lark.Token) -> mtl.Prop:
         return mtl.Prop(str(name))
 

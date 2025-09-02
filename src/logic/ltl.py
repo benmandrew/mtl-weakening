@@ -7,6 +7,16 @@ class Ltl:
 
 
 @dataclass(frozen=True)
+class TrueBool(Ltl):
+    pass
+
+
+@dataclass(frozen=True)
+class FalseBool(Ltl):
+    pass
+
+
+@dataclass(frozen=True)
 class Prop(Ltl):
     name: str
 
@@ -56,6 +66,10 @@ class Until(Ltl):
 
 
 def to_nuxmv(formula: Ltl) -> str:
+    if isinstance(formula, TrueBool):
+        return "true"
+    if isinstance(formula, FalseBool):
+        return "false"
     if isinstance(formula, Prop):
         return formula.name
     if isinstance(formula, Not):

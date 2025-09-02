@@ -24,7 +24,9 @@ start: formula
       | atom
       | "(" formula ")"
 
-atom: CNAME -> ap
+atom: "true" -> true
+      | "false" -> false
+      | CNAME -> ap
 
 interval: "[" INT "," maybe_infinity "]"
 

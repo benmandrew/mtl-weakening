@@ -14,6 +14,16 @@ class Mtl:
 
 
 @dataclass(frozen=True, order=True, repr=False)
+class TrueBool(Mtl):
+    pass
+
+
+@dataclass(frozen=True, order=True, repr=False)
+class FalseBool(Mtl):
+    pass
+
+
+@dataclass(frozen=True, order=True, repr=False)
 class Prop(Mtl):
     name: str
 
@@ -119,6 +129,10 @@ def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
 
 
 def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
+    if isinstance(formula, TrueBool):
+        return ltl.TrueBool()
+    if isinstance(formula, FalseBool):
+        return ltl.FalseBool()
     if isinstance(formula, Prop):
         return ltl.Prop(formula.name)
     if isinstance(formula, Not):
@@ -188,6 +202,10 @@ def fmt_interval(interval: Interval) -> str:
 
 
 def to_string(formula: Mtl) -> str:
+    if isinstance(formula, TrueBool):
+        return "true"
+    if isinstance(formula, FalseBool):
+        return "false"
     if isinstance(formula, Prop):
         return formula.name
     if isinstance(formula, Not):

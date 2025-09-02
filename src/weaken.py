@@ -16,18 +16,7 @@ def min_option(a: int, b: int | None) -> int:
 
 
 class Weaken:
-    """Performs trace-guided interval weakening of MTL subformulas.
-
-    Weakening is done by adjusting the interval so that the modified
-    formula remains true over the given trace.
-
-    The algorithm is mutually recursive, alternating between `_aux` and
-    `_naux` depending on polarity. Negations reverse polarity and
-    delegate to the corresponding opposite method.
-
-    Temporal operators use specific `_weaken_*` methods to attempt
-    interval expansion while preserving validity over the trace.
-    """
+    """Performs trace-guided interval weakening of MTL subformulas."""
 
     def __init__(
         self,

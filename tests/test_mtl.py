@@ -53,28 +53,37 @@ class TestMtlToLtl(unittest.TestCase):
         result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
+    def test_boolean(self) -> None:
+        mtl = m.And(m.TrueBool(), m.FalseBool())
+        expected = l.And(l.TrueBool(), l.FalseBool())
+        result = m.mtl_to_ltl(mtl)
+        self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
+
 
 class TestMtlToString(unittest.TestCase):
     def test_deep_nested_negations_and_temporal(self) -> None:
         formula = m.Not(
             m.Implies(
                 m.And(m.Prop("p"), m.Not(m.Eventually(m.Prop("q"), (1, 2)))),
-                m.Always(m.Or(m.Not(m.Prop("r")), m.Next(m.Prop("s"))), (0, 3)),
+                m.Always(
+                    m.Or(m.Not(m.Prop("r")), m.Next(m.TrueBool())),
+                    (0, 3),
+                ),
             ),
         )
         self.assertEqual(
             m.to_string(formula),
-            "!(((p & !(F[1, 2] (q))) -> G[0, 3] ((!(r) | X (s)))))",
+            "!(((p & !(F[1, 2] (q))) -> G[0, 3] ((!(r) | X (true)))))",
         )
 
     def test_complex_mixed_with_next_and_implies(self) -> None:
         formula = m.And(
-            m.Implies(m.Prop("p"), m.Next(m.Eventually(m.Prop("q"), (2, 4)))),
+            m.Implies(m.FalseBool(), m.Next(m.Eventually(m.Prop("q"), (2, 4)))),
             m.Not(m.Or(m.Prop("r"), m.Until(m.Prop("s"), m.Prop("t"), (1, 3)))),
         )
         self.assertEqual(
             m.to_string(formula),
-            "((p -> X (F[2, 4] (q))) & !((r | (s U[1, 3] t))))",
+            "((false -> X (F[2, 4] (q))) & !((r | (s U[1, 3] t))))",
         )
 
 

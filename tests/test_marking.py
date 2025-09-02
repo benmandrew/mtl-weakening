@@ -377,6 +377,37 @@ class TestMarkingLasso(unittest.TestCase):
         result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
+    def test_fmt_markings_bool(self) -> None:
+        formula = mtl.Or(mtl.TrueBool(), mtl.Prop("a"))
+        trace = marking.Trace(
+            [
+                {"a": True},
+                {"a": False},
+            ],
+            0,
+        )
+        expected = format_expect(
+            """
+                    0 1
+        (true | a) │●│●│
+        a          │●│ │
+        =Lasso=     └─┘
+        """,
+        )
+        result = format_expect(str(marking.Marking(trace, formula)))
+        self.assertEqual(result, expected)
+        formula = mtl.Or(mtl.FalseBool(), mtl.Prop("a"))
+        expected = format_expect(
+            """
+                     0 1
+        (false | a) │●│ │
+        a           │●│ │
+        =Lasso=      └─┘
+        """,
+        )
+        result = format_expect(str(marking.Marking(trace, formula)))
+        self.assertEqual(result, expected)
+
 
 if __name__ == "__main__":
     unittest.main()
