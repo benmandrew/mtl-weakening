@@ -67,9 +67,9 @@ class Until(Ltl):
 
 def to_nuxmv(formula: Ltl) -> str:
     if isinstance(formula, TrueBool):
-        return "true"
+        return "TRUE"
     if isinstance(formula, FalseBool):
-        return "false"
+        return "FALSE"
     if isinstance(formula, Prop):
         return formula.name
     if isinstance(formula, Not):
