@@ -5,6 +5,11 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
+# Allow script to exit even if nuXmv is hanging
+# To kill nuXmv process run:
+#   kill -9 $(ps aux | grep nuXmv | awk '{print $2}')
+trap 'exit 130' INT
+
 # Use path relative to script
 parent_path=$(
 	(cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1)
@@ -24,8 +29,9 @@ fi
 
 # Write commands file
 cat >"$tempdir/commands.txt" <<EOL
+set on_failure_script_quits 1
 go_bmc
-check_ltlspec_bmc_onepb -k "$2"
+check_ltlspec_bmc_onepb -k "$2" -l '*'
 quit
 EOL
 
@@ -39,9 +45,10 @@ echo "LTLSPEC $ltlspec;" >>"$temp_smv_file"
 # Run NuXmv
 nuxmv_output=$(nuXmv \
 	-source "$tempdir/commands.txt" "$temp_smv_file" 2>/dev/null |
-	grep -Fv "*** ")
+	grep -Fv "*** " |
+	grep -v -e '^$')
 
-# echo "$nuxmv_output"
+# >&2 echo "$nuxmv_output"
 
 # Analyse counterexample
 python3 -m src.analyse_cex "$1" --quiet <<<"$nuxmv_output"
