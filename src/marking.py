@@ -59,7 +59,19 @@ class Trace:
         self.trace = self.trace[: loop[1]]
         return True
 
-    def to_markings(self) -> dict[m.Mtl, list[bool]]:
+    def to_markings(self) -> dict[m.Mtl, list[bool | int]]:
+        markings: dict[m.Mtl, list[bool | int]] = {}
+        for state in self.trace:
+            for k, v in state.items():
+                if not isinstance(v, (bool, int)):
+                    continue
+                f = m.Prop(k)
+                if f not in markings:
+                    markings[f] = []
+                markings[f].append(v)
+        return markings
+
+    def to_bool_markings(self) -> dict[m.Mtl, list[bool]]:
         markings: dict[m.Mtl, list[bool]] = {}
         for state in self.trace:
             for k, v in state.items():
@@ -152,7 +164,7 @@ def parse_nuxmv_output(
     output: str,
     subformulae: list[m.Mtl],
     num_states: int,
-) -> dict[m.Mtl, list[bool]]:
+) -> dict[m.Mtl, list[bool | int]]:
     lines = output.split("\n")
     lines = list(
         filter(
@@ -163,7 +175,7 @@ def parse_nuxmv_output(
             lines,
         ),
     )
-    markings: dict[m.Mtl, list[bool]] = {}
+    markings: dict[m.Mtl, list[bool | int]] = {}
     for i, f in enumerate(subformulae):
         markings[f] = []
         for j in range(num_states):
@@ -183,7 +195,7 @@ class Marking:
 
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
-        self.markings = trace.to_markings()
+        self.markings = trace.to_bool_markings()
         self[formula]  # pylint: disable=pointless-statement
 
     def get(self, f: m.Mtl, i: int) -> bool:
@@ -303,7 +315,7 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        out, max_len = markings_to_str(
+        out, max_len = bool_markings_to_str(
             self.markings,
             max_len=len(self.loop_str),
         )
@@ -340,8 +352,15 @@ def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
     return out + "\n"
 
 
+def _marking_char(marking: bool | int) -> str:  # noqa: FBT001
+    if isinstance(marking, bool):
+        return "●" if marking else " "
+    string = str(marking)
+    return string if len(string) == 1 else "*"
+
+
 def markings_to_str(
-    markings: dict[m.Mtl, list[bool]],
+    markings: dict[m.Mtl, list[bool | int]],
     max_len: int | None = None,
 ) -> tuple[str, int]:
     subformulae = list(markings.keys())
@@ -356,9 +375,14 @@ def markings_to_str(
         s = m.to_string(f)
         out += f"{s:<{max_formula_len}} "
         for marking in markings[f]:
-            if marking:
-                out += "│●"
-            else:
-                out += "│ "
+            out += f"│{_marking_char(marking)}"
         out += "│\n"
     return out, max_formula_len
+
+
+def bool_markings_to_str(
+    markings: dict[m.Mtl, list[bool]],
+    max_len: int | None = None,
+) -> tuple[str, int]:
+    general_markings = typing.cast("dict[m.Mtl, list[bool | int]]", markings)
+    return markings_to_str(general_markings, max_len)

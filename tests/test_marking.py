@@ -441,6 +441,27 @@ class TestMarkingLasso(unittest.TestCase):
         result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
+    def test_fmt_markings_timer(self) -> None:
+        trace = marking.Trace(
+            [
+                {"a": False, "b": False, "timer": 2},
+                {"a": False, "b": True, "timer": 1},
+                {"a": False, "b": False, "timer": 2},
+                {"a": False, "b": True, "timer": 5},
+                {"a": True, "b": False, "timer": 100},
+            ],
+        )
+        expected = format_expect(
+            """
+               0 1 2 3 4
+        timer │2│1│2│5│*│
+        b     │ │●│ │●│ │
+        a     │ │ │ │ │●│
+        """,
+        )
+        result, _ = marking.markings_to_str(trace.to_markings())
+        self.assertEqual(format_expect(result), expected)
+
 
 if __name__ == "__main__":
     unittest.main()
