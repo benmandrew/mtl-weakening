@@ -50,9 +50,9 @@ echo "LTLSPEC $ltlspec;" >>"$tempdir/model.smv"
 	nuXmv -source "$tempdir/commands.txt" "$tempdir/model.smv") >/dev/null
 
 # Analyse counterexample
-# python3 -m src.analyse_cex "$1" --quiet <<<"$nuxmv_output"
+# python3 -m src.analyse_cex --mtl "$1" --quiet "$tempdir/trace.txt"
 
-cat "$tempdir/trace.txt"
+# cat "$tempdir/trace.txt"
 
 # Print the markings
-# python3 -m src.trace2marking --quiet "$tempdir/trace.txt"
+python3 -m src.trace2marking --quiet "$tempdir/trace.txt"

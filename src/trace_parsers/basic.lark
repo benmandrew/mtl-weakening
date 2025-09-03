@@ -7,7 +7,6 @@ bool: "TRUE" -> true
     | "FALSE" -> false
 
 %import common.INT
-// %import common.WORD
 %import common.CNAME
 %import common.NEWLINE
 %import common.WS_INLINE
