@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -lt 1 ]; then
-	echo "No arguments supplied"
+	>&2 echo "No arguments supplied"
 	exit 1
 fi
 
@@ -15,11 +15,11 @@ tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
 input_smv_file=models/foraging-robots.smv
 
 if ! nuXmv "$input_smv_file" >/dev/null; then
-	echo "SMV file failed to parse"
+	>&2 echo "SMV file failed to parse"
 	exit 1
 fi
 
-# nuXmv trace plugins:
+# nuXmv trace plugins, controlled with flag `-p`:
 #   0   BASIC TRACE EXPLAINER - shows changes only
 #   1   BASIC TRACE EXPLAINER - shows all variables
 #   2   TRACE TABLE PLUGIN - symbols on column
@@ -34,7 +34,7 @@ cat >"$tempdir/commands.txt" <<EOL
 set on_failure_script_quits 1
 go_bmc
 check_ltlspec_bmc_onepb -k "$2" -l '*' -o "problem"
-show_traces -o "trace.txt" -p 0
+show_traces -o "trace.xml" -p 4
 quit
 EOL
 
@@ -49,10 +49,15 @@ echo "LTLSPEC $ltlspec;" >>"$tempdir/model.smv"
 (cd "$tempdir" || exit ;\
 	nuXmv -source "$tempdir/commands.txt" "$tempdir/model.smv") >/dev/null
 
-# Analyse counterexample
-# python3 -m src.analyse_cex --mtl "$1" --quiet "$tempdir/trace.txt"
+if [ ! -f "$tempdir/trace.xml" ]; then
+    >&2 echo "Trace file not found at: $tempdir/trace.xml"
+	exit 1
+fi
 
-# cat "$tempdir/trace.txt"
+# Analyse counterexample
+# python3 -m src.analyse_cex --mtl "$1" --quiet "$tempdir/trace.xml"
+
+# cat "$tempdir/trace.xml"
 
 # Print the markings
-python3 -m src.trace2marking --quiet "$tempdir/trace.txt"
+python3 -m src.trace2marking --quiet "$tempdir/trace.xml"

@@ -55,6 +55,16 @@ def get_model_parser() -> lark.Lark:
 Value = int | bool | str
 
 
+def str_to_value(s: str) -> Value:
+    if s == "TRUE":
+        return True
+    if s == "FALSE":
+        return False
+    if s.isdigit():
+        return int(s)
+    return s
+
+
 class TreeTransformer(lark.Transformer[lark.Token, marking.Trace]):
     INT = int
     CNAME = str

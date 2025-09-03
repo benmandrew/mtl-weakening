@@ -7,6 +7,7 @@ import typing
 from pathlib import Path
 
 from src import marking, util
+from src.trace_parsers import xml_dump
 
 if typing.TYPE_CHECKING:
     import lark
@@ -61,16 +62,22 @@ def get_cex_trace(model_parser: lark.Lark, lines: list[str]) -> marking.Trace:
     return cex_trace
 
 
+def get_cex_trace_xml(lines: list[str]) -> marking.Trace:
+    xml_element = xml_dump.parse("".join(lines))
+    return xml_dump.xml_to_trace(xml_element)
+
+
 def main() -> None:
     args = parse_args()
     util.setup_logging(args.log_level)
-    model_parser = util.get_model_parser()
+    # model_parser = util.get_model_parser()
     lines = read_trace_input(args)
-    cex_trace = get_cex_trace(model_parser, lines)
-    if not cex_trace.find_loop():
-        util.eprint("No loop found")
-    else:
-        print(f"Loop found at idx {cex_trace.loop_start}")  # noqa: T201
+    cex_trace = get_cex_trace_xml(lines)
+    # cex_trace = get_cex_trace(model_parser, lines)
+    # if not cex_trace.find_loop():
+    #     util.eprint("No loop found")
+    # else:
+    #     print(f"Loop found at idx {cex_trace.loop_start}")
     result, _ = marking.markings_to_str(cex_trace.to_markings())
     print(result, end="")  # noqa: T201
 
