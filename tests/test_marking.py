@@ -377,21 +377,53 @@ class TestMarkingLasso(unittest.TestCase):
         result = format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
 
-    def test_fmt_markings_bool(self) -> None:
+    def test_fmt_markings_long_bool(self) -> None:
         formula = mtl.Or(mtl.TrueBool(), mtl.Prop("a"))
         trace = marking.Trace(
             [
                 {"a": True},
                 {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+                {"a": True},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
             ],
-            0,
+            20,
         )
         expected = format_expect(
             """
-                    0 1
-        (true | a) │●│●│
-        a          │●│ │
-        =Lasso=     └─┘
+                                        1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3
+                    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
+        (true | a) │●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│
+        a          │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
+        =Lasso=                                             └───────────────────────┘
         """,
         )
         result = format_expect(str(marking.Marking(trace, formula)))
@@ -399,10 +431,11 @@ class TestMarkingLasso(unittest.TestCase):
         formula = mtl.Or(mtl.FalseBool(), mtl.Prop("a"))
         expected = format_expect(
             """
-                     0 1
-        (false | a) │●│ │
-        a           │●│ │
-        =Lasso=      └─┘
+                                         1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3
+                     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
+        (false | a) │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
+        a           │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
+        =Lasso=                                              └───────────────────────┘
         """,
         )
         result = format_expect(str(marking.Marking(trace, formula)))

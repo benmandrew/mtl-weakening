@@ -327,7 +327,14 @@ class Marking:
 
 
 def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
-    out = " " + " " * max_len
+    out = ""
+    if trace_len > 10:  # noqa: PLR2004
+        out += " " + " " * max_len
+        for i in range(trace_len):
+            tens = i // 10
+            out += f" {tens if tens > 0 else ' '}"
+        out += "\n"
+    out += " " + " " * max_len
     for i in range(trace_len):
         out += f" {i % 10}"
     return out + "\n"
