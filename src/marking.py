@@ -191,8 +191,6 @@ def parse_nuxmv_output(
 
 
 class Marking:
-    loop_str = "=Lasso="
-
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
         self.markings = trace.to_bool_markings()
@@ -315,27 +313,7 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        out, max_len = bool_markings_to_str(
-            self.markings,
-            max_len=len(self.loop_str),
-        )
-        return out + self.get_loop_str(max_len)
-
-    def get_loop_str(self, max_len: int) -> str:
-        out = f"{self.loop_str:<{max_len}}  "
-        loop_start = self.trace.loop_start
-        for i in range(len(self.trace)):
-            if i == loop_start and i == len(self.trace) - 1:
-                out += "⊔"
-            elif i == loop_start:
-                out += "└─"
-            elif i == len(self.trace) - 1:
-                out += "┘"
-            elif i > loop_start:
-                out += "──"
-            else:
-                out += "  "
-        return out
+        return bool_markings_to_str(self.markings, self.trace.loop_start)
 
 
 def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
@@ -359,30 +337,49 @@ def _marking_char(marking: bool | int) -> str:  # noqa: FBT001
     return string if len(string) == 1 else "*"
 
 
+LOOP_STR = "=Lasso="
+
+
+def _get_loop_str(loop_start: int, max_formula_len: int, trace_len: int) -> str:
+    out = f"{LOOP_STR:<{max_formula_len}}  "
+    for i in range(trace_len):
+        if i == loop_start and i == trace_len - 1:
+            out += "⊔"
+        elif i == loop_start:
+            out += "└─"
+        elif i == trace_len - 1:
+            out += "┘"
+        elif i > loop_start:
+            out += "──"
+        else:
+            out += "  "
+    return out + "\n"
+
+
 def markings_to_str(
     markings: dict[m.Mtl, list[bool | int]],
-    max_len: int | None = None,
-) -> tuple[str, int]:
+    loop_start: int | None,
+) -> str:
     subformulae = list(markings.keys())
+    trace_len = len(markings[subformulae[0]])
     max_formula_len = max(len(m.to_string(f)) for f in subformulae)
-    max_formula_len = (
-        max(max_len, max_formula_len)
-        if max_len is not None
-        else max_formula_len
-    )
-    out = _get_trace_indices_str(len(markings[subformulae[0]]), max_formula_len)
+    if loop_start is not None:
+        max_formula_len = max(max_formula_len, len(LOOP_STR))
+    out = _get_trace_indices_str(trace_len, max_formula_len)
     for f in reversed(subformulae):
         s = m.to_string(f)
         out += f"{s:<{max_formula_len}} "
         for marking in markings[f]:
             out += f"│{_marking_char(marking)}"
         out += "│\n"
-    return out, max_formula_len
+    if loop_start is not None:
+        out += _get_loop_str(loop_start, max_formula_len, trace_len)
+    return out
 
 
 def bool_markings_to_str(
     markings: dict[m.Mtl, list[bool]],
-    max_len: int | None = None,
-) -> tuple[str, int]:
+    loop_start: int | None,
+) -> str:
     general_markings = typing.cast("dict[m.Mtl, list[bool | int]]", markings)
-    return markings_to_str(general_markings, max_len)
+    return markings_to_str(general_markings, loop_start)

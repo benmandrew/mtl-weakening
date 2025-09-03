@@ -459,8 +459,10 @@ class TestMarkingLasso(unittest.TestCase):
         a     │ │ │ │ │●│
         """,
         )
-        result, _ = marking.markings_to_str(trace.to_markings())
-        self.assertEqual(format_expect(result), expected)
+        result = format_expect(
+            marking.markings_to_str(trace.to_markings(), None),
+        )
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":

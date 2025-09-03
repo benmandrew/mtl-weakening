@@ -78,7 +78,10 @@ def main() -> None:
     #     util.eprint("No loop found")
     # else:
     #     print(f"Loop found at idx {cex_trace.loop_start}")
-    result, _ = marking.markings_to_str(cex_trace.to_markings())
+    result = marking.markings_to_str(
+        cex_trace.to_markings(),
+        cex_trace.loop_start,
+    )
     print(result, end="")  # noqa: T201
 
 

@@ -65,7 +65,7 @@ ASSIGN
       state = homing & timer < TIME_D : { homing, resting };
       state = homing & timer = TIME_D : resting;
 
-      TRUE : state; -- Shouldn't happen
+      TRUE : state;
     esac;
 
   init(timer) := 0;

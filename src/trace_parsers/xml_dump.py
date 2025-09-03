@@ -1,24 +1,43 @@
-from xml.etree.ElementTree import Element  # nosec B405
+from __future__ import annotations
+
+import typing
 
 from defusedxml import ElementTree
 
 from src import marking, util
+
+if typing.TYPE_CHECKING:
+    from xml.etree.ElementTree import Element  # nosec B405
 
 
 def parse(s: str) -> Element:
     return ElementTree.fromstring(s)
 
 
+def _parse_state(state: Element) -> dict[str, util.Value]:
+    state_dict = {}
+    for item in state:
+        assert item.text is not None
+        state_dict[item.attrib["variable"]] = util.str_to_value(
+            item.text,
+        )
+    return state_dict
+
+
+def _parse_loops(loops: Element) -> int | None:
+    if loops.text is None:
+        return None
+    return int(loops.text)
+
+
 def xml_to_trace(xml_element: Element) -> marking.Trace:
     states: list[dict[str, util.Value]] = []
+    loop: int | None = None
     for node in xml_element:
-        state_dict = {}
         if node.tag == "node":
-            state = node[0]
-            for item in state:
-                assert item.text is not None
-                state_dict[item.attrib["variable"]] = util.str_to_value(
-                    item.text,
-                )
-            states.append(state_dict)
-    return marking.Trace(states)
+            states.append(_parse_state(node[0]))
+        elif node.tag == "loops":
+            loop = _parse_loops(node)
+        else:
+            util.eprint(f"Unexpected tag {node.tag} in XML trace")
+    return marking.Trace(states, loop)
