@@ -8,17 +8,13 @@ from pathlib import Path
 
 import lark
 
-from src import marking, util, weaken
-from src.logic import ctx, parser
-
-if typing.TYPE_CHECKING:
-    from src.logic import mtl
+from src import marking, util
 
 logger = logging.getLogger(__name__)
 
 
 class Namespace(argparse.Namespace):
-    mtl: str
+    trace_file: Path | None
     log_level: str
 
 
@@ -26,7 +22,12 @@ def parse_args() -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Analyse NuXmv output.",
     )
-    arg_parser.add_argument("mtl", type=str, help="MTL specification")
+    arg_parser.add_argument(
+        "trace_file",
+        type=Path,
+        default=None,
+        help="Path to the trace file to analyse. If not provided, stdin will be used.",
+    )
     group = arg_parser.add_mutually_exclusive_group()
     group.add_argument(
         "--quiet",
@@ -47,11 +48,7 @@ def parse_args() -> Namespace:
 Value = int | bool | str
 
 
-class NoCounterexampleError(Exception):
-    pass
-
-
-class NoLoopError(Exception):
+class NoLinesError(Exception):
     pass
 
 
@@ -69,10 +66,7 @@ class TreeTransformer(lark.Transformer[lark.Token, marking.Trace]):
         return lark.Discard
 
     def start(self, tok: list[dict[str, Value]]) -> marking.Trace:
-        trace = marking.Trace(tok)
-        if not trace.find_loop():
-            raise NoLoopError
-        return trace
+        return marking.Trace(tok)
 
     def expr(self, tok: list[Value]) -> Value:
         return tok[0]
@@ -94,6 +88,12 @@ def get_model_parser() -> lark.Lark:
         return lark.Lark(f.read(), parser="lalr")
 
 
+def read_trace_input(args: Namespace) -> list[str]:
+    if args.trace_file:
+        return Path(args.trace_file).read_text(encoding="utf-8").splitlines()
+    return sys.stdin.readlines()
+
+
 def parse_nuxmv_output(
     model_parser: lark.Lark,
     lines: list[str],
@@ -107,7 +107,7 @@ def parse_nuxmv_output(
         and not line.startswith("Trace ")
     ]
     if not filtered_lines:
-        raise NoCounterexampleError
+        raise NoLinesError
     parsetree = model_parser.parse("".join(filtered_lines))
     try:
         result = TreeTransformer().transform(parsetree)
@@ -122,27 +122,19 @@ def parse_nuxmv_output(
 def main() -> None:
     args = parse_args()
     util.setup_logging(args.log_level)
-    formula = parser.parse_mtl(args.mtl)
     model_parser = get_model_parser()
-    lines = sys.stdin.readlines()
+    lines = read_trace_input(args)
     try:
         cex_trace = parse_nuxmv_output(model_parser, lines)
-    except NoLoopError:
-        print("No loop exists in the counterexample")  # noqa: T201
+    except NoLinesError:
+        print("Trace is empty", file=sys.stderr)  # noqa: T201
         sys.exit(1)
-    except NoCounterexampleError:
-        print("Property is valid")  # noqa: T201
-        sys.exit(1)
-    context, subformula = ctx.split_formula(formula, [0, 1])
-    context, subformula = ctx.partial_nnf(
-        context,
-        typing.cast("mtl.Temporal", subformula),
-    )
-    w = weaken.Weaken(context, subformula, cex_trace)
-    # with open("bruh.txt", "w") as f:
-    #     print(w.markings, file=f)
-    interval = w.weaken()
-    print(str(interval).replace(" ", ""))  # noqa: T201
+    if not cex_trace.find_loop():
+        print("No loop found")  # noqa: T201
+    else:
+        print(f"Loop found at idx {cex_trace.loop_start}")  # noqa: T201
+    result, _ = marking.markings_to_str(cex_trace.to_markings())
+    print(result, end="")  # noqa: T201
 
 
 if __name__ == "__main__":

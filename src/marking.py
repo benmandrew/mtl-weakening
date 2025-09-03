@@ -303,29 +303,11 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        subformulae = list(self.markings.keys())
-        max_len = max(
-            len(self.loop_str),
-            *(len(m.to_string(f)) for f in subformulae),
+        out, max_len = markings_to_str(
+            self.markings,
+            max_len=len(self.loop_str),
         )
-        out = self.get_trace_indices_str(max_len)
-        for f in reversed(subformulae):
-            s = m.to_string(f)
-            out += f"{s:<{max_len}} "
-            for marking in self.markings[f]:
-                if marking:
-                    out += "│●"
-                else:
-                    out += "│ "
-            out += "│\n"
-        out += self.get_loop_str(max_len)
-        return out
-
-    def get_trace_indices_str(self, max_len: int) -> str:
-        out = "\n " + " " * max_len
-        for i in range(len(self.trace)):
-            out += f" {i % 10}"
-        return out + "\n"
+        return out + self.get_loop_str(max_len)
 
     def get_loop_str(self, max_len: int) -> str:
         out = f"{self.loop_str:<{max_len}}  "
@@ -342,3 +324,34 @@ class Marking:
             else:
                 out += "  "
         return out
+
+
+def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
+    out = " " + " " * max_len
+    for i in range(trace_len):
+        out += f" {i % 10}"
+    return out + "\n"
+
+
+def markings_to_str(
+    markings: dict[m.Mtl, list[bool]],
+    max_len: int | None = None,
+) -> tuple[str, int]:
+    subformulae = list(markings.keys())
+    max_formula_len = max(len(m.to_string(f)) for f in subformulae)
+    max_formula_len = (
+        max(max_len, max_formula_len)
+        if max_len is not None
+        else max_formula_len
+    )
+    out = _get_trace_indices_str(len(markings[subformulae[0]]), max_formula_len)
+    for f in reversed(subformulae):
+        s = m.to_string(f)
+        out += f"{s:<{max_formula_len}} "
+        for marking in markings[f]:
+            if marking:
+                out += "│●"
+            else:
+                out += "│ "
+        out += "│\n"
+    return out, max_formula_len
