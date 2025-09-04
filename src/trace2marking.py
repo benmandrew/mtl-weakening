@@ -5,7 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
-from src import marking, util, xml_trace
+from src import custom_args, marking, util, xml_trace
 
 logger = logging.getLogger(__name__)
 
@@ -19,26 +19,8 @@ def parse_args() -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Analyse NuXmv output.",
     )
-    arg_parser.add_argument(
-        "trace_file",
-        type=Path,
-        default=None,
-        help="Path to the trace file to analyse. If not provided, stdin will be used.",
-    )
-    group = arg_parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--quiet",
-        action="store_const",
-        dest="log_level",
-        const=logging.ERROR,
-    )
-    group.add_argument(
-        "--debug",
-        action="store_const",
-        dest="log_level",
-        const=logging.DEBUG,
-    )
-    arg_parser.set_defaults(log_level=logging.WARNING)
+    custom_args.add_trace_file_argument(arg_parser)
+    custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(namespace=Namespace())
 
 

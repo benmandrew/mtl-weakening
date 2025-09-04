@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import argparse
 import logging
+import pathlib
 import sys
 import typing
-from pathlib import Path
 
-from src import marking, util, weaken, xml_trace
+from src import custom_args, marking, util, weaken, xml_trace
 from src.logic import ctx, parser
 
 if typing.TYPE_CHECKING:
@@ -18,56 +18,28 @@ logger = logging.getLogger(__name__)
 class Namespace(argparse.Namespace):
     mtl: str
     de_bruijn: list[int]
-    trace_file: Path | None
+    trace_file: pathlib.Path | None
     log_level: str
-
-
-def list_of_ints(arg: str) -> list[int]:
-    return list(map(int, arg.split(",")))
 
 
 def parse_args() -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Analyse NuXmv output.",
     )
-    arg_parser.add_argument(
-        "--mtl",
-        type=str,
-        required=True,
-        help="MTL specification",
-    )
-    arg_parser.add_argument(
-        "--de-bruijn",
-        type=list_of_ints,
-        required=True,
-        help="De Bruijn index of the subformula as a list of integers",
-    )
-    arg_parser.add_argument(
-        "trace_file",
-        type=Path,
-        default=None,
-        help="Path to the trace file to analyse. If not provided, stdin will be used.",
-    )
-    group = arg_parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--quiet",
-        action="store_const",
-        dest="log_level",
-        const=logging.ERROR,
-    )
-    group.add_argument(
-        "--debug",
-        action="store_const",
-        dest="log_level",
-        const=logging.DEBUG,
-    )
-    arg_parser.set_defaults(log_level=logging.WARNING)
+    custom_args.add_mtl_argument(arg_parser)
+    custom_args.add_de_bruijn_argument(arg_parser)
+    custom_args.add_trace_file_argument(arg_parser)
+    custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(namespace=Namespace())
 
 
 def read_trace_input(args: Namespace) -> list[str]:
     if args.trace_file:
-        return Path(args.trace_file).read_text(encoding="utf-8").splitlines()
+        return (
+            pathlib.Path(args.trace_file)
+            .read_text(encoding="utf-8")
+            .splitlines()
+        )
     return sys.stdin.readlines()
 
 
