@@ -1,0 +1,25 @@
+#!/usr/bin/expect -f
+
+## Warning: If your terminal is too small, then some lines may be wrapped and the test will fail
+
+## Change to 1 to see the output of tested commands
+log_user 0
+
+source ./tests/util.exp
+
+spawn python3 -m src.analyse_cex -h
+
+expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--quiet | --debug\] trace_file"
+expect_exact ""
+expect_exact "Analyse NuXmv output."
+expect_exact ""
+expect_exact "positional arguments:"
+expect_exact "  trace_file            Path to the trace file to analyse. If not provided, stdin will be used."
+expect_exact ""
+expect_exact "options:"
+expect_exact "  -h, --help            show this help message and exit"
+expect_exact "  --mtl MTL             MTL specification"
+expect_exact "  --de-bruijn DE_BRUIJN"
+expect_exact "                        De Bruijn index of the subformula as a list of integers"
+expect_exact "  --quiet"
+expect_exact "  --debug"

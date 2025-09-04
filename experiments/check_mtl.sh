@@ -46,7 +46,7 @@ quit
 EOL
 
 # Generate LTL from MTL
-ltlspec=$(python3 -m src.mtl2ltlspec "$mtl")
+ltlspec=$(python3 -m src.mtl2ltlspec --mtl "$mtl")
 
 # Append LTL specification to model file
 cp "$input_smv_file" "$tempdir/model.smv"

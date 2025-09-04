@@ -1,0 +1,30 @@
+#!/usr/bin/expect -f
+
+## Warning: If your terminal is too small, then some lines may be wrapped and the test will fail
+
+## Change to 1 to see the output of tested commands
+log_user 0
+
+source ./tests/util.exp
+
+spawn python3 -m src.trace2marking -h
+
+expect_exact "usage: trace2marking.py \[-h\] \[--quiet | --debug\] trace_file"
+expect_exact ""
+expect_exact "Analyse NuXmv output."
+expect_exact ""
+expect_exact "positional arguments:"
+expect_exact "  trace_file  Path to the trace file to analyse. If not provided, stdin will be used."
+expect_exact ""
+expect_exact "options:"
+expect_exact "  -h, --help  show this help message and exit"
+expect_exact "  --quiet"
+expect_exact "  --debug"
+
+
+spawn python3 -m src.trace2marking tests/test_data/trace_valid.xml
+
+expect_exact "           0 1 2"
+expect_exact "MAX_TIMER │*│*│*│"
+expect_exact "timer     │0│1│0│"
+expect_exact "=Lasso=      └─┘"
