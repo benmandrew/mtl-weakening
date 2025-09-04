@@ -34,4 +34,5 @@ stevedore==5.4.1
 timeout-decorator==0.5.0
 tomli==2.2.1
 tomlkit==0.13.3
+types-defusedxml==0.7.0.20250822
 typing_extensions==4.14.0
