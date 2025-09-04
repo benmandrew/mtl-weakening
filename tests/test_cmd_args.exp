@@ -1,6 +1,9 @@
 #!/usr/bin/expect -f
 
-log_user 1
+## Warning: If your terminal is too small, then some lines may be wrapped and the test will fail
+
+## Change to 1 to see the output of tested commands
+log_user 0
 
 proc expect_exact {text} {
 	expect {
