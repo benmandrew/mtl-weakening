@@ -5,7 +5,7 @@
 --   https://doi.org/10.1007/s10817-020-09541-4
 
 -- Changes from the paper:
---   Removed the scanArena state, as this allows infinite loops of searching without coming back to rest
+--   Force the robot to stop searching after a certain time and return home
 
 MODULE main
 
@@ -13,31 +13,36 @@ DEFINE
   TIME_R := 5;
   TIME_D := 5;
   MAX_TIMER := 10;
+  MAX_SEARCHING_TIMER := 30;
 
 VAR
-  state : { resting, leavingHome, randomWalk, moveToFood, grabFood, moveToHome, deposit, homing };
+  state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
   timer : 0..MAX_TIMER; -- Should be the maximum time that any transition can take
+  searching_timer : 0..MAX_SEARCHING_TIMER;
 
 DEFINE
-  resting_p := state = resting;
+  resting_p :=     state = resting;
   leavingHome_p := state = leavingHome;
-  randomWalk_p := state = randomWalk;
-  moveToFood_p := state = moveToFood;
-  grabFood_p := state = grabFood;
-  moveToHome_p := state = moveToHome;
-  deposit_p := state = deposit;
-  homing_p := state = homing;
-  searching_p := leavingHome_p | randomWalk_p | moveToFood_p;
+  randomWalk_p :=  state = randomWalk;
+  moveToFood_p :=  state = moveToFood;
+  scanArena_p :=   state = scanArena;
+  grabFood_p :=    state = grabFood;
+  moveToHome_p :=  state = moveToHome;
+  deposit_p :=     state = deposit;
+  homing_p :=      state = homing;
+  searching_p :=   leavingHome_p | randomWalk_p | moveToFood_p | scanArena_p;
 
 -- Assumptions encoded in the state machine:
---   G (resting -> F[1,TIME_R] leavingHome)
+--   G (resting     -> F[1,TIME_R] leavingHome)
 --   G (leavingHome -> F[2,3] randomWalk)
---   G (randomWalk -> F[1,∞] homing | moveToFood)
---   G (moveToFood -> F[1,∞] grabFood | homing)
---   G (grabFood -> F[2,3] moveToHome)
---   G (moveToHome -> F[1,TIME_D] deposit)
---   G (deposit -> F[3,4] resting)
---   G (homing -> F[1,TIME_D] resting)
+--   G (randomWalk  -> F[1,∞] homing | moveToFood)
+--   G (moveToFood  -> F[1,∞] grabFood | homing | scanArena)
+--   G (scanArena   -> F[1,5] homing | moveToFood | randomWalk)
+--   G (grabFood    -> F[2,3] moveToHome)
+--   G (moveToHome  -> F[1,TIME_D] deposit)
+--   G (deposit     -> F[3,4] resting)
+--   G (homing      -> F[1,TIME_D] resting)
+
 
 ASSIGN
   init(state) := resting;
@@ -46,14 +51,18 @@ ASSIGN
       state = resting & timer < TIME_R : { resting, leavingHome };
       state = resting & timer = TIME_R : leavingHome;
 
-      state = leavingHome & timer = 2 : {leavingHome, randomWalk };
-      state = leavingHome & timer = 3 : randomWalk;
+      state = leavingHome & timer = 2 & searching_timer < MAX_SEARCHING_TIMER : {leavingHome, randomWalk };
+      state = leavingHome & timer = 3 & searching_timer < MAX_SEARCHING_TIMER : randomWalk;
 
-      state = randomWalk : { homing, moveToFood };
+      state = randomWalk & searching_timer < MAX_SEARCHING_TIMER : { homing, moveToFood };
 
-      state = moveToFood : { grabFood, homing };
+      state = moveToFood & searching_timer < MAX_SEARCHING_TIMER : { grabFood, homing };
 
-      state = grabFood & timer = 2 : {grabFood, moveToHome };
+      state = scanArena & searching_timer < MAX_SEARCHING_TIMER : { homing, moveToFood, randomWalk };
+
+      searching_timer = MAX_SEARCHING_TIMER : { homing };
+
+      state = grabFood & timer = 2 : { grabFood, moveToHome };
       state = grabFood & timer = 3 : moveToHome;
 
       state = moveToHome & timer < TIME_D : { moveToHome, deposit };
@@ -74,4 +83,12 @@ ASSIGN
       next(state) != state : 0;      -- Reset timer on state change
       timer < MAX_TIMER : timer + 1; -- Otherwise increment
       TRUE : timer;                  -- Saturate timer
+    esac;
+
+  init(searching_timer) := 0;
+  next(searching_timer) :=
+    case
+      next(searching_p) != searching_p : 0;      -- Reset timer if we start searching
+      searching_p & searching_timer < MAX_SEARCHING_TIMER : searching_timer + 1; -- Otherwise increment if we're searching
+      TRUE : searching_timer;                  -- Saturate timer
     esac;
