@@ -6,12 +6,10 @@ import sys
 import typing
 from pathlib import Path
 
-from src import marking, util, weaken
+from src import marking, util, weaken, xml_trace
 from src.logic import ctx, parser
-from src.trace_parsers import xml_dump
 
 if typing.TYPE_CHECKING:
-    import lark
 
     from src.logic import mtl
 
@@ -63,21 +61,9 @@ def read_trace_input(args: Namespace) -> list[str]:
     return sys.stdin.readlines()
 
 
-def get_cex_trace(model_parser: lark.Lark, lines: list[str]) -> marking.Trace:
-    try:
-        cex_trace = util.parse_nuxmv_output(model_parser, lines)
-    except util.NoLinesError:
-        util.eprint("Property is valid")
-        sys.exit(1)
-    if not cex_trace.find_loop():
-        util.eprint("No loop exists in the counterexample")
-        sys.exit(1)
-    return cex_trace
-
-
-def get_cex_trace_xml(lines: list[str]) -> marking.Trace:
-    xml_element = xml_dump.parse("".join(lines))
-    return xml_dump.xml_to_trace(xml_element)
+def get_cex_trace(lines: list[str]) -> marking.Trace:
+    xml_element = xml_trace.parse("".join(lines))
+    return xml_trace.xml_to_trace(xml_element)
 
 
 def main() -> None:
@@ -85,7 +71,7 @@ def main() -> None:
     util.setup_logging(args.log_level)
     formula = parser.parse_mtl(args.mtl)
     lines = read_trace_input(args)
-    cex_trace = get_cex_trace_xml(lines)
+    cex_trace = get_cex_trace(lines)
     context, subformula = ctx.split_formula(formula, [0, 1])
     context, subformula = ctx.partial_nnf(
         context,

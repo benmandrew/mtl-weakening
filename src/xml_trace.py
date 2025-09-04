@@ -24,12 +24,16 @@ def _parse_state(state: Element) -> dict[str, util.Value]:
     return state_dict
 
 
-def _parse_loops(loops: Element) -> int | None:
+class NoLoopError(Exception):
+    pass
+
+
+def _parse_loops(loops: Element) -> int:
     if loops.text is None:
-        return None
+        raise NoLoopError
     text = loops.text.strip()
     if text == "":
-        return None
+        raise NoLoopError
     return int(text)
 
 
@@ -43,4 +47,6 @@ def xml_to_trace(xml_element: Element) -> marking.Trace:
             loop = _parse_loops(node)
         else:
             util.eprint(f"Unexpected tag {node.tag} in XML trace")
+    if loop is None:
+        raise NoLoopError
     return marking.Trace(states, loop)

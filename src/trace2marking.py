@@ -3,14 +3,9 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-import typing
 from pathlib import Path
 
-from src import marking, util
-from src.trace_parsers import xml_dump
-
-if typing.TYPE_CHECKING:
-    import lark
+from src import marking, util, xml_trace
 
 logger = logging.getLogger(__name__)
 
@@ -53,25 +48,16 @@ def read_trace_input(args: Namespace) -> list[str]:
     return sys.stdin.readlines()
 
 
-def get_cex_trace(model_parser: lark.Lark, lines: list[str]) -> marking.Trace:
-    try:
-        cex_trace = util.parse_nuxmv_output(model_parser, lines)
-    except util.NoLinesError:
-        util.eprint("Trace is empty")
-        sys.exit(1)
-    return cex_trace
-
-
-def get_cex_trace_xml(lines: list[str]) -> marking.Trace:
-    xml_element = xml_dump.parse("".join(lines))
-    return xml_dump.xml_to_trace(xml_element)
+def get_cex_trace(lines: list[str]) -> marking.Trace:
+    xml_element = xml_trace.parse("".join(lines))
+    return xml_trace.xml_to_trace(xml_element)
 
 
 def main() -> None:
     args = parse_args()
     util.setup_logging(args.log_level)
     lines = read_trace_input(args)
-    cex_trace = get_cex_trace_xml(lines)
+    cex_trace = get_cex_trace(lines)
     result = marking.markings_to_str(
         cex_trace.to_markings(),
         cex_trace.loop_start,
