@@ -1,13 +1,18 @@
 #!/bin/bash
 
+# function get_mtl() {
+#     local interval="$1"
+#     echo "G(leavingHome_p -> F${interval}(resting_p))"
+# }
+
 function get_mtl() {
     local interval="$1"
-    echo "G(leavingHome_p -> F${interval}(resting_p))"
+    echo "G(leavingHome_p -> G${interval}(! resting_p))"
 }
 
-interval="[0,1]"
-bound=36
-loopback=6
+interval="[0,30]"
+bound=70
+loopback=1
 
 start_time=$(date +%s%3N)
 
@@ -25,7 +30,7 @@ do
         echo "Satisfying interval: $ret"
         interval=$ret
         rhs="${BASH_REMATCH[2]}"
-        bound=$((rhs * 2))
+        bound=$((rhs * 2 + 10))
     elif [ "$ret" = "Property is valid" ]; then
         echo "No interval found for bound $bound"
         break
