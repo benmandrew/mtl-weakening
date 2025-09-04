@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" id="1" desc="BMC Counterexample" >
+    <node>
+        <state id='1'>
+            <value variable="state">resting</value>
+            <value variable="timer">0</value>
+            <value variable="MAX_TIMER">10</value>
+        </state>
+    </node>
+    <node>
+        <state id='2'>
+            <value variable="state">resting</value>
+            <value variable="timer">1</value>
+            <value variable="MAX_TIMER">10</value>
+        </state>
+    </node>
+    <node>
+        <state id='3'>
+            <value variable="state">leavingHome</value>
+            <value variable="timer">0</value>
+            <value variable="MAX_TIMER">10</value>
+        </state>
+    </node>
+    <loops> 5 </loops>
+</counter-example>

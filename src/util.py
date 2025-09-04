@@ -2,6 +2,7 @@ import json
 import logging.config
 import subprocess as sp
 import sys
+import textwrap
 from pathlib import Path
 
 
@@ -52,3 +53,7 @@ def str_to_value(s: str) -> Value:
     if s.isdigit():
         return int(s)
     return s
+
+
+def format_expect(s: str) -> str:
+    return textwrap.dedent(s).strip("\n")

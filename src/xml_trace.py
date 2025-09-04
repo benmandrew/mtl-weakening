@@ -10,8 +10,8 @@ if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec B405
 
 
-def parse(s: str) -> Element:
-    return ElementTree.fromstring(s)
+def parse(s: str) -> marking.Trace:
+    return xml_to_trace(ElementTree.fromstring(s))
 
 
 def _parse_state(state: Element) -> dict[str, util.Value]:
@@ -49,4 +49,5 @@ def xml_to_trace(xml_element: Element) -> marking.Trace:
             util.eprint(f"Unexpected tag {node.tag} in XML trace")
     if loop is None:
         raise NoLoopError
+    assert 0 <= loop < len(states)
     return marking.Trace(states, loop)

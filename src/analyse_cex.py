@@ -62,8 +62,7 @@ def read_trace_input(args: Namespace) -> list[str]:
 
 
 def get_cex_trace(lines: list[str]) -> marking.Trace:
-    xml_element = xml_trace.parse("".join(lines))
-    return xml_trace.xml_to_trace(xml_element)
+    return xml_trace.parse("".join(lines))
 
 
 def main() -> None:
