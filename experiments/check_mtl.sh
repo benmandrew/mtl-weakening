@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ $# -lt 3 ]; then
+if [ $# -lt 4 ]; then
 	>&2 echo "Not enough arguments supplied"
 	exit 1
 fi
 
 mtl=$1
-bound=$2
-loopback=$3
+de_bruijn=$2
+bound=$3
+loopback=$4
 
 # Allow script to exit even if nuXmv is hanging
 # To kill nuXmv process run:
@@ -68,7 +69,7 @@ if [ ! -f "$tempdir/trace.xml" ]; then
 fi
 
 # Analyse counterexample
-python3 -m src.analyse_cex --mtl "$mtl" --quiet "$tempdir/trace.xml"
+python3 -m src.analyse_cex --mtl "$mtl" --de-bruijn "$de_bruijn" --quiet "$tempdir/trace.xml"
 
 # Print the markings
 # python3 -m src.trace2marking --quiet "$tempdir/trace.xml"

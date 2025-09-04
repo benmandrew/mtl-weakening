@@ -11,7 +11,8 @@ function get_mtl() {
 }
 
 interval="[0,30]"
-bound=70
+de_bruijn="0,1"
+bound=60
 loopback=1
 
 start_time=$(date +%s%3N)
@@ -21,7 +22,7 @@ do
     loop_start_time=$(date +%s%3N)
     mtl=$(get_mtl "$interval")
     echo "Checking bound=$bound, loopback=$loopback"
-    ret=$(./experiments/check_mtl.sh "$mtl" "$bound" "$loopback")
+    ret=$(./experiments/check_mtl.sh "$mtl" "$de_bruijn" "$bound" "$loopback")
     loop_end_time=$(date +%s%3N)
     loop_elapsed_time=$((loop_end_time - loop_start_time))
     echo "Elapsed time: $loop_elapsed_time ms"

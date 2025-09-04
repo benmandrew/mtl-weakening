@@ -29,6 +29,7 @@ python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 rich==14.1.0
 ruff==0.12.1
+sh==2.2.2
 six==1.17.0
 stevedore==5.4.1
 timeout-decorator==0.5.0

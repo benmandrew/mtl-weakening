@@ -10,7 +10,6 @@ from src import marking, util, weaken, xml_trace
 from src.logic import ctx, parser
 
 if typing.TYPE_CHECKING:
-
     from src.logic import mtl
 
 logger = logging.getLogger(__name__)
@@ -18,8 +17,13 @@ logger = logging.getLogger(__name__)
 
 class Namespace(argparse.Namespace):
     mtl: str
+    de_bruijn: list[int]
     trace_file: Path | None
     log_level: str
+
+
+def list_of_ints(arg: str) -> list[int]:
+    return list(map(int, arg.split(",")))
 
 
 def parse_args() -> Namespace:
@@ -31,6 +35,12 @@ def parse_args() -> Namespace:
         type=str,
         required=True,
         help="MTL specification",
+    )
+    arg_parser.add_argument(
+        "--de-bruijn",
+        type=list_of_ints,
+        required=True,
+        help="De Bruijn index of the subformula as a list of integers",
     )
     arg_parser.add_argument(
         "trace_file",
@@ -71,7 +81,7 @@ def main() -> None:
     formula = parser.parse_mtl(args.mtl)
     lines = read_trace_input(args)
     cex_trace = get_cex_trace(lines)
-    context, subformula = ctx.split_formula(formula, [0, 1])
+    context, subformula = ctx.split_formula(formula, args.de_bruijn)
     context, subformula = ctx.partial_nnf(
         context,
         typing.cast("mtl.Temporal", subformula),
