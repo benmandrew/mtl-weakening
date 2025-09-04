@@ -1,18 +1,13 @@
 #!/bin/bash
 
-function format_interval() {
-    local interval="$1"
-    echo "$interval" | sed -e 's/^.//' -e 's/.$//'
-}
-
 function get_mtl() {
     local interval="$1"
-    formatted_interval=$(format_interval "$interval")
-    echo "G(leavingHome_p -> F[${formatted_interval}](resting_p))"
+    echo "G(leavingHome_p -> F${interval}(resting_p))"
 }
 
+interval="[0,1]"
 bound=36
-interval="(0,18)"
+loopback=6
 
 start_time=$(date +%s%3N)
 
@@ -20,20 +15,19 @@ while true
 do
     loop_start_time=$(date +%s%3N)
     mtl=$(get_mtl "$interval")
-    ret=$(./experiments/check_mtl.sh "$mtl" $bound)
+    echo "Checking bound=$bound, loopback=$loopback"
+    ret=$(./experiments/check_mtl.sh "$mtl" "$bound" "$loopback")
     loop_end_time=$(date +%s%3N)
     loop_elapsed_time=$((loop_end_time - loop_start_time))
-    echo "Checked bound $bound | $mtl | $loop_elapsed_time ms"
+    echo "Elapsed time: $loop_elapsed_time ms"
 
     if [[ $ret =~ \[([0-9]+),([0-9]+)\] ]]; then
-        echo "Counterexample found for bound $bound: $ret"
-        echo "$ret"
+        echo "Satisfying interval: $ret"
         interval=$ret
-        bound=$((ret * 2))
-    elif [ "$ret" = "No loop exists in the counterexample" ]; then
-        bound=$((bound - 1))
+        rhs="${BASH_REMATCH[2]}"
+        bound=$((rhs * 2))
     elif [ "$ret" = "Property is valid" ]; then
-        echo "No counterexample found for bound $bound"
+        echo "No interval found for bound $bound"
         break
     else
         echo "Unexpected output: $ret"

@@ -1,9 +1,13 @@
 #!/bin/bash
 
-if [ $# -lt 1 ]; then
-	>&2 echo "No arguments supplied"
+if [ $# -lt 3 ]; then
+	>&2 echo "Not enough arguments supplied"
 	exit 1
 fi
+
+mtl=$1
+bound=$2
+loopback=$3
 
 # Allow script to exit even if nuXmv is hanging
 # To kill nuXmv process run:
@@ -11,6 +15,8 @@ fi
 trap 'exit 130' INT
 
 tempdir=$(mktemp -d "${TMPDIR:-/tmp/}$(basename "$0").XXXXXXXXXXXX")
+
+# >&2 echo "Temporary directory created at: $tempdir"
 
 input_smv_file=models/foraging-robots.smv
 
@@ -33,13 +39,13 @@ fi
 cat >"$tempdir/commands.txt" <<EOL
 set on_failure_script_quits 1
 go_bmc
-check_ltlspec_bmc_onepb -k "$2" -l '*' -o "problem"
+check_ltlspec_bmc_onepb -k "$bound" -l "$loopback" -o "problem"
 show_traces -o "trace.xml" -p 4
 quit
 EOL
 
 # Generate LTL from MTL
-ltlspec=$(python3 -m src.mtl2ltlspec "$1")
+ltlspec=$(python3 -m src.mtl2ltlspec "$mtl")
 
 # Append LTL specification to model file
 cp "$input_smv_file" "$tempdir/model.smv"
@@ -47,17 +53,22 @@ echo "LTLSPEC $ltlspec;" >>"$tempdir/model.smv"
 
 # Run NuXmv
 (cd "$tempdir" || exit ;\
-	nuXmv -source "$tempdir/commands.txt" "$tempdir/model.smv") >/dev/null
+	nuXmv -source "$tempdir/commands.txt" "$tempdir/model.smv") >"$tempdir/nuXmv.log" 2>&1
+
+no_cex_string="no counterexample found with bound $bound and loop at $loopback"
+
+if grep -q "$no_cex_string" "$tempdir/nuXmv.log"; then
+    echo "Property is valid"
+	exit 0
+fi
 
 if [ ! -f "$tempdir/trace.xml" ]; then
-    >&2 echo "Trace file not found at: $tempdir/trace.xml"
+    # >&2 echo "Trace file not found at: $tempdir/trace.xml"
 	exit 1
 fi
 
 # Analyse counterexample
-# python3 -m src.analyse_cex --mtl "$1" --quiet "$tempdir/trace.xml"
-
-# cat "$tempdir/trace.xml"
+python3 -m src.analyse_cex --mtl "$mtl" --quiet "$tempdir/trace.xml"
 
 # Print the markings
-python3 -m src.trace2marking --quiet "$tempdir/trace.xml"
+# python3 -m src.trace2marking --quiet "$tempdir/trace.xml"

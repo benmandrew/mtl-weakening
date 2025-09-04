@@ -30,16 +30,12 @@ class Trace:
     def __init__(
         self,
         trace: list[dict[str, bool | int | str]],
-        loop_start: int | None = None,
+        loop_start: int,
     ) -> None:
         trace = expand_nuxmv_trace(trace)
-        if loop_start is None:
-            self.loop_start = 0
-            self.trace = trace
-        else:
-            assert loop_start < len(trace)
-            self.loop_start = loop_start
-            self.trace = trace
+        assert loop_start < len(trace)
+        self.loop_start = loop_start
+        self.trace = trace
 
     def find_loop(self) -> bool:
         """

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from src import marking, util, weaken
 from src.logic import ctx, parser
+from src.trace_parsers import xml_dump
 
 if typing.TYPE_CHECKING:
     import lark
@@ -74,13 +75,17 @@ def get_cex_trace(model_parser: lark.Lark, lines: list[str]) -> marking.Trace:
     return cex_trace
 
 
+def get_cex_trace_xml(lines: list[str]) -> marking.Trace:
+    xml_element = xml_dump.parse("".join(lines))
+    return xml_dump.xml_to_trace(xml_element)
+
+
 def main() -> None:
     args = parse_args()
     util.setup_logging(args.log_level)
     formula = parser.parse_mtl(args.mtl)
-    model_parser = util.get_model_parser()
     lines = read_trace_input(args)
-    cex_trace = get_cex_trace(model_parser, lines)
+    cex_trace = get_cex_trace_xml(lines)
     context, subformula = ctx.split_formula(formula, [0, 1])
     context, subformula = ctx.partial_nnf(
         context,
@@ -88,7 +93,9 @@ def main() -> None:
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
-    print(str(interval).replace(" ", ""))  # noqa: T201
+    print(  # noqa: T201
+        str(interval).replace(" ", "").replace("(", "[").replace(")", "]"),
+    )
 
 
 if __name__ == "__main__":

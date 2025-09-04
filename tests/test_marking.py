@@ -450,6 +450,7 @@ class TestMarkingLasso(unittest.TestCase):
                 {"a": False, "b": True, "timer": 5},
                 {"a": True, "b": False, "timer": 100},
             ],
+            1,
         )
         expected = format_expect(
             """
@@ -461,6 +462,19 @@ class TestMarkingLasso(unittest.TestCase):
         )
         result = format_expect(
             marking.markings_to_str(trace.to_markings(), None),
+        )
+        self.assertEqual(result, expected)
+        expected = format_expect(
+            """
+                 0 1 2 3 4
+        timer   │2│1│2│5│*│
+        b       │ │●│ │●│ │
+        a       │ │ │ │ │●│
+        =Lasso=    └─────┘
+        """,
+        )
+        result = format_expect(
+            marking.markings_to_str(trace.to_markings(), trace.loop_start),
         )
         self.assertEqual(result, expected)
 

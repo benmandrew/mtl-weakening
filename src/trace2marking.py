@@ -70,14 +70,8 @@ def get_cex_trace_xml(lines: list[str]) -> marking.Trace:
 def main() -> None:
     args = parse_args()
     util.setup_logging(args.log_level)
-    # model_parser = util.get_model_parser()
     lines = read_trace_input(args)
     cex_trace = get_cex_trace_xml(lines)
-    # cex_trace = get_cex_trace(model_parser, lines)
-    # if not cex_trace.find_loop():
-    #     util.eprint("No loop found")
-    # else:
-    #     print(f"Loop found at idx {cex_trace.loop_start}")
     result = marking.markings_to_str(
         cex_trace.to_markings(),
         cex_trace.loop_start,

@@ -27,7 +27,10 @@ def _parse_state(state: Element) -> dict[str, util.Value]:
 def _parse_loops(loops: Element) -> int | None:
     if loops.text is None:
         return None
-    return int(loops.text)
+    text = loops.text.strip()
+    if text == "":
+        return None
+    return int(text)
 
 
 def xml_to_trace(xml_element: Element) -> marking.Trace:
