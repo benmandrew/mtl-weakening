@@ -370,8 +370,8 @@ def partial_nnf_ctx(c: Ctx) -> tuple[Ctx, bool]:
 
 def partial_nnf(
     c: Ctx,
-    subf: mtl.Always | mtl.Eventually | mtl.Until | mtl.Release,
-) -> tuple[Ctx, mtl.Mtl]:
+    subf: mtl.Temporal,
+) -> tuple[Ctx, mtl.Temporal]:
     """Convert the context `c` and the subformula `subf` to partial negation
     normal form (PNNF). The returned context and subformula are logically
     equivalent to the original ones.

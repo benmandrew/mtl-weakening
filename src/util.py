@@ -1,7 +1,16 @@
 import json
 import logging.config
 import subprocess as sp
+import sys
+import textwrap
 from pathlib import Path
+
+
+def eprint(  # type: ignore[no-untyped-def]
+    *args,  # noqa: ANN002
+    **kwargs,  # noqa: ANN003
+) -> None:
+    print(*args, file=sys.stderr, **kwargs)  # noqa: T201
 
 
 def run_and_capture(cmd: list[str]) -> str:
@@ -31,3 +40,20 @@ def setup_logging(loglevel: str) -> None:
         config = json.load(f)
     config["loggers"]["root"]["level"] = loglevel
     logging.config.dictConfig(config)
+
+
+Value = int | bool | str
+
+
+def str_to_value(s: str) -> Value:
+    if s == "TRUE":
+        return True
+    if s == "FALSE":
+        return False
+    if s.isdigit():
+        return int(s)
+    return s
+
+
+def format_expect(s: str) -> str:
+    return textwrap.dedent(s).strip("\n")

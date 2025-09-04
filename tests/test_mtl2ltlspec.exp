@@ -1,0 +1,27 @@
+#!/usr/bin/expect -f
+
+## Warning: If your terminal is too small, then some lines may be wrapped and the test will fail
+
+## Change to 1 to see the output of tested commands
+log_user 0
+
+source ./tests/util.exp
+
+spawn python3 -m src.mtl2ltlspec -h
+
+expect_exact "usage: mtl2ltlspec.py \[-h\] \[--mtl MTL\]"
+expect_exact ""
+expect_exact "Convert MTL formula to SMV-compatible LTL specifications."
+expect_exact ""
+expect_exact "options:"
+expect_exact "  -h, --help  show this help message and exit"
+expect_exact "  --mtl MTL   MTL specification"
+
+
+spawn python3 -m src.mtl2ltlspec --mtl "G (p -> F\[0,1\] (q))"
+
+expect_exact "G ((p -> (q | X (q))))"
+
+spawn python3 -m src.mtl2ltlspec --mtl "G (p & G\[0,1\] (! q))"
+
+expect_exact "G ((p & (!(q) & X (!(q)))))"

@@ -1,7 +1,18 @@
-.PHONY: test fmt fmt-ci lint ruff pylint mypy bandit
+.PHONY: test unittest expect_test fmt fmt-ci lint ruff pylint mypy bandit
 
-test:
+test: unittest expect_test
+
+unittest:
 	PYTHONPATH=src python3 -m unittest discover -s tests -p "test_*.py"
+
+EXPECT_TESTS := $(wildcard tests/test_*.exp)
+
+expect_test:
+	@for t in $(EXPECT_TESTS); do \
+		echo "Running $$t..."; \
+		expect -- $$t || { echo "Test $$t FAILED"; exit 1; }; \
+	done
+	@echo "All expect tests passed!"
 
 fmt:
 	python3 -m black -l 80 .
