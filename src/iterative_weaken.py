@@ -3,7 +3,7 @@ import logging
 
 import sh  # type: ignore[import-untyped]
 
-from src import util
+from src import custom_args, util
 from src.logic import ctx, mtl, parser
 
 logger = logging.getLogger(__name__)
@@ -23,26 +23,9 @@ def parse_args() -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Convert MTL formula to SMV-compatible LTL specifications.",
     )
-    arg_parser.add_argument("--mtl", type=str, help="MTL specification")
-    arg_parser.add_argument(
-        "--de-bruijn",
-        type=list_of_ints,
-        help="De Bruijn index of the subformula as a list of integers",
-    )
-    group = arg_parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--quiet",
-        action="store_const",
-        dest="log_level",
-        const=logging.ERROR,
-    )
-    group.add_argument(
-        "--debug",
-        action="store_const",
-        dest="log_level",
-        const=logging.DEBUG,
-    )
-    arg_parser.set_defaults(log_level=logging.WARNING)
+    custom_args.add_mtl_argument(arg_parser)
+    custom_args.add_de_bruijn_argument(arg_parser)
+    custom_args.add_log_level_arguments(arg_parser, logging.INFO)
     return arg_parser.parse_args(namespace=Namespace())
 
 
@@ -79,7 +62,6 @@ def substitute_interval(
 
 
 BOUND_MIN = 20
-BOUND_MAX = 100
 LOOPBACK = 1
 
 CHECK_MTL_COMMAND = sh.Command("experiments/check_mtl.sh")
@@ -90,7 +72,7 @@ def main() -> None:
     util.setup_logging(args.log_level)
     context, subformula = get_context_and_subformula(args)
     bound = (
-        BOUND_MAX
+        BOUND_MIN
         if subformula.interval[1] is None
         else subformula.interval[1] * 2
     )
@@ -110,6 +92,7 @@ def main() -> None:
         if result == "Property is valid":
             break
         interval = parse_interval(result)
+        bound = max(BOUND_MIN, interval[1] * 2)
         logger.info("Weakened %s to %s", subformula.interval, interval)
         subformula = substitute_interval(subformula, interval)
     print("Final weakened interval:", subformula.interval)  # noqa: T201

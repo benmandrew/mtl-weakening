@@ -28,7 +28,9 @@ def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def add_log_level_arguments(parser: argparse.ArgumentParser) -> None:
+def add_log_level_arguments(
+    parser: argparse.ArgumentParser, default_level: int = logging.WARNING,
+) -> None:
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--quiet",
@@ -42,4 +44,4 @@ def add_log_level_arguments(parser: argparse.ArgumentParser) -> None:
         dest="log_level",
         const=logging.DEBUG,
     )
-    parser.set_defaults(log_level=logging.WARNING)
+    parser.set_defaults(log_level=default_level)

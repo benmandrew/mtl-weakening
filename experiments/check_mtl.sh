@@ -36,12 +36,14 @@ fi
 #   6   TRACE XML EMBEDDED DUMP PLUGIN - an xml element
 #   7   Empty Trace Plugin
 
+trace_plugin=4
+
 # Write commands file
 cat >"$tempdir/commands.txt" <<EOL
 set on_failure_script_quits 1
 go_bmc
 check_ltlspec_bmc_onepb -k "$bound" -l "$loopback" -o "problem"
-show_traces -o "trace.xml" -p 4
+show_traces -o "trace.xml" -p "$trace_plugin"
 quit
 EOL
 
