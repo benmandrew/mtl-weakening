@@ -15,13 +15,13 @@ class Namespace(argparse.Namespace):
     log_level: str
 
 
-def parse_args() -> Namespace:
+def parse_args(argv: list[str]) -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Analyse NuXmv output.",
     )
     custom_args.add_trace_file_argument(arg_parser)
     custom_args.add_log_level_arguments(arg_parser)
-    return arg_parser.parse_args(namespace=Namespace())
+    return arg_parser.parse_args(argv, namespace=Namespace())
 
 
 def read_trace_input(args: Namespace) -> list[str]:
@@ -34,8 +34,8 @@ def get_cex_trace(lines: list[str]) -> marking.Trace:
     return xml_trace.parse("".join(lines))
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str]) -> None:
+    args = parse_args(argv)
     util.setup_logging(args.log_level)
     lines = read_trace_input(args)
     cex_trace = get_cex_trace(lines)
@@ -47,4 +47,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
