@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-import sh  # type: ignore[import-untyped]
+import sh
 
 from src import custom_args, util
 from src.logic import ctx, mtl, parser

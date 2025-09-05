@@ -54,11 +54,11 @@ ASSIGN
       state = leavingHome & timer = 2 & searching_timer < MAX_SEARCHING_TIMER : {leavingHome, randomWalk };
       state = leavingHome & timer = 3 & searching_timer < MAX_SEARCHING_TIMER : randomWalk;
 
-      state = randomWalk & searching_timer < MAX_SEARCHING_TIMER : { homing, moveToFood };
+      state = randomWalk & searching_timer < MAX_SEARCHING_TIMER : { randomWalk, homing, moveToFood };
 
-      state = moveToFood & searching_timer < MAX_SEARCHING_TIMER : { grabFood, homing };
+      state = moveToFood & searching_timer < MAX_SEARCHING_TIMER : { moveToFood, grabFood, homing, scanArena };
 
-      state = scanArena & searching_timer < MAX_SEARCHING_TIMER : { homing, moveToFood, randomWalk };
+      state = scanArena & searching_timer < MAX_SEARCHING_TIMER : { scanArena, homing, moveToFood, randomWalk };
 
       searching_timer = MAX_SEARCHING_TIMER : { homing };
 

@@ -47,5 +47,5 @@ disable = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["timeout_decorator.*"]
+module = ["timeout_decorator.*", "sh.*"]
 ignore_missing_imports = true
