@@ -128,6 +128,10 @@ def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
     return apply_next_k(make_disjunction(terms), a)
 
 
+def _mtl_to_ltl_release(_formula: Release) -> ltl.Ltl:
+    raise NotImplementedError
+
+
 def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
     if isinstance(formula, TrueBool):
         return ltl.TrueBool()
@@ -149,6 +153,10 @@ def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
         return _mtl_to_ltl_always(formula)
     if isinstance(formula, Until):
         return _mtl_to_ltl_until(formula)
+    if isinstance(formula, Release):
+        return _mtl_to_ltl_release(formula)
+    if isinstance(formula, Next):
+        return ltl.Next(mtl_to_ltl(formula.operand))
     msg = "Unsupported MTL construct"
     raise TypeError(msg)
 

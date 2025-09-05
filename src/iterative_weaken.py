@@ -30,7 +30,7 @@ def parse_args(argv: list[str]) -> Namespace:
     )
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
-    custom_args.add_log_level_arguments(arg_parser, default_level=logging.INFO)
+    custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
@@ -85,6 +85,7 @@ def write_commands_file(
 ) -> None:
     commands = [
         "set on_failure_script_quits 1\n"
+        # "set nusmv_stdout /dev/null\n"
         "go_bmc\n"
         f'check_ltlspec_bmc_onepb -k "{bound}" -l "{loopback}" -o "problem"\n'
         f'show_traces -o "trace.xml" -p "{TRACE_PLUGIN}"\n'
@@ -188,9 +189,11 @@ def main(argv: list[str]) -> None:
         else subformula.interval[1] * 2
     )
     bound = max(BOUND_MIN, bound)
+    n_iterations = 0
     while True:
         formula = ctx.substitute(context, subformula)
         logger.info("Checking MTL formula %s", formula)
+        # print(f"Checking MTL formula {formula}")
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 result = check_mtl(
@@ -201,7 +204,10 @@ def main(argv: list[str]) -> None:
                     LOOPBACK,
                 )
         except PropertyValidError:
-            print("Final weakened interval:", subformula.interval)  # noqa: T201
+            print(  # noqa: T201
+                f"Final weakened interval in {n_iterations} "
+                f"iterations: {subformula.interval}",
+            )
             break
         except NoWeakeningError:
             print(analyse_cex.NO_WEAKENING_EXISTS_STR)  # noqa: T201
@@ -209,7 +215,9 @@ def main(argv: list[str]) -> None:
         interval = parse_interval(result)
         bound = max(BOUND_MIN, interval[1] * 2)
         logger.info("Weakened %s to %s", subformula.interval, interval)
+        # print(f"Weakened {subformula.interval} to {interval}")
         subformula = substitute_interval(subformula, interval)
+        n_iterations += 1
 
 
 if __name__ == "__main__":

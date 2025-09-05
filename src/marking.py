@@ -276,6 +276,10 @@ class Marking:
                     break
         return bs
 
+    def _get_next(self, operand: m.Mtl) -> list[bool]:
+        operands = self[operand]
+        return [operands[self.trace.idx(i + 1)] for i in range(len(operands))]
+
     def __getitem__(self, f: m.Mtl) -> list[bool]:
         if f in self.markings:
             return self.markings[f]
@@ -302,6 +306,8 @@ class Marking:
             bs = self._get_until(f.left, f.right, f.interval)
         elif isinstance(f, m.Release):
             bs = self._get_release(f.left, f.right, f.interval)
+        elif isinstance(f, m.Next):
+            bs = self._get_next(f.operand)
         else:
             msg = f"Unsupported MTL construct: {f}"
             raise TypeError(msg)
