@@ -4,7 +4,7 @@ from pathlib import Path
 
 import lark
 
-from src.logic import mtl
+from src.logic import ltl, mtl
 
 
 @lark.v_args(inline=True)
@@ -110,8 +110,7 @@ class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
         raise ValueError(msg)
 
 
-PARSER_PATH = Path(__file__).parent / "mtl.lark"
-with PARSER_PATH.open(encoding="utf-8") as f:
+with (Path(__file__).parent / "mtl.lark").open(encoding="utf-8") as f:
     grammar = f.read()
 MTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 
@@ -123,3 +122,76 @@ def parse_mtl(text: str) -> mtl.Mtl:
     """
     tree = MTL_PARSER.parse(text)
     return MTLTransformer().transform(tree)
+
+
+@lark.v_args(inline=True)
+class LTLTransformer(lark.Transformer[lark.Token, ltl.Ltl]):
+    def start(self, *args: ltl.Ltl) -> ltl.Ltl:
+        return args[0]
+
+    def INT(self, value: lark.Token) -> int:  # noqa: N802
+        return int(str(value))
+
+    def true(self) -> ltl.TrueBool:
+        return ltl.TrueBool()
+
+    def false(self) -> ltl.FalseBool:
+        return ltl.FalseBool()
+
+    def ap(self, name: lark.Token) -> ltl.Prop:
+        return ltl.Prop(str(name))
+
+    def neg(self, phi: ltl.Ltl) -> ltl.Not:
+        return ltl.Not(phi)
+
+    def conjunction(self, left: ltl.Ltl, right: ltl.Ltl) -> ltl.And:
+        return ltl.And(left=left, right=right)
+
+    def disjunction(self, left: ltl.Ltl, right: ltl.Ltl) -> ltl.Or:
+        return ltl.Or(left=left, right=right)
+
+    def implies(self, left: ltl.Ltl, right: ltl.Ltl) -> ltl.Implies:
+        return ltl.Implies(left=left, right=right)
+
+    def always(
+        self,
+        phi: ltl.Ltl,
+    ) -> ltl.Always:
+        return ltl.Always(phi)
+
+    def eventually(
+        self,
+        phi: ltl.Ltl,
+    ) -> ltl.Eventually:
+        return ltl.Eventually(phi)
+
+    def next(self, phi: ltl.Ltl) -> ltl.Next:
+        return ltl.Next(phi)
+
+    def until(
+        self,
+        left: ltl.Ltl,
+        right: ltl.Ltl,
+    ) -> ltl.Until:
+        return ltl.Until(left, right)
+
+    def release(
+        self,
+        left: ltl.Ltl,
+        right: ltl.Ltl,
+    ) -> ltl.Release:
+        return ltl.Release(left, right)
+
+
+with (Path(__file__).parent / "ltl.lark").open(encoding="utf-8") as f:
+    grammar = f.read()
+LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
+
+
+def parse_ltl(text: str) -> ltl.Ltl:
+    """
+    Parse an LTL formula string into a validated AST.
+    Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
+    """
+    tree = LTL_PARSER.parse(text)
+    return LTLTransformer().transform(tree)

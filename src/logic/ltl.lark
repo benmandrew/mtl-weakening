@@ -1,0 +1,34 @@
+start: formula
+
+?formula: implication
+
+?implication: disjunction
+            | disjunction "->" implication -> implies
+
+?disjunction: conjunction
+            | disjunction "|" conjunction -> disjunction
+
+?conjunction: until
+            | conjunction "&" until -> conjunction
+
+?until: release
+      | until "U" release -> until
+
+?release: unary
+      | release "R" unary -> release
+
+?unary: "!" unary -> neg
+      | "G" unary -> always
+      | "F" unary -> eventually
+      | "X" unary -> next
+      | atom
+      | "(" formula ")"
+
+atom: "TRUE" -> true
+      | "FALSE" -> false
+      | CNAME -> ap
+
+%import common.CNAME
+%import common.INT
+%import common.WS
+%ignore WS
