@@ -128,8 +128,22 @@ def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
     return apply_next_k(make_disjunction(terms), a)
 
 
-def _mtl_to_ltl_release(_formula: Release) -> ltl.Ltl:
-    raise NotImplementedError
+def _mtl_to_ltl_release(formula: Release) -> ltl.Ltl:
+    a, b = formula.interval
+    left = mtl_to_ltl(formula.left)
+    right = mtl_to_ltl(formula.right)
+    if b is None:
+        return apply_next_k(ltl.Release(left, right), a)
+    out = right
+    for _ in range(b - a):
+        out = ltl.And(right, ltl.Next(out))
+    terms = [out]
+    for i in range(b - a + 1):
+        out = ltl.And(left, right)
+        for _ in range(i):
+            out = ltl.And(right, ltl.Next(out))
+        terms.append(out)
+    return apply_next_k(make_disjunction(terms), a)
 
 
 def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:

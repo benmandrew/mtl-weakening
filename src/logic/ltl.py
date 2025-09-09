@@ -65,6 +65,12 @@ class Until(Ltl):
     right: Ltl
 
 
+@dataclass(frozen=True)
+class Release(Ltl):
+    left: Ltl
+    right: Ltl
+
+
 def to_nuxmv(formula: Ltl) -> str:
     if isinstance(formula, TrueBool):
         return "TRUE"
@@ -88,6 +94,8 @@ def to_nuxmv(formula: Ltl) -> str:
         return f"({to_nuxmv(formula.left)} -> {to_nuxmv(formula.right)})"
     if isinstance(formula, Until):
         return f"({to_nuxmv(formula.left)} U {to_nuxmv(formula.right)})"
+    if isinstance(formula, Release):
+        return f"({to_nuxmv(formula.left)} R {to_nuxmv(formula.right)})"
     msg = f"Unsupported LTL construct: {formula}"
     raise ValueError(msg)
 

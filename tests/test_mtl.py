@@ -53,6 +53,31 @@ class TestMtlToLtl(unittest.TestCase):
         result = m.mtl_to_ltl(mtl)
         self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
 
+    def test_release_upper_bound(self) -> None:
+        mtl = m.Release(m.Prop("p"), m.Prop("q"), (1, 2))
+        expected = l.Next(
+            l.Or(
+                l.Or(
+                    l.And(l.Prop("q"), l.Next(l.Prop("q"))),
+                    l.And(l.Prop("p"), l.Prop("q")),
+                ),
+                l.And(l.Prop("q"), l.Next(l.And(l.Prop("p"), l.Prop("q")))),
+            ),
+        )
+        result = m.mtl_to_ltl(mtl)
+        self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
+
+    def test_release_infinite_upper_bound(self) -> None:
+        mtl = m.Release(m.Prop("p"), m.Prop("q"), (2, None))
+        expected: l.Ltl
+        expected = l.Next(l.Next(l.Release(l.Prop("p"), l.Prop("q"))))
+        result = m.mtl_to_ltl(mtl)
+        self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
+        mtl = m.Release(m.Prop("p"), m.Prop("q"))
+        expected = l.Release(l.Prop("p"), l.Prop("q"))
+        result = m.mtl_to_ltl(mtl)
+        self.assertEqual(l.to_nuxmv(result), l.to_nuxmv(expected))
+
     def test_boolean(self) -> None:
         mtl = m.And(m.TrueBool(), m.FalseBool())
         expected = l.And(l.TrueBool(), l.FalseBool())
