@@ -1,7 +1,7 @@
 import unittest
 
 from src import marking, util
-from src.logic import mtl
+from src.logic import mtl, parser
 
 
 class TestTrace(unittest.TestCase):
@@ -50,7 +50,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
     def test_fmt_markings_gf(self) -> None:
-        formula = mtl.Always(mtl.Eventually(mtl.Prop("trigger"), (0, 4)))
+        formula = parser.parse_mtl("G (F[0, 4] (trigger))")
         trace = marking.Trace(
             [
                 {"trigger": False},
@@ -74,7 +74,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         result = util.format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
-        formula = mtl.Always(mtl.Eventually(mtl.Prop("a"), (0, 4)))
+        formula = parser.parse_mtl("G (F[0, 4] (a))")
         trace = marking.Trace(
             [
                 {"a": False},
@@ -98,7 +98,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_f(self) -> None:
-        formula = mtl.Eventually(mtl.Or(mtl.Prop("a"), mtl.Prop("b")))
+        formula = parser.parse_mtl("F ((a | b))")
         trace = marking.Trace(
             [
                 {"a": True, "b": False},
@@ -120,9 +120,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_gfg(self) -> None:
-        formula = mtl.Always(
-            mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)), (0, 4)),
-        )
+        formula = parser.parse_mtl("G (F[0, 4] (G[0, 2] (a)))")
         trace = marking.Trace(
             [
                 {"a": True},
@@ -177,7 +175,7 @@ class TestMarkingLasso(unittest.TestCase):
         )
         result = util.format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
-        formula = mtl.Always(mtl.Eventually(mtl.Always(mtl.Prop("a"), (2, 5))))
+        formula = parser.parse_mtl("G (F (G[2, 5] (a)))")
         trace = marking.Trace(
             [
                 {"a": False},
@@ -204,7 +202,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_fg(self) -> None:
-        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 1)))
+        formula = parser.parse_mtl("F (G[0, 1] (a))")
         trace = marking.Trace(
             [
                 {"a": False},
@@ -216,7 +214,7 @@ class TestMarkingLasso(unittest.TestCase):
             0,
         )
         markings = marking.Marking(trace, formula)
-        formula = mtl.Eventually(mtl.Always(mtl.Prop("a"), (0, 2)))
+        formula = parser.parse_mtl("F (G[0, 2] (a))")
         expected = util.format_expect(
             """
                              0 1 2 3 4
@@ -232,10 +230,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(util.format_expect(str(markings)), expected)
 
     def test_fmt_markings_fu(self) -> None:
-        formula = mtl.Eventually(
-            mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 2)),
-            (0, 2),
-        )
+        formula = parser.parse_mtl("F[0, 2] ((p U[1, 2] q))")
         trace = marking.Trace(
             [
                 {"p": True, "q": False},
@@ -259,9 +254,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_ngu(self) -> None:
-        formula = mtl.Not(
-            mtl.Always(mtl.Until(mtl.Prop("p"), mtl.Prop("q"), (1, 3)), (0, 3)),
-        )
+        formula = parser.parse_mtl("!G[0, 3] ((p U[1, 3] q))")
         trace = marking.Trace(
             [
                 {"p": True, "q": False},
@@ -287,7 +280,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_r(self) -> None:
-        formula = mtl.Release(mtl.Prop("b"), mtl.Prop("a"), (0, 2))
+        formula = parser.parse_mtl("(b R[0, 2] a)")
         trace = marking.Trace(
             [
                 {"a": True, "b": False},
@@ -328,10 +321,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_ugf(self) -> None:
-        formula = mtl.Until(
-            mtl.Always(mtl.Eventually(mtl.Prop("b"), (0, 1))),
-            mtl.Prop("a"),
-        )
+        formula = parser.parse_mtl("(G (F[0, 1] (b)) U a)")
         trace = marking.Trace(
             [
                 {"a": False, "b": False},
@@ -373,7 +363,7 @@ class TestMarkingLasso(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fmt_markings_long_bool(self) -> None:
-        formula = mtl.Or(mtl.TrueBool(), mtl.Prop("a"))
+        formula = parser.parse_mtl("(TRUE | a)")
         trace = marking.Trace(
             [
                 {"a": True},
@@ -416,19 +406,19 @@ class TestMarkingLasso(unittest.TestCase):
             """
                                         1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3
                     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
-        (true | a) │●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│
+        (TRUE | a) │●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│●│
         a          │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
         =Lasso=                                             └───────────────────────┘
         """,
         )
         result = util.format_expect(str(marking.Marking(trace, formula)))
         self.assertEqual(result, expected)
-        formula = mtl.Or(mtl.FalseBool(), mtl.Prop("a"))
+        formula = parser.parse_mtl("(FALSE | a)")
         expected = util.format_expect(
             """
                                          1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3
                      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
-        (false | a) │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
+        (FALSE | a) │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
         a           │●│ │ │ │ │ │ │ │●│ │ │ │ │ │ │●│ │ │ │ │ │ │ │●│●│ │ │ │ │ │ │ │●│
         =Lasso=                                              └───────────────────────┘
         """,

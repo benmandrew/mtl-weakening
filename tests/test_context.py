@@ -1,6 +1,6 @@
 import unittest
 
-from src.logic import ctx, mtl
+from src.logic import ctx, mtl, parser
 
 
 class TestSplitFormula(unittest.TestCase):
@@ -11,11 +11,8 @@ class TestSplitFormula(unittest.TestCase):
         )
         indices = ctx.get_de_bruijn(expected_context)
         self.assertEqual(indices, [0, 1, 0])
-        expected_subf = mtl.Always(mtl.Prop("b"))
-        expected_f = mtl.And(
-            mtl.Or(mtl.Prop("a"), mtl.Not(mtl.Always(mtl.Prop("b")))),
-            mtl.Eventually(mtl.Prop("c")),
-        )
+        expected_subf = parser.parse_mtl("G b")
+        expected_f = parser.parse_mtl("(a | !G b) & F c")
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
         result_context, result_subf = ctx.split_formula(expected_f, [0, 1, 0])
@@ -30,19 +27,8 @@ class TestSplitFormula(unittest.TestCase):
         )
         indices = ctx.get_de_bruijn(expected_context)
         self.assertEqual(indices, [0, 1])
-        expected_subf = mtl.Until(
-            mtl.Eventually(mtl.Prop("b")),
-            mtl.Prop("e"),
-            (0, 3),
-        )
-        expected_f = mtl.Until(
-            mtl.And(
-                mtl.Prop("a"),
-                mtl.Until(mtl.Eventually(mtl.Prop("b")), mtl.Prop("e"), (0, 3)),
-            ),
-            mtl.Or(mtl.Prop("c"), mtl.Prop("d")),
-            (0, 5),
-        )
+        expected_subf = parser.parse_mtl("(F b) U[0,3] e")
+        expected_f = parser.parse_mtl("(a & ((F b) U[0,3] e)) U[0,5] (c | d)")
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
         context, subf = ctx.split_formula(result_f, indices)
@@ -59,31 +45,9 @@ class TestSplitFormula(unittest.TestCase):
         )
         indices = ctx.get_de_bruijn(expected_context)
         self.assertEqual(indices, [0, 0, 1])
-        expected_subf = mtl.Always(
-            mtl.And(
-                mtl.Until(mtl.Prop("c"), mtl.Eventually(mtl.Prop("d")), (2, 4)),
-                mtl.Or(mtl.Prop("e"), mtl.Prop("f")),
-            ),
-        )
-        expected_f = mtl.Eventually(
-            mtl.And(
-                mtl.Until(
-                    mtl.Prop("a"),
-                    mtl.Always(
-                        mtl.And(
-                            mtl.Until(
-                                mtl.Prop("c"),
-                                mtl.Eventually(mtl.Prop("d")),
-                                (2, 4),
-                            ),
-                            mtl.Or(mtl.Prop("e"), mtl.Prop("f")),
-                        ),
-                    ),
-                    (1, 3),
-                ),
-                mtl.Or(mtl.Prop("b"), mtl.Prop("c")),
-            ),
-            (0, 5),
+        expected_subf = parser.parse_mtl("G ((c U[2,4] F d) & (e | f))")
+        expected_f = parser.parse_mtl(
+            "F[0,5] ((a U[1,3] G ((c U[2,4] F d) & (e | f))) & (b | c))",
         )
         result_f = ctx.substitute(expected_context, expected_subf)
         self.assertEqual(expected_f, result_f)
@@ -153,8 +117,9 @@ class TestPartialNNFContext(unittest.TestCase):
 class TestPartialNNF(unittest.TestCase):
     def test_pnnf_subformula(self) -> None:
         context = ctx.Not(ctx.Hole())
-        subformula = mtl.Always(mtl.Prop("a"), (1, 5))
-        expected_subformula = mtl.Eventually(mtl.Not(mtl.Prop("a")), (1, 5))
+        subformula = parser.parse_mtl("G[1,5] a")
+        assert isinstance(subformula, mtl.Temporal)
+        expected_subformula = parser.parse_mtl("F[1,5] !a")
         result_context, result_subformula = ctx.partial_nnf(context, subformula)
         self.assertEqual(result_subformula, expected_subformula)
         self.assertEqual(result_context, ctx.Hole())

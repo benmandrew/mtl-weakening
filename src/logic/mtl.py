@@ -225,9 +225,9 @@ def fmt_interval(interval: Interval) -> str:
 
 def to_string(formula: Mtl) -> str:
     if isinstance(formula, TrueBool):
-        return "true"
+        return "TRUE"
     if isinstance(formula, FalseBool):
-        return "false"
+        return "FALSE"
     if isinstance(formula, Prop):
         return formula.name
     if isinstance(formula, Not):
