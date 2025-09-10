@@ -63,6 +63,7 @@ def main(argv: list[str]) -> None:
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
+    # print(w.markings)
     if interval is None:
         print(NO_WEAKENING_EXISTS_STR)  # noqa: T201
     else:

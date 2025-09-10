@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from src import analyse_cex, custom_args, mtl2ltlspec, util
+from src import analyse_cex, custom_args, mtl2ltlspec, util, xml_trace
 from src.logic import ctx, mtl, parser
 
 logger = logging.getLogger(__name__)
@@ -81,13 +81,12 @@ TRACE_PLUGIN = 4
 def write_commands_file(
     tmpdir: Path,
     bound: int,
-    loopback: int,
 ) -> None:
     commands = [
         "set on_failure_script_quits 1\n"
         # "set nusmv_stdout /dev/null\n"
         "go_bmc\n"
-        f'check_ltlspec_bmc_onepb -k "{bound}" -l "{loopback}" -o "problem"\n'
+        f'check_ltlspec_bmc_onepb -k "{bound}" -l "*" -o "problem"\n'
         f'show_traces -o "trace.xml" -p "{TRACE_PLUGIN}"\n'
         "quit",
     ]
@@ -96,6 +95,7 @@ def write_commands_file(
 
 
 INPUT_SMV_FILE = Path("models/foraging-robots.smv")
+# INPUT_SMV_FILE = Path("models/foraging-robots-limit-search.smv")
 
 
 def call_mtl2ltlspec(formula: mtl.Mtl) -> str:
@@ -144,9 +144,8 @@ def check_mtl(
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
-    loopback: int,
 ) -> str:
-    write_commands_file(tmpdir, bound, loopback)
+    write_commands_file(tmpdir, bound)
     generate_model_file(tmpdir, formula)
     with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
         subprocess.run(
@@ -162,9 +161,10 @@ def check_mtl(
             check=True,
         )
     with (tmpdir / "nuXmv.log").open("r", encoding="utf-8") as nuxmv_log:
-        no_cex_string = (
-            f"no counterexample found with bound {bound} and loop at {loopback}"
-        )
+        # no_cex_string = (
+        #     f"no counterexample found with bound {bound} and loop at {loopback}"
+        # )
+        no_cex_string = f"no counterexample found with bound {bound}"
         if no_cex_string in nuxmv_log.read():
             assert not Path(tmpdir / "trace.xml").exists()
             # Property is valid
@@ -176,7 +176,6 @@ def check_mtl(
 
 
 BOUND_MIN = 20
-LOOPBACK = 1
 
 
 def main(argv: list[str]) -> None:
@@ -186,14 +185,16 @@ def main(argv: list[str]) -> None:
     bound = (
         BOUND_MIN
         if subformula.interval[1] is None
-        else subformula.interval[1] * 2
+        else int(subformula.interval[1] * 1.5)
     )
     bound = max(BOUND_MIN, bound)
     n_iterations = 0
     while True:
         formula = ctx.substitute(context, subformula)
-        logger.info("Checking MTL formula %s", formula)
-        # print(f"Checking MTL formula {formula}")
+        logger.info("Checking MTL formula %s with bound %d", formula, bound)
+        print(  # noqa: T201
+            f"Checking MTL formula {formula} with bound {bound}",
+        )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 result = check_mtl(
@@ -201,19 +202,31 @@ def main(argv: list[str]) -> None:
                     formula,
                     args.de_bruijn,
                     bound,
-                    LOOPBACK,
                 )
         except PropertyValidError:
             print(  # noqa: T201
                 f"Final weakened interval in {n_iterations} "
                 f"iterations: {subformula.interval}",
             )
+            # interval = (
+            #     str(subformula.interval).replace("(", "").replace(")", "")
+            # )
+            # print(f"{n_iterations}, {interval}")
             break
         except NoWeakeningError:
             print(analyse_cex.NO_WEAKENING_EXISTS_STR)  # noqa: T201
             break
+        except xml_trace.NoLoopError:
+            logger.warning(
+                "No loop found in the trace, decreasing bound and retrying",
+            )
+            print("No loop found in the trace, decreasing bound and retrying")  # noqa: T201
+            bound -= 1
+            continue
+        # print(result)
+        # break
         interval = parse_interval(result)
-        bound = max(BOUND_MIN, interval[1] * 2)
+        bound = max(BOUND_MIN, int(interval[1] * 1.5))
         logger.info("Weakened %s to %s", subformula.interval, interval)
         # print(f"Weakened {subformula.interval} to {interval}")
         subformula = substitute_interval(subformula, interval)
