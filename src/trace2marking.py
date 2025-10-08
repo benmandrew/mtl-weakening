@@ -5,7 +5,8 @@ import logging
 import sys
 from pathlib import Path
 
-from src import custom_args, marking, util, xml_trace
+from src import custom_args, marking, util
+from src.trace_analysis import nuxmv_xml_trace
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def read_trace_input(args: Namespace) -> list[str]:
 
 
 def get_cex_trace(lines: list[str]) -> marking.Trace:
-    return xml_trace.parse("".join(lines))
+    return nuxmv_xml_trace.parse("".join(lines))
 
 
 def main(argv: list[str]) -> None:
@@ -43,7 +44,7 @@ def main(argv: list[str]) -> None:
         cex_trace.to_markings(),
         cex_trace.loop_start,
     )
-    print(result, end="")  # noqa: T201
+    print(result, end="")
 
 
 if __name__ == "__main__":

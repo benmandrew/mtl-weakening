@@ -12,13 +12,13 @@ MODULE main
 DEFINE
   TIME_R := 5;
   TIME_D := 5;
-  MAX_TIMER := 50;
-  MAX_SEARCHING_TIMER := 30;
+  MAX_TIMER := 10;
+  MAX_SEARCHING_TIMER := 40;
 
 VAR
   state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
-  timer : 0..MAX_TIMER; -- Should be the maximum time that any transition can take
-  searching_timer : 0..MAX_SEARCHING_TIMER;
+  timer : 1..MAX_TIMER; -- Should be the maximum time that any transition can take
+  searching_timer : 1..MAX_SEARCHING_TIMER;
 
 DEFINE
   resting_p :=     state = resting;
@@ -50,8 +50,8 @@ ASSIGN
       state = resting & timer < TIME_R : { resting, leavingHome };
       state = resting & timer = TIME_R : leavingHome;
 
-      state = leavingHome & timer = 2 & searching_timer < MAX_SEARCHING_TIMER : {leavingHome, randomWalk };
-      state = leavingHome & timer = 3 & searching_timer < MAX_SEARCHING_TIMER : randomWalk;
+      state = leavingHome & timer = 1 & searching_timer < MAX_SEARCHING_TIMER : {leavingHome, randomWalk };
+      state = leavingHome & timer = 2 & searching_timer < MAX_SEARCHING_TIMER : randomWalk;
 
       state = randomWalk & searching_timer < MAX_SEARCHING_TIMER : { randomWalk, homing, moveToFood };
 
@@ -61,14 +61,14 @@ ASSIGN
 
       searching_timer = MAX_SEARCHING_TIMER : { homing };
 
-      state = grabFood & timer = 2 : { grabFood, moveToHome };
-      state = grabFood & timer = 3 : moveToHome;
+      state = grabFood & timer = 1 : { grabFood, moveToHome };
+      state = grabFood & timer = 2 : moveToHome;
 
       state = moveToHome & timer < TIME_D : { moveToHome, deposit };
       state = moveToHome & timer = TIME_D : deposit;
 
-      state = deposit & timer = 3 : { deposit, resting };
-      state = deposit & timer = 4 : resting;
+      state = deposit & timer = 2 : { deposit, resting };
+      state = deposit & timer = 3 : resting;
 
       state = homing & timer < TIME_D : { homing, resting };
       state = homing & timer = TIME_D : resting;
@@ -76,18 +76,18 @@ ASSIGN
       TRUE : state;
     esac;
 
-  init(timer) := 0;
+  init(timer) := 1;
   next(timer) :=
     case
-      next(state) != state : 0;      -- Reset timer on state change
+      next(state) != state : 1;      -- Reset timer on state change
       timer < MAX_TIMER : timer + 1; -- Otherwise increment
       TRUE : timer;                  -- Saturate timer
     esac;
 
-  init(searching_timer) := 0;
+  init(searching_timer) := 1;
   next(searching_timer) :=
     case
-      next(searching_p) != searching_p : 0;      -- Reset timer if we start searching
+      next(searching_p) != searching_p : 1;      -- Reset timer if we start searching
       searching_p & searching_timer < MAX_SEARCHING_TIMER : searching_timer + 1; -- Otherwise increment if we're searching
       TRUE : searching_timer;                  -- Saturate timer
     esac;

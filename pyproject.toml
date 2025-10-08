@@ -26,6 +26,7 @@ lint.ignore = [
     "PLR0911",
     "PLR0912",
     "ERA001",  # Allow commented-out code
+    "T201",  # Allow print statements
 ]
 
 [tool.bandit]

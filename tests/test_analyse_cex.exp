@@ -9,7 +9,7 @@ source ./tests/util.exp
 
 spawn python3 -m src.analyse_cex -h
 
-expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--quiet | --debug\] trace_file"
+expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--trace-file-type {nuxmv_xml,spin}\] \[--quiet | --debug\] trace_file"
 expect_exact ""
 expect_exact "Analyse NuXmv output."
 expect_exact ""
@@ -21,5 +21,7 @@ expect_exact "  -h, --help            show this help message and exit"
 expect_exact "  --mtl MTL             MTL specification"
 expect_exact "  --de-bruijn DE_BRUIJN"
 expect_exact "                        De Bruijn index of the subformula as a list of integers"
+expect_exact "  --trace-file-type {nuxmv_xml,spin}"
+expect_exact "                        Type of the trace file (default: nuxmv_xml)"
 expect_exact "  --quiet"
 expect_exact "  --debug"

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging.config
 import subprocess as sp
@@ -5,12 +7,16 @@ import sys
 import textwrap
 from pathlib import Path
 
+SPIN_PATH = Path("/usr/local/bin/spin")
+NUXMV_PATH = Path("/usr/bin/nuXmv")
+GCC_PATH = Path("/usr/bin/gcc")
+
 
 def eprint(  # type: ignore[no-untyped-def]
     *args,  # noqa: ANN002
     **kwargs,  # noqa: ANN003
 ) -> None:
-    print(*args, file=sys.stderr, **kwargs)  # noqa: T201
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def run_and_capture(cmd: list[str]) -> str:
@@ -57,3 +63,9 @@ def str_to_value(s: str) -> Value:
 
 def format_expect(s: str) -> str:
     return textwrap.dedent(s).strip("\n")
+
+
+def interval_to_str(interval: tuple[int, int | None]) -> str:
+    start, end = interval
+    end_str = str(end) if end is not None else "∞"
+    return f"[{start},{end_str}]"

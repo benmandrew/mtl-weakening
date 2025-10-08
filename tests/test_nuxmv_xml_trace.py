@@ -1,7 +1,8 @@
 import pathlib
 import unittest
 
-from src import marking, util, xml_trace
+from src import marking, util
+from src.trace_analysis import nuxmv_xml_trace
 
 
 def read_test_data(file_path: str) -> str:
@@ -13,17 +14,17 @@ class TestXMLTrace(unittest.TestCase):
 
     def test_no_loop(self) -> None:
         xml_input = read_test_data("tests/test_data/trace_no_loop.xml")
-        with self.assertRaises(xml_trace.NoLoopError):
-            xml_trace.parse(xml_input)
+        with self.assertRaises(nuxmv_xml_trace.NoLoopError):
+            nuxmv_xml_trace.parse(xml_input)
 
     def test_invalid_loop(self) -> None:
         xml_input = read_test_data("tests/test_data/trace_invalid_loop.xml")
         with self.assertRaises(AssertionError):
-            xml_trace.parse(xml_input)
+            nuxmv_xml_trace.parse(xml_input)
 
     def test_valid_trace(self) -> None:
         xml_input = read_test_data("tests/test_data/trace_valid.xml")
-        trace = xml_trace.parse(xml_input)
+        trace = nuxmv_xml_trace.parse(xml_input)
         result = util.format_expect(
             marking.markings_to_str(trace.to_markings(), trace.loop_start),
         )

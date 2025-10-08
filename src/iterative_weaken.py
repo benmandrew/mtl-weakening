@@ -1,17 +1,18 @@
 import argparse
-import contextlib
-import io
 import logging
-import shutil
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from src import analyse_cex, custom_args, mtl2ltlspec, util, xml_trace
+from src import analyse_cex, custom_args, util
 from src.logic import ctx, mtl, parser
+from src.trace_analysis import nuxmv, nuxmv_xml_trace
+from src.trace_analysis.common import NoWeakeningError, PropertyValidError
 
 logger = logging.getLogger(__name__)
+
+
+BOUND_MIN = 20
 
 
 class Namespace(argparse.Namespace):
@@ -66,118 +67,6 @@ def substitute_interval(
     raise ValueError(msg)
 
 
-# nuXmv trace plugins, controlled with flag `-p`:
-#   0   BASIC TRACE EXPLAINER - shows changes only
-#   1   BASIC TRACE EXPLAINER - shows all variables
-#   2   TRACE TABLE PLUGIN - symbols on column
-#   3   TRACE TABLE PLUGIN - symbols on row
-#   4   TRACE XML DUMP PLUGIN - an xml document
-#   5   TRACE COMPACT PLUGIN - Shows the trace in a compact tabular fashion
-#   6   TRACE XML EMBEDDED DUMP PLUGIN - an xml element
-#   7   Empty Trace Plugin
-TRACE_PLUGIN = 4
-
-
-def write_commands_file(
-    tmpdir: Path,
-    bound: int,
-) -> None:
-    commands = [
-        "set on_failure_script_quits 1\n"
-        # "set nusmv_stdout /dev/null\n"
-        "go_bmc\n"
-        f'check_ltlspec_bmc_onepb -k "{bound}" -l "*" -o "problem"\n'
-        f'show_traces -o "trace.xml" -p "{TRACE_PLUGIN}"\n'
-        "quit",
-    ]
-    with (tmpdir / "commands.txt").open("w", encoding="utf-8") as f:
-        f.writelines(commands)
-
-
-INPUT_SMV_FILE = Path("models/foraging-robots.smv")
-# INPUT_SMV_FILE = Path("models/foraging-robots-limit-search.smv")
-
-
-def call_mtl2ltlspec(formula: mtl.Mtl) -> str:
-    f = io.StringIO()
-    with contextlib.redirect_stdout(f):
-        mtl2ltlspec.main(["--mtl", mtl.to_string(formula)])
-    return f.getvalue()
-
-
-def generate_model_file(tmpdir: Path, formula: mtl.Mtl) -> None:
-    ltlspec = call_mtl2ltlspec(formula)
-    shutil.copy(INPUT_SMV_FILE, Path(tmpdir / "model.smv"))
-    with (tmpdir / "model.smv").open("a", encoding="utf-8") as f:
-        f.write(f"LTLSPEC {ltlspec};")
-
-
-def call_analyse_cex(
-    tmpdir: Path,
-    formula: mtl.Mtl,
-    de_bruijn: list[int],
-) -> str:
-    f = io.StringIO()
-    with contextlib.redirect_stdout(f):
-        analyse_cex.main(
-            [
-                "--mtl",
-                mtl.to_string(formula),
-                "--de-bruijn",
-                ",".join(map(str, de_bruijn)),
-                str(tmpdir / "trace.xml"),
-            ],
-        )
-    return f.getvalue()
-
-
-class PropertyValidError(Exception):
-    pass
-
-
-class NoWeakeningError(Exception):
-    pass
-
-
-def check_mtl(
-    tmpdir: Path,
-    formula: mtl.Mtl,
-    de_bruijn: list[int],
-    bound: int,
-) -> str:
-    write_commands_file(tmpdir, bound)
-    generate_model_file(tmpdir, formula)
-    with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
-        subprocess.run(
-            [
-                "/usr/bin/nuXmv",
-                "-source",
-                tmpdir / "commands.txt",
-                tmpdir / "model.smv",
-            ],
-            cwd=tmpdir,
-            stdout=nuxmv_log,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
-    with (tmpdir / "nuXmv.log").open("r", encoding="utf-8") as nuxmv_log:
-        # no_cex_string = (
-        #     f"no counterexample found with bound {bound} and loop at {loopback}"
-        # )
-        no_cex_string = f"no counterexample found with bound {bound}"
-        if no_cex_string in nuxmv_log.read():
-            assert not Path(tmpdir / "trace.xml").exists()
-            # Property is valid
-            raise PropertyValidError
-    result = call_analyse_cex(tmpdir, formula, de_bruijn)
-    if result.startswith(analyse_cex.NO_WEAKENING_EXISTS_STR):
-        raise NoWeakeningError
-    return result
-
-
-BOUND_MIN = 20
-
-
 def main(argv: list[str]) -> None:
     args = parse_args(argv)
     util.setup_logging(args.log_level)
@@ -191,44 +80,38 @@ def main(argv: list[str]) -> None:
     n_iterations = 0
     while True:
         formula = ctx.substitute(context, subformula)
-        logger.info("Checking MTL formula %s with bound %d", formula, bound)
-        print(  # noqa: T201
-            f"Checking MTL formula {formula} with bound {bound}",
+        print(
+            f"Bound {bound}: {util.interval_to_str(subformula.interval)} → ",
+            end="",
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                result = check_mtl(
+                result = nuxmv.check_mtl(
                     Path(tmpdir),
                     formula,
                     args.de_bruijn,
                     bound,
                 )
         except PropertyValidError:
-            print(  # noqa: T201
+            print(
                 f"Final weakened interval in {n_iterations} "
                 f"iterations: {subformula.interval}",
             )
-            # interval = (
-            #     str(subformula.interval).replace("(", "").replace(")", "")
-            # )
-            # print(f"{n_iterations}, {interval}")
             break
         except NoWeakeningError:
-            print(analyse_cex.NO_WEAKENING_EXISTS_STR)  # noqa: T201
+            print(analyse_cex.NO_WEAKENING_EXISTS_STR)
             break
-        except xml_trace.NoLoopError:
-            logger.warning(
+        except nuxmv_xml_trace.NoLoopError:
+            print(
                 "No loop found in the trace, decreasing bound and retrying",
             )
-            print("No loop found in the trace, decreasing bound and retrying")  # noqa: T201
             bound -= 1
             continue
         # print(result)
         # break
         interval = parse_interval(result)
         bound = max(BOUND_MIN, int(interval[1] * 1.5))
-        logger.info("Weakened %s to %s", subformula.interval, interval)
-        # print(f"Weakened {subformula.interval} to {interval}")
+        print(util.interval_to_str(interval))
         subformula = substitute_interval(subformula, interval)
         n_iterations += 1
 
