@@ -1,3 +1,6 @@
+# Set terminal dimensions to prevent line wrapping
+stty columns 160 rows 40
+
 proc expect_exact {text} {
 	expect {
 		-exact $text {}
