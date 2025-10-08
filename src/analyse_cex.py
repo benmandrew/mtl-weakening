@@ -6,8 +6,9 @@ import pathlib
 import sys
 import typing
 
-from src import custom_args, marking, util, weaken, xml_trace
+from src import custom_args, marking, util, weaken
 from src.logic import ctx, parser
+from src.trace_analysis import nuxmv_xml_trace
 
 if typing.TYPE_CHECKING:
     from src.logic import mtl
@@ -29,6 +30,7 @@ def parse_args(argv: list[str]) -> Namespace:
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
     custom_args.add_trace_file_argument(arg_parser)
+    custom_args.add_trace_file_type_argument(arg_parser)
     custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
@@ -44,7 +46,7 @@ def read_trace_input(args: Namespace) -> list[str]:
 
 
 def get_cex_trace(lines: list[str]) -> marking.Trace:
-    return xml_trace.parse("".join(lines))
+    return nuxmv_xml_trace.parse("".join(lines))
 
 
 NO_WEAKENING_EXISTS_STR = "No suitable weakening of the interval exists"
@@ -65,11 +67,9 @@ def main(argv: list[str]) -> None:
     interval = w.weaken()
     # print(w.markings)
     if interval is None:
-        print(NO_WEAKENING_EXISTS_STR)  # noqa: T201
+        print(NO_WEAKENING_EXISTS_STR)
     else:
-        print(  # noqa: T201
-            str(interval).replace(" ", "").replace("(", "[").replace(")", "]"),
-        )
+        print(util.interval_to_str(interval))
 
 
 if __name__ == "__main__":
