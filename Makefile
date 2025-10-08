@@ -1,5 +1,7 @@
 .PHONY: test unittest expect_test fmt fmt-ci lint ruff pylint mypy bandit
 
+all: fmt lint test
+
 test: unittest expect_test
 
 unittest:
