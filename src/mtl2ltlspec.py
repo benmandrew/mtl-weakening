@@ -21,7 +21,7 @@ def main(argv: list[str]) -> None:
     args = parse_args(argv)
     formula = parser.parse_mtl(args.mtl)
     smv = ltl.to_nuxmv(mtl.mtl_to_ltl(formula))
-    print(smv)  # noqa: T201
+    print(smv)
 
 
 if __name__ == "__main__":
