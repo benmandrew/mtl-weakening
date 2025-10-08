@@ -1,6 +1,7 @@
 import argparse
 import logging
 import pathlib
+from enum import Enum
 
 
 def _list_of_ints(arg: str) -> list[int]:
@@ -25,6 +26,33 @@ def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
         type=pathlib.Path,
         default=None,
         help="Path to the trace file to analyse. If not provided, stdin will be used.",
+    )
+
+
+class TraceFileType(Enum):
+    nuxmv_xml = "nuxmv_xml"
+    spin = "spin"
+
+    def __str__(self) -> str:
+        return self.name
+
+    @staticmethod
+    def from_string(s: str) -> "TraceFileType":
+        try:
+            return TraceFileType[s]
+        except KeyError as err:
+            raise ValueError from err
+
+
+def add_trace_file_type_argument(
+    parser: argparse.ArgumentParser,
+) -> None:
+    parser.add_argument(
+        "--trace-file-type",
+        type=TraceFileType.from_string,
+        choices=list(TraceFileType),
+        default=TraceFileType.nuxmv_xml,
+        help="Type of the trace file (default: nuxmv_xml)",
     )
 
 
