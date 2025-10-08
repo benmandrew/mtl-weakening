@@ -196,14 +196,21 @@ class Marking:
         return self[f][self.trace.idx(i)]
 
     def _get_and(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
-        return [l and r for l, r in zip(self[left], self[right])]  # noqa: E741
+        return [
+            l and r
+            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
+        ]
 
     def _get_or(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
-        return [l or r for l, r in zip(self[left], self[right])]  # noqa: E741
+        return [
+            l or r
+            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
+        ]
 
     def _get_implies(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
         return [
-            (not l) or r for l, r in zip(self[left], self[right])  # noqa: E741
+            (not l) or r
+            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
         ]
 
     def _get_eventually(
