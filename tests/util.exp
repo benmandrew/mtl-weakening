@@ -1,5 +1,6 @@
-# Set terminal dimensions to prevent line wrapping
-stty columns 160 rows 40
+# Set terminal dimensions only for spawned processes
+set env(COLUMNS) 160
+set env(LINES) 40
 
 proc expect_exact {text} {
 	expect {
