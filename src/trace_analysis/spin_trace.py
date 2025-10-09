@@ -70,5 +70,6 @@ def parse(s: str) -> marking.Trace:
     expanded_states = [expand_state(state) for state in states]
     clear_nonappearing_states(expanded_states)
     return marking.Trace(
-        typing.cast("list[dict[str, bool | int | str]]", expanded_states), loop_i,
+        typing.cast("list[dict[str, bool | int | str]]", expanded_states),
+        loop_i,
     )
