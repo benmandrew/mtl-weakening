@@ -29,30 +29,30 @@ def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-class TraceFileType(Enum):
-    nuxmv_xml = "nuxmv_xml"
+class ModelChecker(Enum):
+    nuxmv = "nuxmv"
     spin = "spin"
 
     def __str__(self) -> str:
         return self.name
 
     @staticmethod
-    def from_string(s: str) -> "TraceFileType":
+    def from_string(s: str) -> "ModelChecker":
         try:
-            return TraceFileType[s]
+            return ModelChecker[s]
         except KeyError as err:
             raise ValueError from err
 
 
-def add_trace_file_type_argument(
+def add_model_checker_argument(
     parser: argparse.ArgumentParser,
 ) -> None:
     parser.add_argument(
-        "--trace-file-type",
-        type=TraceFileType.from_string,
-        choices=list(TraceFileType),
-        default=TraceFileType.nuxmv_xml,
-        help="Type of the trace file (default: nuxmv_xml)",
+        "--model-checker",
+        type=ModelChecker.from_string,
+        choices=list(ModelChecker),
+        default=ModelChecker.nuxmv,
+        help="The model checker used (default: nuxmv)",
     )
 
 

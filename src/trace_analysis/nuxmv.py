@@ -4,7 +4,7 @@ from pathlib import Path
 
 from src import analyse_cex
 from src.logic import mtl
-from src.trace_analysis import common
+from src.trace_analysis import common, exceptions
 
 # INPUT_SMV_FILE = Path("models/foraging-robots.smv")
 INPUT_SMV_FILE = Path("models/foraging-robots-limit-search.smv")
@@ -67,20 +67,13 @@ def write_commands_file(
 
 
 def generate_model_file(tmpdir: Path, formula: mtl.Mtl) -> None:
-    ltlspec = common.call_mtl2ltlspec(formula)
+    ltlspec = common.call_mtl2ltlspec_nuxmv(formula)
     shutil.copy(INPUT_SMV_FILE, Path(tmpdir / "model.smv"))
     with (tmpdir / "model.smv").open("a", encoding="utf-8") as f:
         f.write(f"LTLSPEC {ltlspec};")
 
 
-def check_mtl(
-    tmpdir: Path,
-    formula: mtl.Mtl,
-    de_bruijn: list[int],
-    bound: int,
-) -> str:
-    write_commands_file(tmpdir, bound)
-    generate_model_file(tmpdir, formula)
+def model_check(tmpdir: Path) -> None:
     with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
         subprocess.run(
             [
@@ -96,9 +89,18 @@ def check_mtl(
             stderr=subprocess.STDOUT,
             check=True,
         )
+
+
+def check_mtl(
+    tmpdir: Path,
+    formula: mtl.Mtl,
+    de_bruijn: list[int],
+    bound: int,
+) -> str:
+    write_commands_file(tmpdir, bound)
+    generate_model_file(tmpdir, formula)
+    model_check(tmpdir)
     with (tmpdir / "nuXmv.log").open("r", encoding="utf-8") as nuxmv_log:
-        with Path("bruh").open("w", encoding="utf-8") as f:
-            f.write(nuxmv_log.read())
         nuxmv_log.seek(0)
         # no_cex_string = (
         #     f"no counterexample found with bound {bound} and loop at {loopback}"
@@ -106,9 +108,8 @@ def check_mtl(
         no_cex_string = f"no counterexample found with bound {bound}"
         if no_cex_string in nuxmv_log.read():
             assert not Path(tmpdir / "trace.xml").exists()
-            # Property is valid
-            raise common.PropertyValidError
-    result = common.call_analyse_cex(tmpdir, formula, de_bruijn, "nuxmv_xml")
+            raise exceptions.PropertyValidError
+    result = common.call_analyse_cex_nuxmv(tmpdir, formula, de_bruijn)
     if result.startswith(analyse_cex.NO_WEAKENING_EXISTS_STR):
-        raise common.NoWeakeningError
+        raise exceptions.NoWeakeningError
     return result

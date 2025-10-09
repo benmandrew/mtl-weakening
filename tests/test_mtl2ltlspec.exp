@@ -7,19 +7,32 @@ source ./tests/util.exp
 
 spawn python3 -m src.mtl2ltlspec -h
 
-expect_exact "usage: mtl2ltlspec.py \[-h\] \[--mtl MTL\]"
+expect_exact "usage: mtl2ltlspec.py \[-h\] \[--mtl MTL\] \[--model-checker {nuxmv,spin}\]"
 expect_exact ""
-expect_exact "Convert MTL formula to SMV-compatible LTL specifications."
+expect_exact "Convert MTL formula to SMV- or Promela-compatible LTL specifications."
 expect_exact ""
 expect_exact "options:"
-expect_exact "  -h, --help  show this help message and exit"
-expect_exact "  --mtl MTL   MTL specification"
+expect_exact "  -h, --help            show this help message and exit"
+expect_exact "  --mtl MTL             MTL specification"
+expect_exact "  --model-checker {nuxmv,spin}"
+expect_exact "                        The model checker used (default: nuxmv)"
 
 
-spawn python3 -m src.mtl2ltlspec --mtl "G (p -> F\[0,1\] (q))"
+spawn python3 -m src.mtl2ltlspec --mtl "G (p -> F\[0,1\] (q))" --model-checker nuxmv
 
 expect_exact "G ((p -> (q | X (q))))"
 
-spawn python3 -m src.mtl2ltlspec --mtl "G (p & G\[0,1\] (! q))"
 
-expect_exact "G ((p & (!(q) & X (!(q)))))"
+spawn python3 -m src.mtl2ltlspec --mtl "G (p -> F\[0,1\] (q))" --model-checker spin
+
+expect_exact "\[\] ((p -> (q || X (q))))"
+
+
+spawn python3 -m src.mtl2ltlspec --mtl "F (p & G\[0,1\] (! q))" --model-checker nuxmv
+
+expect_exact "F ((p & (!(q) & X (!(q)))))"
+
+
+spawn python3 -m src.mtl2ltlspec --mtl "F (p & G\[0,1\] (! q))" --model-checker spin
+
+expect_exact "<> ((p && (!(q) && X (!(q)))))"

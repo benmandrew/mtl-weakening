@@ -6,8 +6,7 @@ from pathlib import Path
 
 from src import analyse_cex, custom_args, util
 from src.logic import ctx, mtl, parser
-from src.trace_analysis import nuxmv, nuxmv_xml_trace
-from src.trace_analysis.common import NoWeakeningError, PropertyValidError
+from src.trace_analysis import exceptions, nuxmv, spin
 
 logger = logging.getLogger(__name__)
 
@@ -86,22 +85,24 @@ def main(argv: list[str]) -> None:
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
+                result = spin.check_mtl(Path(tmpdir), formula, args.de_bruijn)
+                print(result)
                 result = nuxmv.check_mtl(
                     Path(tmpdir),
                     formula,
                     args.de_bruijn,
                     bound,
                 )
-        except PropertyValidError:
+        except exceptions.PropertyValidError:
             print(
                 f"Final weakened interval in {n_iterations} "
                 f"iterations: {subformula.interval}",
             )
             break
-        except NoWeakeningError:
+        except exceptions.NoWeakeningError:
             print(analyse_cex.NO_WEAKENING_EXISTS_STR)
             break
-        except nuxmv_xml_trace.NoLoopError:
+        except exceptions.NoLoopError:
             print(
                 "No loop found in the trace, decreasing bound and retrying",
             )
