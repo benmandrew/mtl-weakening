@@ -2,7 +2,7 @@ import pathlib
 import unittest
 
 from src import marking, util
-from src.trace_analysis import nuxmv_xml_trace
+from src.trace_analysis import exceptions, nuxmv_xml_trace
 
 
 def read_test_data(file_path: str) -> str:
@@ -14,7 +14,7 @@ class TestXMLTrace(unittest.TestCase):
 
     def test_no_loop(self) -> None:
         xml_input = read_test_data("tests/test_data/trace_no_loop.xml")
-        with self.assertRaises(nuxmv_xml_trace.NoLoopError):
+        with self.assertRaises(exceptions.NoLoopError):
             nuxmv_xml_trace.parse(xml_input)
 
     def test_invalid_loop(self) -> None:

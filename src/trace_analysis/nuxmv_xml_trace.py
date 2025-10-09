@@ -5,6 +5,7 @@ import typing
 from defusedxml import ElementTree
 
 from src import marking, util
+from src.trace_analysis import exceptions
 
 if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec B405
@@ -24,16 +25,12 @@ def _parse_state(state: Element) -> dict[str, util.Value]:
     return state_dict
 
 
-class NoLoopError(Exception):
-    pass
-
-
 def _parse_loops(loops: Element) -> int:
     if loops.text is None:
-        raise NoLoopError
+        raise exceptions.NoLoopError
     text = loops.text.strip()
     if text == "":
-        raise NoLoopError
+        raise exceptions.NoLoopError
     return int(text)
 
 
@@ -48,6 +45,6 @@ def xml_to_trace(xml_element: Element) -> marking.Trace:
         else:
             util.eprint(f"Unexpected tag {node.tag} in XML trace")
     if loop is None:
-        raise NoLoopError
+        raise exceptions.NoLoopError
     assert 0 <= loop < len(states)
     return marking.Trace(states, loop)

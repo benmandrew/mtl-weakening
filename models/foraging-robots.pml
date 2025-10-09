@@ -10,17 +10,17 @@ mtype = {
      homing
 };
 
-inline show_state(s) {
+inline print_state(s, timer) {
     if
-    :: (s == resting)     -> printf("@@@ state=resting\n")
-    :: (s == leavingHome) -> printf("@@@ state=leavingHome\n")
-    :: (s == randomWalk)  -> printf("@@@ state=randomWalk\n")
-    :: (s == moveToFood)  -> printf("@@@ state=moveToFood\n")
-    :: (s == scanArena)   -> printf("@@@ state=scanArena\n")
-    :: (s == grabFood)    -> printf("@@@ state=grabFood\n")
-    :: (s == moveToHome)  -> printf("@@@ state=moveToHome\n")
-    :: (s == deposit)     -> printf("@@@ state=deposit\n")
-    :: (s == homing)      -> printf("@@@ state=homing\n")
+    :: (s == resting)     -> printf("@@@ {\"state\": \"resting\", \"timer\": %d}\n", timer)
+    :: (s == leavingHome) -> printf("@@@ {\"state\": \"leavingHome\", \"timer\": %d}\n", timer)
+    :: (s == randomWalk)  -> printf("@@@ {\"state\": \"randomWalk\", \"timer\": %d}\n", timer)
+    :: (s == moveToFood)  -> printf("@@@ {\"state\": \"moveToFood\", \"timer\": %d}\n", timer)
+    :: (s == scanArena)   -> printf("@@@ {\"state\": \"scanArena\", \"timer\": %d}\n", timer)
+    :: (s == grabFood)    -> printf("@@@ {\"state\": \"grabFood\", \"timer\": %d}\n", timer)
+    :: (s == moveToHome)  -> printf("@@@ {\"state\": \"moveToHome\", \"timer\": %d}\n", timer)
+    :: (s == deposit)     -> printf("@@@ {\"state\": \"deposit\", \"timer\": %d}\n", timer)
+    :: (s == homing)      -> printf("@@@ {\"state\": \"homing\", \"timer\": %d}\n", timer)
     fi
 }
 
@@ -133,11 +133,9 @@ init {
 
           /* --- commit synchronous updates --- */
           state = next_state;
-
-          show_state(state);
-          printf("@@@ {\"step\": %d, \"state\": \"%d\", \"timer\": %d}\n", _nr_pr, state, timer);
-          step = step + 1;
-     }
+          print_state(state, timer);
+          step = step + 1;   
+     }  
      od
 }
 
@@ -150,8 +148,3 @@ init {
 #define moveToHome_p (state == moveToHome)
 #define deposit_p (state == deposit)
 #define homing_p (state == homing)
-
-ltl formula
-{
-     []( (leavingHome_p) -> <> (resting_p) )
-}

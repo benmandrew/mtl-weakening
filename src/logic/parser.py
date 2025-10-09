@@ -183,15 +183,29 @@ class LTLTransformer(lark.Transformer[lark.Token, ltl.Ltl]):
         return ltl.Release(left, right)
 
 
-with (Path(__file__).parent / "ltl.lark").open(encoding="utf-8") as f:
+with (Path(__file__).parent / "ltl_nuxmv.lark").open(encoding="utf-8") as f:
     grammar = f.read()
-LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
+NUXMV_LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 
 
-def parse_ltl(text: str) -> ltl.Ltl:
+def parse_nuxmv_ltl(text: str) -> ltl.Ltl:
     """
-    Parse an LTL formula string into a validated AST.
+    Parse an LTL formula string in NuXmv format into a validated AST.
     Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
     """
-    tree = LTL_PARSER.parse(text)
+    tree = NUXMV_LTL_PARSER.parse(text)
+    return LTLTransformer().transform(tree)
+
+
+with (Path(__file__).parent / "ltl_spin.lark").open(encoding="utf-8") as f:
+    grammar = f.read()
+SPIN_LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
+
+
+def parse_spin_ltl(text: str) -> ltl.Ltl:
+    """
+    Parse an LTL formula string in Promela format into a validated AST.
+    Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
+    """
+    tree = SPIN_LTL_PARSER.parse(text)
     return LTLTransformer().transform(tree)
