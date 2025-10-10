@@ -29,7 +29,7 @@ def get_diameter(tmpdir: Path, model_file: Path) -> int:
     with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
         subprocess.run(
             [
-                "/usr/bin/nuXmv",
+                util.NUXMV_PATH,
                 "-source",
                 tmpdir / "commands.txt",
                 tmpdir / "model.smv",
@@ -78,7 +78,7 @@ def model_check(tmpdir: Path) -> None:
     with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
         subprocess.run(
             [
-                "/usr/bin/nuXmv",
+                util.NUXMV_PATH,
                 "-source",
                 tmpdir / "commands.txt",
                 tmpdir / "model.smv",

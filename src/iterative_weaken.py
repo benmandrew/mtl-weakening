@@ -19,10 +19,6 @@ class Namespace(argparse.Namespace):
     log_level: str
 
 
-def list_of_ints(arg: str) -> list[int]:
-    return list(map(int, arg.split(",")))
-
-
 def parse_args(argv: list[str]) -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Convert MTL formula to SMV-compatible LTL specifications.",

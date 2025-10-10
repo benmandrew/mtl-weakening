@@ -18,7 +18,6 @@ class TestXMLTrace(unittest.TestCase):
             spin_trace.parse(trail_input)
 
     def test_valid_trace(self) -> None:
-        self.maxDiff = None
         trail_input = read_test_data("tests/test_data/trace_valid.spin")
         trace = spin_trace.parse(trail_input)
         result = util.format_expect(
