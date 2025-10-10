@@ -4,14 +4,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-from src import analyse_cex, custom_args, util
+from src import custom_args, util
 from src.logic import ctx, mtl, parser
 from src.trace_analysis import exceptions, nuxmv, spin
 
 logger = logging.getLogger(__name__)
-
-
-BOUND_MIN = 20
 
 
 class Namespace(argparse.Namespace):
@@ -66,10 +63,14 @@ def substitute_interval(
     raise ValueError(msg)
 
 
-def main(argv: list[str]) -> None:
+BOUND_MIN = 20
+
+
+def main_nuxmv(argv: list[str]) -> None:
     args = parse_args(argv)
     util.setup_logging(args.log_level)
     context, subformula = get_context_and_subformula(args)
+    de_bruijn = ctx.get_de_bruijn(context)
     bound = (
         BOUND_MIN
         if subformula.interval[1] is None
@@ -85,12 +86,10 @@ def main(argv: list[str]) -> None:
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                result = spin.check_mtl(Path(tmpdir), formula, args.de_bruijn)
-                print(result)
                 result = nuxmv.check_mtl(
                     Path(tmpdir),
                     formula,
-                    args.de_bruijn,
+                    de_bruijn,
                     bound,
                 )
         except exceptions.PropertyValidError:
@@ -100,7 +99,7 @@ def main(argv: list[str]) -> None:
             )
             break
         except exceptions.NoWeakeningError:
-            print(analyse_cex.NO_WEAKENING_EXISTS_STR)
+            print(util.NO_WEAKENING_EXISTS_STR)
             break
         except exceptions.NoLoopError:
             print(
@@ -108,10 +107,38 @@ def main(argv: list[str]) -> None:
             )
             bound -= 1
             continue
-        # print(result)
-        # break
         interval = parse_interval(result)
         bound = max(BOUND_MIN, int(interval[1] * 1.5))
+        print(util.interval_to_str(interval))
+        subformula = substitute_interval(subformula, interval)
+        n_iterations += 1
+
+
+def main(argv: list[str]) -> None:
+    args = parse_args(argv)
+    util.setup_logging(args.log_level)
+    context, subformula = get_context_and_subformula(args)
+    de_bruijn = ctx.get_de_bruijn(context)
+    n_iterations = 0
+    while True:
+        formula = ctx.substitute(context, subformula)
+        print(
+            f"{util.interval_to_str(subformula.interval)} → ",
+            end="",
+        )
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                result = spin.check_mtl(Path(tmpdir), formula, de_bruijn)
+        except exceptions.PropertyValidError:
+            print(
+                f"Final weakened interval in {n_iterations} "
+                f"iterations: {subformula.interval}",
+            )
+            break
+        except exceptions.NoWeakeningError:
+            print(util.NO_WEAKENING_EXISTS_STR)
+            break
+        interval = parse_interval(result)
         print(util.interval_to_str(interval))
         subformula = substitute_interval(subformula, interval)
         n_iterations += 1

@@ -4,9 +4,9 @@ from pathlib import Path
 
 from src import util
 from src.logic import mtl
-from src.trace_analysis import common
+from src.trace_analysis import common, exceptions
 
-INPUT_PML_FILE = Path("models/foraging-robots.pml")
+INPUT_PML_FILE = Path("models/foraging-robots-limit-search.pml")
 
 
 def generate_model_file(tmpdir: Path, formula: mtl.Mtl) -> None:
@@ -46,15 +46,10 @@ def compile_pan(tmpdir: Path) -> None:
 
 def run_pan(tmpdir: Path) -> None:
     subprocess.run(
-        [
-            tmpdir / "pan",
-            "-T",
-            "-e",
-            "-c1",
-            "-a",
-        ],
+        [tmpdir / "pan", "-T", "-e", "-c10", "-a"],
         cwd=tmpdir,
         check=True,
+        stdout=subprocess.DEVNULL,
     )
 
 
@@ -62,7 +57,7 @@ def expand_trail_file(
     tmpdir: Path,
     trail_file: Path,
     output_file: Path,
-) -> None:
+) -> bool:
     expanded_trail = subprocess.run(
         [
             util.SPIN_PATH,
@@ -79,16 +74,18 @@ def expand_trail_file(
         capture_output=True,
         text=True,
     )
+    has_loop = False
     with output_file.open(
         "w",
         encoding="utf-8",
     ) as out:
         for line in expanded_trail.stdout.splitlines():
-            # out.write(line + "\n")
             if line.startswith("@@@"):
                 out.write(line[len("@@@ ") :] + "\n")
             elif line == "<<<<<START OF CYCLE>>>>>":
+                has_loop = True
                 out.write("START OF CYCLE\n")
+    return has_loop
 
 
 def pick_longest_trail_file(tmpdir: Path, trail_files: list[Path]) -> Path:
@@ -120,9 +117,12 @@ def check_mtl(
     output_files: list[Path] = []
     for i, trail_file in enumerate(trail_files):
         output_file = tmpdir / f"expanded_trail_{i+1}.txt"
-        output_files.append(output_file)
-        expand_trail_file(tmpdir, trail_file, output_file)
+        has_loop = expand_trail_file(tmpdir, trail_file, output_file)
+        if has_loop:
+            output_files.append(output_file)
+    assert output_files, "No valid trail files with loops found"
     longest_file = max(output_files, key=lambda p: sum(1 for _ in p.open()))
-    # return longest_file.read_text(encoding="utf-8")
-    print("FILE:", longest_file.read_text(encoding="utf-8"))
-    return common.call_analyse_cex_spin(formula, de_bruijn, longest_file)
+    result = common.call_analyse_cex_spin(formula, de_bruijn, longest_file)
+    if result.startswith(util.NO_WEAKENING_EXISTS_STR):
+        raise exceptions.NoWeakeningError
+    return result

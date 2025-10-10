@@ -26,13 +26,13 @@ class TestXMLTrace(unittest.TestCase):
         )
         expected = util.format_expect(
             """
-                                 1 1 1 1 1 1 1
-             0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
-timer       │2│3│4│5│1│2│3│1│2│3│4│5│6│7│8│9│*│
-randomWalk  │0│0│0│0│0│0│0│1│1│1│1│1│1│1│1│1│1│
-leavingHome │0│0│0│0│1│1│1│0│0│0│0│0│0│0│0│0│0│
-resting     │1│1│1│1│0│0│0│0│0│0│0│0│0│0│0│0│0│
-=Lasso=                                      ⊔
+                                   1 1 1 1 1 1 1
+               0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
+timer         │2│3│4│5│1│2│3│1│2│3│4│5│6│7│8│9│*│
+randomWalk_p  │ │ │ │ │ │ │ │●│●│●│●│●│●│●│●│●│●│
+leavingHome_p │ │ │ │ │●│●│●│ │ │ │ │ │ │ │ │ │ │
+resting_p     │●│●│●│●│ │ │ │ │ │ │ │ │ │ │ │ │ │
+=Lasso=                                        ⊔
         """,
         )
         self.assertEqual(result, expected)

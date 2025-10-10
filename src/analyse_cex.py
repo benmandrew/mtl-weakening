@@ -50,12 +50,9 @@ def get_cex_trace(args: Namespace, lines: list[str]) -> marking.Trace:
     if args.model_checker == custom_args.ModelChecker.nuxmv:
         return nuxmv_xml_trace.parse("".join(lines))
     if args.model_checker == custom_args.ModelChecker.spin:
-        return spin_trace.parse("".join(lines))
+        return spin_trace.parse("\n".join(lines))
     msg = f"Unknown model checker: {args.model_checker}"
     raise ValueError(msg)
-
-
-NO_WEAKENING_EXISTS_STR = "No suitable weakening of the interval exists"
 
 
 def main(argv: list[str]) -> None:
@@ -71,9 +68,9 @@ def main(argv: list[str]) -> None:
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
-    # print(w.markings)
+    print(w.markings)
     if interval is None:
-        print(NO_WEAKENING_EXISTS_STR)
+        print(util.NO_WEAKENING_EXISTS_STR)
     else:
         print(util.interval_to_str(interval))
 
