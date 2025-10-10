@@ -1,7 +1,8 @@
 import pathlib
 import unittest
 
-from src import marking, util
+from src import util
+from src.marking import common
 from src.trace_analysis import exceptions, nuxmv_xml_trace
 
 
@@ -26,7 +27,7 @@ class TestXMLTrace(unittest.TestCase):
         xml_input = read_test_data("tests/test_data/trace_valid.xml")
         trace = nuxmv_xml_trace.parse(xml_input)
         result = util.format_expect(
-            marking.markings_to_str(trace.to_markings(), trace.loop_start),
+            common.markings_to_str(trace.to_markings(), trace.loop_start),
         )
         expected = util.format_expect(
             """

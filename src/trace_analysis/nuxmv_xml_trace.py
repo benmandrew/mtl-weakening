@@ -4,14 +4,15 @@ import typing
 
 from defusedxml import ElementTree
 
-from src import marking, util
+from src import util
+from src.marking import common
 from src.trace_analysis import exceptions
 
 if typing.TYPE_CHECKING:
     from xml.etree.ElementTree import Element  # nosec B405
 
 
-def parse(s: str) -> marking.Trace:
+def parse(s: str) -> common.Trace:
     return xml_to_trace(ElementTree.fromstring(s))
 
 
@@ -34,7 +35,7 @@ def _parse_loops(loops: Element) -> int:
     return int(text)
 
 
-def xml_to_trace(xml_element: Element) -> marking.Trace:
+def xml_to_trace(xml_element: Element) -> common.Trace:
     states: list[dict[str, util.Value]] = []
     loop: int | None = None
     for node in xml_element:
@@ -47,4 +48,4 @@ def xml_to_trace(xml_element: Element) -> marking.Trace:
     if loop is None:
         raise exceptions.NoLoopError
     assert 0 <= loop < len(states)
-    return marking.Trace(states, loop)
+    return common.Trace(states, loop)

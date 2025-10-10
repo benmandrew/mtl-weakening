@@ -5,7 +5,8 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
-from src import custom_args, marking, util
+from src import custom_args, util
+from src.marking import common
 from src.trace_analysis import nuxmv_xml_trace
 
 if TYPE_CHECKING:
@@ -34,14 +35,14 @@ def read_trace_input(trace_file: Path | None) -> list[str]:
     return sys.stdin.readlines()
 
 
-def get_cex_trace(lines: list[str]) -> marking.Trace:
+def get_cex_trace(lines: list[str]) -> common.Trace:
     return nuxmv_xml_trace.parse("".join(lines))
 
 
 def main(trace_file: Path | None) -> str:
     lines = read_trace_input(trace_file)
     cex_trace = get_cex_trace(lines)
-    return marking.markings_to_str(
+    return common.markings_to_str(
         cex_trace.to_markings(),
         cex_trace.loop_start,
     )

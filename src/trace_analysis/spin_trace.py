@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import typing
 
-from src import marking
+from src.marking import common
 from src.trace_analysis import exceptions
 
 
@@ -53,7 +53,7 @@ def clear_nonappearing_states(states: list[dict[str, int]]) -> None:
                 state.pop(enum_value)
 
 
-def parse(s: str) -> marking.Trace:
+def parse(s: str) -> common.Trace:
     lines = s.strip().split("\n")
     states: list[dict[str, int | str]] = []
     state_i = 0
@@ -69,7 +69,7 @@ def parse(s: str) -> marking.Trace:
         raise exceptions.NoLoopError
     expanded_states = [expand_state(state) for state in states]
     clear_nonappearing_states(expanded_states)
-    return marking.Trace(
+    return common.Trace(
         typing.cast("list[dict[str, bool | int | str]]", expanded_states),
         loop_i,
     )

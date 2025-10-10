@@ -1,7 +1,8 @@
 import pathlib
 import unittest
 
-from src import marking, util
+from src import util
+from src.marking import common
 from src.trace_analysis import exceptions, spin_trace
 
 
@@ -21,7 +22,7 @@ class TestXMLTrace(unittest.TestCase):
         trail_input = read_test_data("tests/test_data/trace_valid.spin")
         trace = spin_trace.parse(trail_input)
         result = util.format_expect(
-            marking.markings_to_str(trace.to_markings(), trace.loop_start),
+            common.markings_to_str(trace.to_markings(), trace.loop_start),
         )
         expected = util.format_expect(
             """

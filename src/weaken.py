@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from src import marking
 from src.logic import ctx, mtl
+from src.marking import common, lasso
 
 
 def min_option(a: int, b: int | None) -> int:
@@ -22,17 +22,15 @@ class Weaken:
         self,
         context: ctx.Ctx,
         subformula: mtl.Mtl,
-        trace: marking.Trace,
-        markings: marking.Marking | None = None,
+        trace: common.Trace,
+        markings: lasso.Marking | None = None,
     ) -> None:
         self.context = context
         self.subformula = subformula
         self.trace = trace
         formula = ctx.substitute(context, subformula)
         self.markings = (
-            marking.Marking(self.trace, formula)
-            if markings is None
-            else markings
+            lasso.Marking(self.trace, formula) if markings is None else markings
         )
         self.trace_len = len(trace)
         if not isinstance(

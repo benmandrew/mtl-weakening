@@ -5,7 +5,7 @@ import logging
 import sys
 import typing
 
-from src import custom_args, marking, util, weaken
+from src import custom_args, util, weaken
 from src.logic import ctx, parser
 from src.trace_analysis import nuxmv_xml_trace, spin_trace
 
@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
     from pathlib import Path
 
     from src.logic import mtl
+    from src.marking import common
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def read_trace_input(trace_file: Path | None) -> list[str]:
 def get_cex_trace(
     model_checker: custom_args.ModelChecker,
     lines: list[str],
-) -> marking.Trace:
+) -> common.Trace:
     if model_checker == custom_args.ModelChecker.nuxmv:
         return nuxmv_xml_trace.parse("".join(lines))
     if model_checker == custom_args.ModelChecker.spin:

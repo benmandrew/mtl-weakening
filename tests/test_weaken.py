@@ -2,8 +2,9 @@ import unittest
 
 import timeout_decorator
 
-from src import marking, weaken
+from src import weaken
 from src.logic import ctx, mtl, parser
+from src.marking import common
 
 
 class TestWeakenContext(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_fg(self) -> None:
         formula = parser.parse_mtl("F G[0,2] a")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False},
                 {"a": False},
@@ -28,7 +29,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_gf(self) -> None:
         formula = parser.parse_mtl("G F[0,4] a")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False},
                 {"a": False},
@@ -43,7 +44,7 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 6))
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True},
                 {"a": False},
@@ -62,7 +63,7 @@ class TestWeakenContext(unittest.TestCase):
         """
         formula = parser.parse_mtl("G[0,9999999999999999999] F[0,4] a")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False},
                 {"a": False},
@@ -81,7 +82,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_ff(self) -> None:
         formula = parser.parse_mtl("F (a & F[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": False},
@@ -99,7 +100,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_gg(self) -> None:
         formula = parser.parse_mtl("G (a | G[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": False},
@@ -121,7 +122,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_gfg(self) -> None:
         formula = parser.parse_mtl("G F G[2,5] a")
         context, subformula = ctx.split_formula(formula, [0, 0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False},
                 {"a": True},
@@ -140,7 +141,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_gu(self) -> None:
         formula = parser.parse_mtl("G (a U[0,2] b)")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": False},
@@ -158,7 +159,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_uf_right(self) -> None:
         formula = parser.parse_mtl("a U F[2,3] b")
         context, subformula = ctx.split_formula(formula, [1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": False},
@@ -179,7 +180,7 @@ class TestWeakenContext(unittest.TestCase):
         self.assertTupleEqual(result, (2, 7))
         formula = parser.parse_mtl("a U F[0,1] b")
         context, subformula = ctx.split_formula(formula, [1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
             ],
@@ -191,7 +192,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_uf_left(self) -> None:
         formula = parser.parse_mtl("F[0,1] b U a")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": True},
                 {"a": False, "b": False},
@@ -203,7 +204,7 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 2))
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": True},
                 {"a": False, "b": False},
@@ -214,7 +215,7 @@ class TestWeakenContext(unittest.TestCase):
         )
         result = weaken.Weaken(context, subformula, trace).weaken()
         self.assertIsNone(result)
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
             ],
@@ -223,7 +224,7 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 1))
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": True},
             ],
@@ -235,7 +236,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_gug_right(self) -> None:
         formula = parser.parse_mtl("G (a U G[1,4] b)")
         context, subformula = ctx.split_formula(formula, [0, 1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": False},
                 {"a": True, "b": True},
@@ -257,7 +258,7 @@ class TestWeakenContext(unittest.TestCase):
             (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
         )
         context, subformula = ctx.partial_nnf(context, subformula)
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"p": False},
                 {"p": False},
@@ -277,7 +278,7 @@ class TestWeakenContext(unittest.TestCase):
             (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
         )
         context, subformula = ctx.partial_nnf(context, subformula)
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"p": False},
                 {"p": True},
@@ -297,7 +298,7 @@ class TestWeakenContext(unittest.TestCase):
             (mtl.Always, mtl.Eventually, mtl.Until, mtl.Release),
         )
         context, subformula = ctx.partial_nnf(context, subformula)
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"p": True},
                 {"p": True},
@@ -312,7 +313,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_rg_left(self) -> None:
         formula = parser.parse_mtl("G[0,2] a R b")
         context, subformula = ctx.split_formula(formula, [0])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": True},
                 {"a": True, "b": False},
@@ -327,7 +328,7 @@ class TestWeakenContext(unittest.TestCase):
     def test_weakening_rf_right(self) -> None:
         formula = parser.parse_mtl("a R F[0,1] b")
         context, subformula = ctx.split_formula(formula, [1])
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": False},
                 {"a": False, "b": False},
@@ -340,7 +341,7 @@ class TestWeakenContext(unittest.TestCase):
         result = weaken.Weaken(context, subformula, trace).weaken()
         assert result is not None
         self.assertTupleEqual(result, (0, 3))
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": True},
                 {"a": False, "b": False},
@@ -349,7 +350,7 @@ class TestWeakenContext(unittest.TestCase):
         )
         result = weaken.Weaken(context, subformula, trace).weaken()
         self.assertIsNone(result)
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": False, "b": False},
                 {"a": False, "b": False},
@@ -366,7 +367,7 @@ class TestWeakenDirect(unittest.TestCase):
 
     def test_weaken_direct_release_1(self) -> None:
         formula = parser.parse_mtl("b R[0,2] a")
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": False},
@@ -390,7 +391,7 @@ class TestWeakenDirect(unittest.TestCase):
 
     def test_weaken_direct_release_2(self) -> None:
         formula = parser.parse_mtl("b R[0,2] a")
-        trace = marking.Trace(
+        trace = common.Trace(
             [
                 {"a": True, "b": False},
                 {"a": True, "b": True},
