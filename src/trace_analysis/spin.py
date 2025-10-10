@@ -90,22 +90,6 @@ def expand_trail_file(
     return has_loop
 
 
-def pick_longest_trail_file(tmpdir: Path, trail_files: list[Path]) -> Path:
-    output_files: list[Path] = []
-    for i, trail_file in enumerate(trail_files):
-        output_file = tmpdir / f"trail_output_{i+1}.txt"
-        with trail_file.open("r", encoding="utf-8") as inp, output_file.open(
-            "w",
-            encoding="utf-8",
-        ) as out:
-            for line in inp.readlines():
-                if line.startswith("@@@"):
-                    out.write(line[len("@@@ ") :])
-        output_files.append(output_file)
-    assert output_files, "No trail files found"
-    return max(output_files, key=lambda p: sum(1 for _ in p.open()))
-
-
 def check_mtl(
     tmpdir: Path,
     model_file: Path,

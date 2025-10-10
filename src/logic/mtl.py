@@ -181,15 +181,6 @@ def apply_next_k(formula: ltl.Ltl, k: int) -> ltl.Ltl:
     return formula
 
 
-def make_conjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
-    if not terms:
-        return ltl.Prop("TRUE")
-    result = terms[0]
-    for t in terms[1:]:
-        result = ltl.And(result, t)
-    return result
-
-
 def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
     if not terms:
         return ltl.Prop("FALSE")
@@ -262,41 +253,3 @@ def to_string(formula: Mtl) -> str:
         return f"X ({to_string(formula.operand)})"
     msg = f"Unsupported MTL construct: {formula}"
     raise TypeError(msg)
-
-
-def generate_subformulae_smv(f: Mtl, num_states: int) -> tuple[str, list[Mtl]]:
-    label_map: dict[Mtl, str] = {}
-    ltlspec_lines = []
-    subformulae = []
-    counter = 1
-
-    def get_label() -> str:
-        nonlocal counter
-        label = f"f{counter}"
-        counter += 1
-        return label
-
-    def aux(f: Mtl) -> str:
-        subformulae.append(f)
-        for i in range(num_states):
-            g = Always(Implies(Prop(f"state = {i}"), f))
-            if g in label_map:
-                return label_map[g]
-            label = get_label()
-            expr = ltl.to_nuxmv(mtl_to_ltl(g))
-            label_map[g] = label
-            ltlspec_lines.append(f"LTLSPEC NAME {label} := {expr};")
-        if isinstance(f, Prop):
-            pass
-        elif isinstance(f, (Not, Eventually, Always)):
-            aux(f.operand)
-        elif isinstance(f, (And, Or, Implies, Until)):
-            aux(f.left)
-            aux(f.right)
-        else:
-            msg = f"Unsupported MTL construct: {f}"
-            raise TypeError(msg)
-        return label
-
-    aux(f)
-    return "\n".join(ltlspec_lines), subformulae

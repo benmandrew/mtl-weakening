@@ -118,7 +118,6 @@ MTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 def parse_mtl(text: str) -> mtl.Mtl:
     """
     Parse an MTL formula string into a validated AST.
-    Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
     """
     tree = MTL_PARSER.parse(text)
     return MTLTransformer().transform(tree)
@@ -191,7 +190,6 @@ NUXMV_LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 def parse_nuxmv_ltl(text: str) -> ltl.Ltl:
     """
     Parse an LTL formula string in NuXmv format into a validated AST.
-    Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
     """
     tree = NUXMV_LTL_PARSER.parse(text)
     return LTLTransformer().transform(tree)
@@ -205,7 +203,6 @@ SPIN_LTL_PARSER = lark.Lark(grammar, start="start", parser="lalr")
 def parse_spin_ltl(text: str) -> ltl.Ltl:
     """
     Parse an LTL formula string in Promela format into a validated AST.
-    Returns a Python dict tree; raises ValueError / UnexpectedInput on errors.
     """
     tree = SPIN_LTL_PARSER.parse(text)
     return LTLTransformer().transform(tree)

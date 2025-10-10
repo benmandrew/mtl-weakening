@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import collections
 import logging
 import typing
-from enum import Enum
 
 from src.logic import mtl as m
 
@@ -37,24 +35,6 @@ class Trace:
         self.loop_start = loop_start
         self.trace = trace
 
-    def find_loop(self) -> bool:
-        """
-        Find a loop in the trace.
-        Return True if a loop is found, False otherwise.
-        """
-        loop = self.periodic_trace_idx(self.trace)
-        if loop is None:
-            return False
-        logger.info(
-            "Trace of len %d has loop indices (%d, %d)",
-            len(self.trace),
-            loop[0],
-            loop[1],
-        )
-        self.loop_start = loop[0]
-        self.trace = self.trace[: loop[1]]
-        return True
-
     def to_markings(self) -> dict[m.Mtl, list[bool | int]]:
         markings: dict[m.Mtl, list[bool | int]] = {}
         for state in self.trace:
@@ -79,26 +59,6 @@ class Trace:
                 markings[f].append(v)
         return markings
 
-    def periodic_trace_idx(
-        self,
-        trace: list[dict[str, bool | int | str]],
-    ) -> tuple[int, int] | None:
-        """
-        Attempts to find the indices of a loop in the trace.
-        If none is found, then None is returned.
-
-        Loops are found by checking for repeated states,
-        and we return the coincident indices as a tuple.
-        """
-        if not trace:
-            return None
-        for j, back in reversed(list(enumerate(trace))):
-            for i in range(j - 1, -1, -1):
-                if back == trace[i]:
-                    return i, j
-        logger.warning("Cannot identify loop in trace")
-        return None
-
     def idx(self, i: int) -> int:
         if i >= len(self.trace):
             j = (i - self.loop_start) % (len(self.trace) - self.loop_start)
@@ -120,70 +80,6 @@ class Trace:
 
     def __iter__(self) -> typing.Iterator[dict[str, bool | int | str]]:
         return iter(self.trace)
-
-
-class Mutability(Enum):
-    VARIABLE = 1
-    CONSTANT = 2
-
-
-def get_variable_types(
-    trace: Trace,
-) -> dict[str, tuple[Mutability, str]]:
-    variable_values = collections.defaultdict(set)
-    for state in trace:
-        for k, v in state.items():
-            variable_values[k].add(v)
-    variable_types = {}
-    for var, values in variable_values.items():
-        if all(isinstance(v, bool) for v in values):
-            variable_types[var] = (Mutability.VARIABLE, "boolean")
-        elif all(isinstance(v, int) for v in values):
-            max_val = max(values)
-            min_val = min(values)
-            if min_val == max_val:
-                variable_types[var] = (Mutability.CONSTANT, f"{min_val}")
-            else:
-                variable_types[var] = (
-                    Mutability.VARIABLE,
-                    f"{min_val}..{max_val}",
-                )
-        else:
-            msg = f"Mixed or unsupported types for variable '{var}': {values}"
-            raise ValueError(
-                msg,
-            )
-    return variable_types
-
-
-def parse_nuxmv_output(
-    output: str,
-    subformulae: list[m.Mtl],
-    num_states: int,
-) -> dict[m.Mtl, list[bool | int]]:
-    lines = output.split("\n")
-    lines = list(
-        filter(
-            lambda line: line.startswith("-- ")
-            and not line.startswith(
-                "-- as demonstrated by the following execution sequence",
-            ),
-            lines,
-        ),
-    )
-    markings: dict[m.Mtl, list[bool | int]] = {}
-    for i, f in enumerate(subformulae):
-        markings[f] = []
-        for j in range(num_states):
-            idx = i * num_states + j
-            if lines[idx].endswith("true"):
-                markings[f].append(True)
-            elif lines[idx].endswith("false"):
-                markings[f].append(False)
-            else:
-                msg = f"line '{lines[idx]}' is malformed"
-                raise ValueError(msg)
-    return markings
 
 
 class Marking:
