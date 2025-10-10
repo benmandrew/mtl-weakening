@@ -2,16 +2,18 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from src import util
+from src import analyse_cex, custom_args, mtl2ltlspec, util
 from src.logic import mtl
-from src.trace_analysis import common, exceptions
-
-INPUT_PML_FILE = Path("models/foraging-robots-limit-search.pml")
+from src.trace_analysis import exceptions
 
 
-def generate_model_file(tmpdir: Path, formula: mtl.Mtl) -> None:
-    ltlspec = common.call_mtl2ltlspec_spin(formula)
-    shutil.copy(INPUT_PML_FILE, Path(tmpdir / "model.pml"))
+def generate_model_file(
+    tmpdir: Path,
+    model_file: Path,
+    formula: mtl.Mtl,
+) -> None:
+    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.spin, formula)
+    shutil.copy(model_file, Path(tmpdir / "model.pml"))
     with (tmpdir / "model.pml").open("a", encoding="utf-8") as f:
         f.write("ltl formula\n{\n")
         f.write(f"  {ltlspec}\n")
@@ -106,10 +108,11 @@ def pick_longest_trail_file(tmpdir: Path, trail_files: list[Path]) -> Path:
 
 def check_mtl(
     tmpdir: Path,
+    model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
 ) -> str:
-    generate_model_file(tmpdir, formula)
+    generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
     compile_pan(tmpdir)
     run_pan(tmpdir)
@@ -122,7 +125,12 @@ def check_mtl(
             output_files.append(output_file)
     assert output_files, "No valid trail files with loops found"
     longest_file = max(output_files, key=lambda p: sum(1 for _ in p.open()))
-    result = common.call_analyse_cex_spin(formula, de_bruijn, longest_file)
+    result = analyse_cex.main(
+        formula,
+        de_bruijn,
+        longest_file,
+        custom_args.ModelChecker.spin,
+    )
     if result.startswith(util.NO_WEAKENING_EXISTS_STR):
         raise exceptions.NoWeakeningError
     return result

@@ -9,7 +9,7 @@ spawn python3 -m src.analyse_cex -h
 
 expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--model-checker {nuxmv,spin}\] \[--quiet | --debug\] trace_file"
 expect_exact ""
-expect_exact "Analyse NuXmv output."
+expect_exact "Determine the optimal weakening of an MTL formula to satisfy a given trace."
 expect_exact ""
 expect_exact "positional arguments:"
 expect_exact "  trace_file            Path to the trace file to analyse. If not provided, stdin will be used."

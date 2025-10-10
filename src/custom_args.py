@@ -8,6 +8,14 @@ def _list_of_ints(arg: str) -> list[int]:
     return list(map(int, arg.split(",")))
 
 
+def add_model_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--model",
+        type=pathlib.Path,
+        help="Path to the model file.",
+    )
+
+
 def add_mtl_argument(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mtl", type=str, help="MTL specification")
 

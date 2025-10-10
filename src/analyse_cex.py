@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import pathlib
 import sys
 import typing
 
@@ -11,6 +10,8 @@ from src.logic import ctx, parser
 from src.trace_analysis import nuxmv_xml_trace, spin_trace
 
 if typing.TYPE_CHECKING:
+    from pathlib import Path
+
     from src.logic import mtl
 
 logger = logging.getLogger(__name__)
@@ -19,14 +20,17 @@ logger = logging.getLogger(__name__)
 class Namespace(argparse.Namespace):
     mtl: str
     de_bruijn: list[int]
-    trace_file: pathlib.Path | None
+    trace_file: Path | None
     model_checker: custom_args.ModelChecker
     log_level: str
 
 
 def parse_args(argv: list[str]) -> Namespace:
     arg_parser = argparse.ArgumentParser(
-        description="Analyse NuXmv output.",
+        description=(
+            "Determine the optimal weakening "
+            "of an MTL formula to satisfy a given trace."
+        ),
     )
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
@@ -36,44 +40,49 @@ def parse_args(argv: list[str]) -> Namespace:
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
-def read_trace_input(args: Namespace) -> list[str]:
-    if args.trace_file:
-        return (
-            pathlib.Path(args.trace_file)
-            .read_text(encoding="utf-8")
-            .splitlines()
-        )
+def read_trace_input(trace_file: Path | None) -> list[str]:
+    if trace_file:
+        return trace_file.read_text(encoding="utf-8").splitlines()
     return sys.stdin.readlines()
 
 
-def get_cex_trace(args: Namespace, lines: list[str]) -> marking.Trace:
-    if args.model_checker == custom_args.ModelChecker.nuxmv:
+def get_cex_trace(
+    model_checker: custom_args.ModelChecker,
+    lines: list[str],
+) -> marking.Trace:
+    if model_checker == custom_args.ModelChecker.nuxmv:
         return nuxmv_xml_trace.parse("".join(lines))
-    if args.model_checker == custom_args.ModelChecker.spin:
+    if model_checker == custom_args.ModelChecker.spin:
         return spin_trace.parse("\n".join(lines))
-    msg = f"Unknown model checker: {args.model_checker}"
+    msg = f"Unknown model checker: {model_checker}"
     raise ValueError(msg)
 
 
-def main(argv: list[str]) -> None:
-    args = parse_args(argv)
-    util.setup_logging(args.log_level)
-    formula = parser.parse_mtl(args.mtl)
-    lines = read_trace_input(args)
-    cex_trace = get_cex_trace(args, lines)
-    context, subformula = ctx.split_formula(formula, args.de_bruijn)
+def main(
+    formula: mtl.Mtl,
+    de_bruijn: list[int],
+    trace_file: Path | None,
+    model_checker: custom_args.ModelChecker,
+) -> str:
+    lines = read_trace_input(trace_file)
+    cex_trace = get_cex_trace(model_checker, lines)
+    context, subformula = ctx.split_formula(formula, de_bruijn)
     context, subformula = ctx.partial_nnf(
         context,
         typing.cast("mtl.Temporal", subformula),
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
-    print(w.markings)
+    # print(w.markings)
     if interval is None:
-        print(util.NO_WEAKENING_EXISTS_STR)
-    else:
-        print(util.interval_to_str(interval))
+        return util.NO_WEAKENING_EXISTS_STR
+    return util.interval_to_str(interval)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = parse_args(sys.argv[1:])
+    util.setup_logging(args.log_level)
+    mtl_formula = parser.parse_mtl(args.mtl)
+    print(
+        main(mtl_formula, args.de_bruijn, args.trace_file, args.model_checker),
+    )

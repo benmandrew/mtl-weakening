@@ -22,18 +22,17 @@ def parse_args(argv: list[str]) -> Namespace:
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
-def main(argv: list[str]) -> None:
-    args = parse_args(argv)
-    mtl_formula = parser.parse_mtl(args.mtl)
+def main(model_checker: custom_args.ModelChecker, mtl_formula: mtl.Mtl) -> str:
     ltl_formula = mtl.mtl_to_ltl(mtl_formula)
-    if args.model_checker == custom_args.ModelChecker.spin:
-        print(ltl.to_spin(ltl_formula))
-    elif args.model_checker == custom_args.ModelChecker.nuxmv:
-        print(ltl.to_nuxmv(ltl_formula))
-    else:
-        msg = f"Unsupported model checker: {args.model_checker}"
-        raise ValueError(msg)
+    if model_checker == custom_args.ModelChecker.spin:
+        return ltl.to_spin(ltl_formula)
+    if model_checker == custom_args.ModelChecker.nuxmv:
+        return ltl.to_nuxmv(ltl_formula)
+    msg = f"Unsupported model checker: {model_checker}"
+    raise ValueError(msg)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = parse_args(sys.argv[1:])
+    formula = parser.parse_mtl(args.mtl)
+    print(main(args.model_checker, formula))
