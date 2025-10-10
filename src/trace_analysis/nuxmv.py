@@ -2,12 +2,9 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from src import util
+from src import analyse_cex, custom_args, mtl2ltlspec, util
 from src.logic import mtl
-from src.trace_analysis import common, exceptions
-
-# INPUT_SMV_FILE = Path("models/foraging-robots.smv")
-INPUT_SMV_FILE = Path("models/foraging-robots-limit-search.smv")
+from src.trace_analysis import exceptions
 
 # nuXmv trace plugins, controlled with flag `-p`:
 #   0   BASIC TRACE EXPLAINER - shows changes only
@@ -21,14 +18,14 @@ INPUT_SMV_FILE = Path("models/foraging-robots-limit-search.smv")
 TRACE_PLUGIN = 4
 
 
-def get_diameter(tmpdir: Path) -> int:
+def get_diameter(tmpdir: Path, model_file: Path) -> int:
     """Get the diameter of the symbolic BDD FSM in the model file."""
     commands = [
         "set on_failure_script_quits 1\ngo\ncompute_reachable\nquit",
     ]
     with (tmpdir / "commands.txt").open("w", encoding="utf-8") as f:
         f.writelines(commands)
-    shutil.copy(INPUT_SMV_FILE, Path(tmpdir / "model.smv"))
+    shutil.copy(model_file, Path(tmpdir / "model.smv"))
     with (tmpdir / "nuXmv.log").open("w", encoding="utf-8") as nuxmv_log:
         subprocess.run(
             [
@@ -66,9 +63,13 @@ def write_commands_file(
         f.writelines(commands)
 
 
-def generate_model_file(tmpdir: Path, formula: mtl.Mtl) -> None:
-    ltlspec = common.call_mtl2ltlspec_nuxmv(formula)
-    shutil.copy(INPUT_SMV_FILE, Path(tmpdir / "model.smv"))
+def generate_model_file(
+    tmpdir: Path,
+    model_file: Path,
+    formula: mtl.Mtl,
+) -> None:
+    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.nuxmv, formula)
+    shutil.copy(model_file, Path(tmpdir / "model.smv"))
     with (tmpdir / "model.smv").open("a", encoding="utf-8") as f:
         f.write(f"LTLSPEC {ltlspec};")
 
@@ -78,8 +79,6 @@ def model_check(tmpdir: Path) -> None:
         subprocess.run(
             [
                 "/usr/bin/nuXmv",
-                # "-v",
-                # "100",
                 "-source",
                 tmpdir / "commands.txt",
                 tmpdir / "model.smv",
@@ -93,12 +92,13 @@ def model_check(tmpdir: Path) -> None:
 
 def check_mtl(
     tmpdir: Path,
+    model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
 ) -> str:
     write_commands_file(tmpdir, bound)
-    generate_model_file(tmpdir, formula)
+    generate_model_file(tmpdir, model_file, formula)
     model_check(tmpdir)
     with (tmpdir / "nuXmv.log").open("r", encoding="utf-8") as nuxmv_log:
         nuxmv_log.seek(0)
@@ -109,7 +109,12 @@ def check_mtl(
         if no_cex_string in nuxmv_log.read():
             assert not Path(tmpdir / "trace.xml").exists()
             raise exceptions.PropertyValidError
-    result = common.call_analyse_cex_nuxmv(tmpdir, formula, de_bruijn)
+    result = analyse_cex.main(
+        formula,
+        de_bruijn,
+        tmpdir / "trace.xml",
+        custom_args.ModelChecker.nuxmv,
+    )
     if result.startswith(util.NO_WEAKENING_EXISTS_STR):
         raise exceptions.NoWeakeningError
     return result

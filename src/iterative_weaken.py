@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class Namespace(argparse.Namespace):
+    model_checker: custom_args.ModelChecker
+    model: Path
     mtl: str
     de_bruijn: list[int]
     log_level: str
@@ -25,15 +27,20 @@ def parse_args(argv: list[str]) -> Namespace:
     arg_parser = argparse.ArgumentParser(
         description="Convert MTL formula to SMV-compatible LTL specifications.",
     )
+    custom_args.add_model_checker_argument(arg_parser)
+    custom_args.add_model_argument(arg_parser)
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
     custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
-def get_context_and_subformula(args: Namespace) -> tuple[ctx.Ctx, mtl.Temporal]:
-    formula = parser.parse_mtl(args.mtl)
-    context, subformula = ctx.split_formula(formula, args.de_bruijn)
+def get_context_and_subformula(
+    mtl_str: str,
+    de_bruijn: list[int],
+) -> tuple[ctx.Ctx, mtl.Temporal]:
+    formula = parser.parse_mtl(mtl_str)
+    context, subformula = ctx.split_formula(formula, de_bruijn)
     assert isinstance(subformula, mtl.Temporal)
     return ctx.partial_nnf(
         context,
@@ -66,10 +73,8 @@ def substitute_interval(
 BOUND_MIN = 20
 
 
-def main_nuxmv(argv: list[str]) -> None:
-    args = parse_args(argv)
-    util.setup_logging(args.log_level)
-    context, subformula = get_context_and_subformula(args)
+def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
+    context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     bound = (
         BOUND_MIN
@@ -88,6 +93,7 @@ def main_nuxmv(argv: list[str]) -> None:
             with tempfile.TemporaryDirectory() as tmpdir:
                 result = nuxmv.check_mtl(
                     Path(tmpdir),
+                    model_file,
                     formula,
                     de_bruijn,
                     bound,
@@ -114,10 +120,8 @@ def main_nuxmv(argv: list[str]) -> None:
         n_iterations += 1
 
 
-def main(argv: list[str]) -> None:
-    args = parse_args(argv)
-    util.setup_logging(args.log_level)
-    context, subformula = get_context_and_subformula(args)
+def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
+    context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0
     while True:
@@ -128,7 +132,12 @@ def main(argv: list[str]) -> None:
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                result = spin.check_mtl(Path(tmpdir), formula, de_bruijn)
+                result = spin.check_mtl(
+                    Path(tmpdir),
+                    model_file,
+                    formula,
+                    de_bruijn,
+                )
         except exceptions.PropertyValidError:
             print(
                 f"Final weakened interval in {n_iterations} "
@@ -145,4 +154,9 @@ def main(argv: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = parse_args(sys.argv[1:])
+    util.setup_logging(args.log_level)
+    if args.model_checker == custom_args.ModelChecker.nuxmv:
+        main_nuxmv(args.model, args.mtl, args.de_bruijn)
+    else:
+        main_spin(args.model, args.mtl, args.de_bruijn)

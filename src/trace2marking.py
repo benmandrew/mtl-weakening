@@ -3,10 +3,13 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src import custom_args, marking, util
 from src.trace_analysis import nuxmv_xml_trace
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +28,9 @@ def parse_args(argv: list[str]) -> Namespace:
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
-def read_trace_input(args: Namespace) -> list[str]:
-    if args.trace_file:
-        return Path(args.trace_file).read_text(encoding="utf-8").splitlines()
+def read_trace_input(trace_file: Path | None) -> list[str]:
+    if trace_file:
+        return trace_file.read_text(encoding="utf-8").splitlines()
     return sys.stdin.readlines()
 
 
@@ -35,17 +38,16 @@ def get_cex_trace(lines: list[str]) -> marking.Trace:
     return nuxmv_xml_trace.parse("".join(lines))
 
 
-def main(argv: list[str]) -> None:
-    args = parse_args(argv)
-    util.setup_logging(args.log_level)
-    lines = read_trace_input(args)
+def main(trace_file: Path | None) -> str:
+    lines = read_trace_input(trace_file)
     cex_trace = get_cex_trace(lines)
-    result = marking.markings_to_str(
+    return marking.markings_to_str(
         cex_trace.to_markings(),
         cex_trace.loop_start,
     )
-    print(result, end="")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = parse_args(sys.argv[1:])
+    util.setup_logging(args.log_level)
+    print(main(args.trace_file), end="")
