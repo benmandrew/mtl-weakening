@@ -28,7 +28,7 @@ def expand_state(state: dict[str, int | str]) -> dict[str, int]:
                 "deposit",
                 "homing",
             ]:
-                expanded[f"{enum_value}"] = 1 if v == enum_value else 0
+                expanded[f"{enum_value}_p"] = v == enum_value
         else:
             msg = f"Unexpected variable type: {type(v)}"
             raise TypeError(msg)
@@ -37,15 +37,15 @@ def expand_state(state: dict[str, int | str]) -> dict[str, int]:
 
 def clear_nonappearing_states(states: list[dict[str, int]]) -> None:
     for enum_value in [
-        "resting",
-        "leavingHome",
-        "randomWalk",
-        "moveToFood",
-        "scanArena",
-        "grabFood",
-        "moveToHome",
-        "deposit",
-        "homing",
+        "resting_p",
+        "leavingHome_p",
+        "randomWalk_p",
+        "moveToFood_p",
+        "scanArena_p",
+        "grabFood_p",
+        "moveToHome_p",
+        "deposit_p",
+        "homing_p",
     ]:
         appears = any(state.get(enum_value, 0) == 1 for state in states)
         if not appears:

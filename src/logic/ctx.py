@@ -267,7 +267,8 @@ def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
 
 
 def _partial_nnf_ctx_neg(c: Ctx) -> tuple[Ctx, bool]:
-    """Convert the negation of the context `c` to partial negation normal form (NNF)."""
+    """Convert the negation of the context `c` to
+    partial negation normal form (PNNF)."""
 
     if isinstance(c, Hole):
         return c, False
@@ -318,7 +319,7 @@ def _partial_nnf_ctx_neg(c: Ctx) -> tuple[Ctx, bool]:
 
 
 def partial_nnf_ctx(c: Ctx) -> tuple[Ctx, bool]:
-    """Convert the context `c` to partial negation normal form (NNF)."""
+    """Convert the context `c` to partial negation normal form (PNNF)."""
 
     if isinstance(c, Hole):
         return c, True

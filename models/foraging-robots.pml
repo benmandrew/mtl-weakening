@@ -35,10 +35,10 @@ int step;
 mtype next_state;
 
 init {
-  /* initial values */
-  state = resting;
-  timer = 1;
-  step = 1;
+     /* initial values */
+     state = resting;
+     timer = 1;
+     step = 1;
 
      do
      :: atomic {

@@ -2,7 +2,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from src import analyse_cex
+from src import util
 from src.logic import mtl
 from src.trace_analysis import common, exceptions
 
@@ -110,6 +110,6 @@ def check_mtl(
             assert not Path(tmpdir / "trace.xml").exists()
             raise exceptions.PropertyValidError
     result = common.call_analyse_cex_nuxmv(tmpdir, formula, de_bruijn)
-    if result.startswith(analyse_cex.NO_WEAKENING_EXISTS_STR):
+    if result.startswith(util.NO_WEAKENING_EXISTS_STR):
         raise exceptions.NoWeakeningError
     return result

@@ -12,6 +12,9 @@ NUXMV_PATH = Path("/usr/bin/nuXmv")
 GCC_PATH = Path("/usr/bin/gcc")
 
 
+NO_WEAKENING_EXISTS_STR = "No suitable weakening of the interval exists"
+
+
 def eprint(  # type: ignore[no-untyped-def]
     *args,  # noqa: ANN002
     **kwargs,  # noqa: ANN003
