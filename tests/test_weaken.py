@@ -406,5 +406,84 @@ class TestWeakenDirect(unittest.TestCase):
         self.assertEqual(result, (0, 2))
 
 
+class TestWeakenFinite(unittest.TestCase):
+
+    def test_weaken_f(self) -> None:
+        formula = parser.parse_mtl("F[0,1] a")
+        context, subformula = ctx.split_formula(formula, [])
+        trace = marking.Trace(
+            [
+                {"a": False},
+                {"a": False},
+                {"a": False},
+            ],
+            None,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 3))
+
+    def test_weaken_gf(self) -> None:
+        formula = parser.parse_mtl("G F[0,2] a")
+        context, subformula = ctx.split_formula(formula, [0])
+        trace = marking.Trace(
+            [
+                {"a": True},
+                {"a": False},
+                {"a": False},
+                {"a": False},
+                {"a": True},
+                {"a": False},
+                {"a": True},
+            ],
+            None,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 3))
+
+    def test_weaken_gu(self) -> None:
+        formula = parser.parse_mtl("G (a U[0,2] b)")
+        context, subformula = ctx.split_formula(formula, [0])
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+            ],
+            None,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 5))
+
+    def test_weaken_r(self) -> None:
+        formula = parser.parse_mtl("a R[0,2] b")
+        context, subformula = ctx.split_formula(formula, [])
+        trace = marking.Trace(
+            [
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+                {"a": True, "b": False},
+            ],
+            None,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        self.assertIsNone(result)
+        trace = marking.Trace(
+            [
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+                {"a": False, "b": True},
+            ],
+            None,
+        )
+        result = weaken.Weaken(context, subformula, trace).weaken()
+        assert result is not None
+        self.assertTupleEqual(result, (0, 2))
+
+
 if __name__ == "__main__":
     unittest.main()

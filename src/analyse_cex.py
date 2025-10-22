@@ -73,7 +73,7 @@ def main(
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
-    # print(w.markings)
+    print(w.markings)
     if interval is None:
         return util.NO_WEAKENING_EXISTS_STR
     return util.interval_to_str(interval)

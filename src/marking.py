@@ -8,7 +8,41 @@ from src.logic import mtl as m
 logger = logging.getLogger(__name__)
 
 
-def expand_nuxmv_trace(
+class UniversalState:
+    """A state in which all formulae are true."""
+
+    def __getitem__(self, _key: str) -> bool:
+        return True
+
+
+State = dict[str, bool | int | str] | UniversalState
+
+
+class BoolMarkings:
+    """
+    A list of boolean markings for a formula over a trace.
+    Indexes beyond the length of the trace return True.
+    """
+
+    def __init__(self, bs: list[bool]) -> None:
+        self.bs = bs
+
+    def __getitem__(self, i: int) -> bool:
+        if i >= len(self.bs):
+            return True
+        return self.bs[i]
+
+    def __len__(self) -> int:
+        return len(self.bs)
+
+    def __iter__(self) -> typing.Iterator[bool]:
+        return iter(self.bs)
+
+    def append(self, value: bool) -> None:  # noqa: FBT001
+        self.bs.append(value)
+
+
+def expand_trace_states(
     trace: list[dict[str, bool | int | str]],
 ) -> list[dict[str, bool | int | str]]:
     """
@@ -28,12 +62,10 @@ class Trace:
     def __init__(
         self,
         trace: list[dict[str, bool | int | str]],
-        loop_start: int,
+        loop_start: int | None,
     ) -> None:
-        trace = expand_nuxmv_trace(trace)
-        assert loop_start < len(trace)
+        self.trace = expand_trace_states(trace)
         self.loop_start = loop_start
-        self.trace = trace
 
     def to_markings(self) -> dict[m.Mtl, list[bool | int]]:
         markings: dict[m.Mtl, list[bool | int]] = {}
@@ -47,19 +79,21 @@ class Trace:
                 markings[f].append(v)
         return markings
 
-    def to_bool_markings(self) -> dict[m.Mtl, list[bool]]:
-        markings: dict[m.Mtl, list[bool]] = {}
+    def to_bool_markings(self) -> dict[m.Mtl, BoolMarkings]:
+        markings: dict[m.Mtl, BoolMarkings] = {}
         for state in self.trace:
             for k, v in state.items():
                 if not isinstance(v, bool):
                     continue
                 f = m.Prop(k)
                 if f not in markings:
-                    markings[f] = []
+                    markings[f] = BoolMarkings([])
                 markings[f].append(v)
         return markings
 
     def idx(self, i: int) -> int:
+        if self.loop_start is None:
+            return i
         if i >= len(self.trace):
             j = (i - self.loop_start) % (len(self.trace) - self.loop_start)
             return j + self.loop_start
@@ -67,6 +101,8 @@ class Trace:
 
     def right_idx(self, a: int) -> int:
         """Get the index of the right side of the trace."""
+        if self.loop_start is None:
+            return len(self.trace)
         if a < self.loop_start:
             return len(self.trace) - 1
         suf_len = len(self.trace) - self.loop_start
@@ -75,7 +111,9 @@ class Trace:
     def __len__(self) -> int:
         return len(self.trace)
 
-    def __getitem__(self, i: int) -> dict[str, bool | int | str]:
+    def __getitem__(self, i: int) -> State:
+        if self.loop_start is None and i >= len(self.trace):
+            return UniversalState()
         return self.trace[self.idx(i)]
 
     def __iter__(self) -> typing.Iterator[dict[str, bool | int | str]]:
@@ -91,29 +129,29 @@ class Marking:
     def get(self, f: m.Mtl, i: int) -> bool:
         return self[f][self.trace.idx(i)]
 
-    def _get_and(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
-        return [
-            l and r
-            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
-        ]
+    def _get_and(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
+        return BoolMarkings(
+            [l and r for l, r in zip(self[left], self[right], strict=True)],
+        )
 
-    def _get_or(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
-        return [
-            l or r
-            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
-        ]
+    def _get_or(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
+        return BoolMarkings(
+            [l or r for l, r in zip(self[left], self[right], strict=True)],
+        )
 
-    def _get_implies(self, left: m.Mtl, right: m.Mtl) -> list[bool]:
-        return [
-            (not l) or r
-            for l, r in zip(self[left], self[right], strict=True)  # noqa: E741
-        ]
+    def _get_implies(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
+        return BoolMarkings(
+            [
+                (not l) or r
+                for l, r in zip(self[left], self[right], strict=True)
+            ],
+        )
 
     def _get_eventually(
         self,
         operand: m.Mtl,
         interval: m.Interval,
-    ) -> list[bool]:
+    ) -> BoolMarkings:
         vs = self[operand]
         bs = [False] * len(vs)
         for i in range(len(vs)):
@@ -122,9 +160,9 @@ class Marking:
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
             )
-        return bs
+        return BoolMarkings(bs)
 
-    def _get_always(self, operand: m.Mtl, interval: m.Interval) -> list[bool]:
+    def _get_always(self, operand: m.Mtl, interval: m.Interval) -> BoolMarkings:
         vs = self[operand]
         bs = [False] * len(vs)
         for i in range(len(vs)):
@@ -133,14 +171,14 @@ class Marking:
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
             )
-        return bs
+        return BoolMarkings(bs)
 
     def _get_until(
         self,
         left: m.Mtl,
         right: m.Mtl,
         interval: m.Interval,
-    ) -> list[bool]:
+    ) -> BoolMarkings:
         rights = self[right]
         lefts = self[left]
         bs = [False] * len(rights)
@@ -155,14 +193,14 @@ class Marking:
                     break
                 if not lefts[k]:
                     break
-        return bs
+        return BoolMarkings(bs)
 
     def _get_release(
         self,
         left: m.Mtl,
         right: m.Mtl,
         interval: m.Interval,
-    ) -> list[bool]:
+    ) -> BoolMarkings:
         rights = self[right]
         lefts = self[left]
         bs = [False] * len(rights)
@@ -177,24 +215,26 @@ class Marking:
                 if lefts[k]:
                     bs[i] = True
                     break
-        return bs
+        return BoolMarkings(bs)
 
-    def _get_next(self, operand: m.Mtl) -> list[bool]:
+    def _get_next(self, operand: m.Mtl) -> BoolMarkings:
         operands = self[operand]
-        return [operands[self.trace.idx(i + 1)] for i in range(len(operands))]
+        return BoolMarkings(
+            [operands[self.trace.idx(i + 1)] for i in range(len(operands))],
+        )
 
-    def __getitem__(self, f: m.Mtl) -> list[bool]:
+    def __getitem__(self, f: m.Mtl) -> BoolMarkings:
         if f in self.markings:
             return self.markings[f]
         if isinstance(f, m.TrueBool):
-            return [True] * len(self.trace)
+            return BoolMarkings([True] * len(self.trace))
         if isinstance(f, m.FalseBool):
-            return [False] * len(self.trace)
+            return BoolMarkings([False] * len(self.trace))
         if isinstance(f, m.Prop):
             msg = f"Proposition '{f}' not found in markings. "
             raise TypeError(msg)
         if isinstance(f, m.Not):
-            bs = [not v for v in self[f.operand]]
+            bs = BoolMarkings([not v for v in self[f.operand]])
         elif isinstance(f, m.And):
             bs = self._get_and(f.left, f.right)
         elif isinstance(f, m.Or):
@@ -218,7 +258,8 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        return bool_markings_to_str(self.markings, self.trace.loop_start)
+        bool_list_markings = {f: self.markings[f].bs for f in self.markings}
+        return bool_markings_to_str(bool_list_markings, self.trace.loop_start)
 
 
 def _get_trace_indices_str(trace_len: int, max_len: int) -> str:

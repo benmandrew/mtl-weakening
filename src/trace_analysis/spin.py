@@ -104,9 +104,8 @@ def check_mtl(
     output_files: list[Path] = []
     for i, trail_file in enumerate(trail_files):
         output_file = tmpdir / f"expanded_trail_{i+1}.txt"
-        has_loop = expand_trail_file(tmpdir, trail_file, output_file)
-        if has_loop:
-            output_files.append(output_file)
+        expand_trail_file(tmpdir, trail_file, output_file)
+        output_files.append(output_file)
     assert output_files, "No valid trail files with loops found"
     longest_file = max(output_files, key=lambda p: sum(1 for _ in p.open()))
     result = analyse_cex.main(
