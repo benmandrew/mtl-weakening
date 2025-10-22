@@ -124,7 +124,7 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
         formula = ctx.substitute(context, subformula)
         print(
             f"{util.interval_to_str(subformula.interval)} → ",
-            end="",
+            end="\n",
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -144,7 +144,7 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
             print(util.NO_WEAKENING_EXISTS_STR)
             break
         interval = parse_interval(result)
-        print(util.interval_to_str(interval))
+        # print(util.interval_to_str(interval))
         subformula = substitute_interval(subformula, interval)
         n_iterations += 1
 

@@ -4,7 +4,6 @@ import json
 import typing
 
 from src import marking
-from src.trace_analysis import exceptions
 
 
 def parse_variables(s: str) -> dict[str, int | str]:
@@ -65,8 +64,6 @@ def parse(s: str) -> marking.Trace:
         else:
             states.append(parse_variables(line))
             state_i += 1
-    if loop_i is None:
-        raise exceptions.NoLoopError
     expanded_states = [expand_state(state) for state in states]
     clear_nonappearing_states(expanded_states)
     return marking.Trace(
