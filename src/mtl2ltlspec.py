@@ -24,9 +24,9 @@ def parse_args(argv: list[str]) -> Namespace:
 
 def main(model_checker: custom_args.ModelChecker, mtl_formula: mtl.Mtl) -> str:
     ltl_formula = mtl.mtl_to_ltl(mtl_formula)
-    if model_checker == custom_args.ModelChecker.spin:
+    if model_checker == custom_args.ModelChecker.SPIN:
         return ltl.to_spin(ltl_formula)
-    if model_checker == custom_args.ModelChecker.nuxmv:
+    if model_checker == custom_args.ModelChecker.NUXMV:
         return ltl.to_nuxmv(ltl_formula)
     msg = f"Unsupported model checker: {model_checker}"
     raise ValueError(msg)

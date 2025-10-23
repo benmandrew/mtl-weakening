@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 from src import custom_args, util
@@ -44,12 +45,6 @@ def get_context_and_subformula(
     )
 
 
-def parse_interval(interval: str) -> tuple[int, int]:
-    interval = interval.replace(" ", "").replace("[", "").replace("]", "")
-    start, end = map(int, interval.split(","))
-    return start, end
-
-
 def substitute_interval(
     formula: mtl.Temporal,
     interval: tuple[int, int],
@@ -87,7 +82,7 @@ def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                result = nuxmv.check_mtl(
+                interval = nuxmv.check_mtl(
                     Path(tmpdir),
                     model_file,
                     formula,
@@ -109,7 +104,6 @@ def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
             )
             bound -= 1
             continue
-        interval = parse_interval(result)
         bound = max(BOUND_MIN, int(interval[1] * 1.5))
         print(util.interval_to_str(interval))
         subformula = substitute_interval(subformula, interval)
@@ -120,15 +114,17 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0
+    total_elapsed = 0.0
     while True:
+        start_time = time.perf_counter()
         formula = ctx.substitute(context, subformula)
         print(
             f"{util.interval_to_str(subformula.interval)} → ",
-            end="\n",
+            end="",
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                result = spin.check_mtl(
+                interval = spin.check_mtl(
                     Path(tmpdir),
                     model_file,
                     formula,
@@ -143,16 +139,20 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
         except exceptions.NoWeakeningError:
             print(util.NO_WEAKENING_EXISTS_STR)
             break
-        interval = parse_interval(result)
-        # print(util.interval_to_str(interval))
+        elapsed = time.perf_counter() - start_time
+        print(
+            f"{util.interval_to_str(interval)} in {elapsed:.2f} seconds",
+        )
+        total_elapsed += elapsed
         subformula = substitute_interval(subformula, interval)
         n_iterations += 1
+    print(f"Total time: {total_elapsed:.2f} seconds")
 
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
     util.setup_logging(args.log_level)
-    if args.model_checker == custom_args.ModelChecker.nuxmv:
+    if args.model_checker == custom_args.ModelChecker.NUXMV:
         main_nuxmv(args.model, args.mtl, args.de_bruijn)
     else:
         main_spin(args.model, args.mtl, args.de_bruijn)

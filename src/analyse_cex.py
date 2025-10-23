@@ -50,9 +50,9 @@ def get_cex_trace(
     model_checker: custom_args.ModelChecker,
     lines: list[str],
 ) -> marking.Trace:
-    if model_checker == custom_args.ModelChecker.nuxmv:
+    if model_checker == custom_args.ModelChecker.NUXMV:
         return nuxmv_xml_trace.parse("".join(lines))
-    if model_checker == custom_args.ModelChecker.spin:
+    if model_checker == custom_args.ModelChecker.SPIN:
         return spin_trace.parse("\n".join(lines))
     msg = f"Unknown model checker: {model_checker}"
     raise ValueError(msg)

@@ -50,3 +50,9 @@ def interval_to_str(interval: tuple[int, int | None]) -> str:
     start, end = interval
     end_str = str(end) if end is not None else "∞"
     return f"[{start},{end_str}]"
+
+
+def str_to_interval(interval: str) -> tuple[int, int]:
+    interval = interval.replace(" ", "").replace("[", "").replace("]", "")
+    start, end = map(int, interval.split(","))
+    return start, end
