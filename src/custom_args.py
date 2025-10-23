@@ -38,8 +38,8 @@ def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
 
 
 class ModelChecker(Enum):
-    nuxmv = "nuxmv"
-    spin = "spin"
+    NUXMV = "nuxmv"
+    SPIN = "spin"
 
     def __str__(self) -> str:
         return self.name
@@ -59,8 +59,8 @@ def add_model_checker_argument(
         "--model-checker",
         type=ModelChecker.from_string,
         choices=list(ModelChecker),
-        default=ModelChecker.nuxmv,
-        help="The model checker used (default: nuxmv)",
+        default=ModelChecker.NUXMV,
+        help="The model checker used (default: NUXMV)",
     )
 
 

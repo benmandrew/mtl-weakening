@@ -68,7 +68,7 @@ def generate_model_file(
     model_file: Path,
     formula: mtl.Mtl,
 ) -> None:
-    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.nuxmv, formula)
+    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.NUXMV, formula)
     shutil.copy(model_file, Path(tmpdir / "model.smv"))
     with (tmpdir / "model.smv").open("a", encoding="utf-8") as f:
         f.write(f"LTLSPEC {ltlspec};")
@@ -96,7 +96,7 @@ def check_mtl(
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
-) -> str:
+) -> tuple[int, int]:
     write_commands_file(tmpdir, bound)
     generate_model_file(tmpdir, model_file, formula)
     model_check(tmpdir)
@@ -113,8 +113,8 @@ def check_mtl(
         formula,
         de_bruijn,
         tmpdir / "trace.xml",
-        custom_args.ModelChecker.nuxmv,
+        custom_args.ModelChecker.NUXMV,
     )
     if result.startswith(util.NO_WEAKENING_EXISTS_STR):
         raise exceptions.NoWeakeningError
-    return result
+    return util.str_to_interval(result)

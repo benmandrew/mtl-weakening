@@ -44,7 +44,6 @@ disable = [
     "too-many-return-statements",
     "too-many-branches",
     "too-few-public-methods",
-    "invalid-name",
     "duplicate-code",
 ]
 

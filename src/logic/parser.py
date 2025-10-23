@@ -12,7 +12,10 @@ class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
     def start(self, *args: mtl.Mtl) -> mtl.Mtl:
         return args[0]
 
-    def INT(self, value: lark.Token) -> int:  # noqa: N802
+    def INT(  # noqa: N802 pylint: disable=invalid-name
+        self,
+        value: lark.Token,
+    ) -> int:
         return int(str(value))
 
     def true(self) -> mtl.TrueBool:
@@ -128,7 +131,10 @@ class LTLTransformer(lark.Transformer[lark.Token, ltl.Ltl]):
     def start(self, *args: ltl.Ltl) -> ltl.Ltl:
         return args[0]
 
-    def INT(self, value: lark.Token) -> int:  # noqa: N802
+    def INT(  # noqa: N802 pylint: disable=invalid-name
+        self,
+        value: lark.Token,
+    ) -> int:
         return int(str(value))
 
     def true(self) -> ltl.TrueBool:

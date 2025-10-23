@@ -12,7 +12,7 @@ def generate_model_file(
     model_file: Path,
     formula: mtl.Mtl,
 ) -> None:
-    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.spin, formula)
+    ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.SPIN, formula)
     shutil.copy(model_file, Path(tmpdir / "model.pml"))
     with (tmpdir / "model.pml").open("a", encoding="utf-8") as f:
         f.write("ltl formula\n{\n")
@@ -33,10 +33,19 @@ def spin_generate_c(tmpdir: Path) -> None:
     )
 
 
+MULTICORE_CFLAGS = [
+    "-DSAFETY",  # Safety property
+    # "-DSEP_STATE",  # Liveness property
+    "-DMEMLIM=16000",  # Set memory limit to 16GB
+    "-DNCORE=16",
+]
+
+
 def compile_pan(tmpdir: Path) -> None:
     subprocess.run(
         [
             util.GCC_PATH,
+            # *MULTICORE_CFLAGS,
             "-o",
             "pan",
             "pan.c",
@@ -46,9 +55,13 @@ def compile_pan(tmpdir: Path) -> None:
     )
 
 
+N_COUNTEREXAMPLES = 5
+
+
 def run_pan(tmpdir: Path) -> None:
     subprocess.run(
-        [tmpdir / "pan", "-T", "-e", "-c10", "-a"],
+        [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}", "-a"],
+        # [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}"],
         cwd=tmpdir,
         check=True,
         stdout=subprocess.DEVNULL,
@@ -95,7 +108,7 @@ def check_mtl(
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
-) -> str:
+) -> tuple[int, int]:
     generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
     compile_pan(tmpdir)
@@ -107,13 +120,15 @@ def check_mtl(
         expand_trail_file(tmpdir, trail_file, output_file)
         output_files.append(output_file)
     assert output_files, "No valid trail files with loops found"
-    longest_file = max(output_files, key=lambda p: sum(1 for _ in p.open()))
-    result = analyse_cex.main(
-        formula,
-        de_bruijn,
-        longest_file,
-        custom_args.ModelChecker.spin,
-    )
-    if result.startswith(util.NO_WEAKENING_EXISTS_STR):
-        raise exceptions.NoWeakeningError
-    return result
+    results: list[tuple[int, int]] = []
+    for file in output_files:
+        result = analyse_cex.main(
+            formula,
+            de_bruijn,
+            file,
+            custom_args.ModelChecker.SPIN,
+        )
+        if result.startswith(util.NO_WEAKENING_EXISTS_STR):
+            raise exceptions.NoWeakeningError
+        results.append(util.str_to_interval(result))
+    return max(results, key=lambda interval: interval[1])
