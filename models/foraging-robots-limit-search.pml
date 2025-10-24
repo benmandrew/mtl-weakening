@@ -10,24 +10,27 @@ mtype = {
      homing
 };
 
-inline print_state(s, timer) {
-    if
-    :: (s == resting)     -> printf("@@@ {\"state\": \"resting\", \"timer\": %d}\n", timer)
-    :: (s == leavingHome) -> printf("@@@ {\"state\": \"leavingHome\", \"timer\": %d}\n", timer)
-    :: (s == randomWalk)  -> printf("@@@ {\"state\": \"randomWalk\", \"timer\": %d}\n", timer)
-    :: (s == moveToFood)  -> printf("@@@ {\"state\": \"moveToFood\", \"timer\": %d}\n", timer)
-    :: (s == scanArena)   -> printf("@@@ {\"state\": \"scanArena\", \"timer\": %d}\n", timer)
-    :: (s == grabFood)    -> printf("@@@ {\"state\": \"grabFood\", \"timer\": %d}\n", timer)
-    :: (s == moveToHome)  -> printf("@@@ {\"state\": \"moveToHome\", \"timer\": %d}\n", timer)
-    :: (s == deposit)     -> printf("@@@ {\"state\": \"deposit\", \"timer\": %d}\n", timer)
-    :: (s == homing)      -> printf("@@@ {\"state\": \"homing\", \"timer\": %d}\n", timer)
-    fi
+inline print_state(s, timer, searching_timer, next_state, next_timer, next_searching_timer) {
+     if
+     :: (s == resting)     -> printf("@@@ {\"state\": \"resting\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == leavingHome) -> printf("@@@ {\"state\": \"leavingHome\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == randomWalk)  -> printf("@@@ {\"state\": \"randomWalk\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == moveToFood)  -> printf("@@@ {\"state\": \"moveToFood\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == scanArena)   -> printf("@@@ {\"state\": \"scanArena\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == grabFood)    -> printf("@@@ {\"state\": \"grabFood\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == moveToHome)  -> printf("@@@ {\"state\": \"moveToHome\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == deposit)     -> printf("@@@ {\"state\": \"deposit\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     :: (s == homing)      -> printf("@@@ {\"state\": \"homing\", \"timer\": %d, \"searching_timer\": %d, \"next_state\": %d, \"next_timer\": %d, \"next_searching_timer\": %d}\n", timer, searching_timer, next_state, next_timer, next_searching_timer)
+     fi
 }
 
 #define TIME_R 5
 #define TIME_D 5
 #define MAX_TIMER 10
-#define MAX_SEARCHING_TIMER 40
+#define MAX_SEARCHING_TIMER 20
+
+#define in_searching_state (state==leavingHome || state==randomWalk || state==moveToFood || state==scanArena)
+#define in_next_searching_state (next_state==leavingHome || next_state==randomWalk || next_state==moveToFood || next_state==scanArena)
 
 mtype state;
 int timer;
@@ -42,6 +45,7 @@ init {
      state = resting;
      timer = 1;
      searching_timer = 1;
+     print_state(state, timer, searching_timer, next_state, next_timer, next_searching_timer);
 
      do
      :: atomic {
@@ -52,7 +56,7 @@ init {
                :: next_state = resting
                :: next_state = leavingHome
                fi
-          :: (state == resting && timer == TIME_R) ->
+          :: (state == resting && timer >= TIME_R) ->
                next_state = leavingHome
 
           :: (state == leavingHome && timer == 1 && searching_timer < MAX_SEARCHING_TIMER) ->
@@ -60,7 +64,7 @@ init {
                :: next_state = leavingHome
                :: next_state = randomWalk
                fi
-          :: (state == leavingHome && timer == 2 && searching_timer < MAX_SEARCHING_TIMER) ->
+          :: (state == leavingHome && timer >= 2 && searching_timer < MAX_SEARCHING_TIMER) ->
                next_state = randomWalk
 
           :: (state == randomWalk && searching_timer < MAX_SEARCHING_TIMER) ->
@@ -86,7 +90,7 @@ init {
                :: next_state = randomWalk
                fi
 
-          :: (searching_timer == MAX_SEARCHING_TIMER) ->
+          :: (searching_timer >= MAX_SEARCHING_TIMER) ->
                next_state = homing
 
           :: (state == grabFood && timer == 1) ->
@@ -94,7 +98,7 @@ init {
                :: next_state = grabFood
                :: next_state = moveToHome
                fi
-          :: (state == grabFood && timer == 2) ->
+          :: (state == grabFood && timer >= 2) ->
                next_state = moveToHome
 
           :: (state == moveToHome && timer < TIME_D) ->
@@ -102,7 +106,7 @@ init {
                :: next_state = moveToHome
                :: next_state = deposit
                fi
-          :: (state == moveToHome && timer == TIME_D) ->
+          :: (state == moveToHome && timer >= TIME_D) ->
                next_state = deposit
 
           :: (state == deposit && timer == 2) ->
@@ -110,7 +114,7 @@ init {
                :: next_state = deposit
                :: next_state = resting
                fi
-          :: (state == deposit && timer == 3) ->
+          :: (state == deposit && timer >= 3) ->
                next_state = resting
 
           :: (state == homing && timer < TIME_D) ->
@@ -118,7 +122,7 @@ init {
                :: next_state = homing
                :: next_state = resting
                fi
-          :: (state == homing && timer == TIME_D) ->
+          :: (state == homing && timer >= TIME_D) ->
                next_state = resting
 
           :: else ->
@@ -134,11 +138,9 @@ init {
 
           /* --- compute next_searching_timer --- */
           if
-          :: (( (next_state==leavingHome || next_state==randomWalk || next_state==moveToFood || next_state==scanArena) ) !=
-               ( (state==leavingHome || state==randomWalk || state==moveToFood || state==scanArena) )) ->
+          :: (in_next_searching_state != in_searching_state) ->
                next_searching_timer = 1
-          :: ((state==leavingHome || state==randomWalk || state==moveToFood || state==scanArena) &&
-               searching_timer < MAX_SEARCHING_TIMER) ->
+          :: (in_searching_state && searching_timer < MAX_SEARCHING_TIMER) ->
                next_searching_timer = searching_timer + 1
           :: else ->
                next_searching_timer = searching_timer
@@ -148,7 +150,7 @@ init {
           state = next_state;
           timer = next_timer;
           searching_timer = next_searching_timer;
-          print_state(state, timer);
+          print_state(state, timer, searching_timer, next_state, next_timer, next_searching_timer);
      }
      od
 }

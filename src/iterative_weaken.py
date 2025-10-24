@@ -110,18 +110,33 @@ def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
         n_iterations += 1
 
 
+def print_starting_interval(interval: tuple[int, int | None]) -> None:
+    print(
+        f"{util.interval_to_str(interval)} → ",
+        end="",
+    )
+
+
+def print_final_interval(
+    n_iterations: int,
+    elapsed: float,
+    total_elapsed: float,
+) -> None:
+    print(f"Final weakened interval in {elapsed:.2f} seconds")
+    print(f"Total time: {total_elapsed:.2f} seconds")
+    print(f"Iterations: {n_iterations}")
+
+
 def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0
     total_elapsed = 0.0
+    prev_interval = None
     while True:
         start_time = time.perf_counter()
+        n_iterations += 1
         formula = ctx.substitute(context, subformula)
-        print(
-            f"{util.interval_to_str(subformula.interval)} → ",
-            end="",
-        )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 interval = spin.check_mtl(
@@ -131,22 +146,25 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
                     de_bruijn,
                 )
         except exceptions.PropertyValidError:
-            print(
-                f"Final weakened interval in {n_iterations} "
-                f"iterations: {subformula.interval}",
-            )
+            elapsed = time.perf_counter() - start_time
+            print_starting_interval(subformula.interval)
+            print_final_interval(n_iterations, elapsed, total_elapsed)
             break
         except exceptions.NoWeakeningError:
+            print_starting_interval(subformula.interval)
             print(util.NO_WEAKENING_EXISTS_STR)
             break
         elapsed = time.perf_counter() - start_time
+        total_elapsed += elapsed
+        print_starting_interval(subformula.interval)
+        if interval == prev_interval:
+            print_final_interval(n_iterations, elapsed, total_elapsed)
+            break
         print(
             f"{util.interval_to_str(interval)} in {elapsed:.2f} seconds",
         )
-        total_elapsed += elapsed
         subformula = substitute_interval(subformula, interval)
-        n_iterations += 1
-    print(f"Total time: {total_elapsed:.2f} seconds")
+        prev_interval = interval
 
 
 if __name__ == "__main__":

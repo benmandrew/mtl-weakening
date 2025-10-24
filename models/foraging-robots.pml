@@ -30,15 +30,15 @@ inline print_state(s, timer) {
 
 mtype state;
 int timer;
-int step;
 
 mtype next_state;
+int next_timer;
 
 init {
      /* initial values */
      state = resting;
      timer = 1;
-     step = 1;
+     print_state(state, timer);
 
      do
      :: atomic {
@@ -52,12 +52,12 @@ init {
           :: (state == resting && timer == TIME_R) ->
                next_state = leavingHome
 
-          :: (state == leavingHome && timer == 2) ->
+          :: (state == leavingHome && timer == 1) ->
                if
                :: next_state = leavingHome
                :: next_state = randomWalk
                fi
-          :: (state == leavingHome && timer == 3) ->
+          :: (state == leavingHome && timer >= 2) ->
                next_state = randomWalk
 
           :: (state == randomWalk) ->
@@ -82,19 +82,19 @@ init {
                :: next_state = moveToFood
                :: next_state = randomWalk
                fi
-          :: (state == scanArena && timer == 5) ->
+          :: (state == scanArena && timer >= 5) ->
                if
                :: next_state = homing
                :: next_state = moveToFood
                :: next_state = randomWalk
                fi
 
-          :: (state == grabFood && timer == 2) ->
+          :: (state == grabFood && timer == 1) ->
                if
                :: next_state = grabFood
                :: next_state = moveToHome
                fi
-          :: (state == grabFood && timer == 3) ->
+          :: (state == grabFood && timer >= 2) ->
                next_state = moveToHome
 
           :: (state == moveToHome && timer < TIME_D) ->
@@ -105,12 +105,12 @@ init {
           :: (state == moveToHome && timer == TIME_D) ->
                next_state = deposit
 
-          :: (state == deposit && timer == 3) ->
+          :: (state == deposit && timer == 2) ->
                if
                :: next_state = deposit
                :: next_state = resting
                fi
-          :: (state == deposit && timer == 4) ->
+          :: (state == deposit && timer >= 3) ->
                next_state = resting
 
           :: (state == homing && timer < TIME_D) ->
@@ -118,7 +118,7 @@ init {
                :: next_state = homing
                :: next_state = resting
                fi
-          :: (state == homing && timer == TIME_D) ->
+          :: (state == homing && timer >= TIME_D) ->
                next_state = resting
 
           :: else ->
@@ -129,12 +129,12 @@ init {
           if
           :: (next_state != state) -> timer = 1
           :: (timer < MAX_TIMER)   -> timer = timer + 1
+          :: else                  -> next_timer = timer
           fi
 
           /* --- commit synchronous updates --- */
           state = next_state;
           print_state(state, timer);
-          step = step + 1;   
      }  
      od
 }

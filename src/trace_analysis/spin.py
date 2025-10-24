@@ -21,31 +21,30 @@ def generate_model_file(
 
 
 def spin_generate_c(tmpdir: Path) -> None:
-    subprocess.run(
-        [
-            util.SPIN_PATH,
-            "-a",
-            tmpdir / "model.pml",
-        ],
-        cwd=tmpdir,
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
-
-
-MULTICORE_CFLAGS = [
-    "-DSAFETY",  # Safety property
-    # "-DSEP_STATE",  # Liveness property
-    "-DMEMLIM=16000",  # Set memory limit to 16GB
-    "-DNCORE=16",
-]
+    try:
+        with (tmpdir / "spin.log").open("w", encoding="utf-8") as log_file:
+            subprocess.run(
+                [
+                    util.SPIN_PATH,
+                    "-a",
+                    tmpdir / "model.pml",
+                ],
+                cwd=tmpdir,
+                check=True,
+                stdout=log_file,
+            )
+    except subprocess.CalledProcessError:
+        print("Error during Spin compilation:")
+        with (tmpdir / "spin.log").open("r", encoding="utf-8") as log_file:
+            print(log_file.read())
+        raise
 
 
 def compile_pan(tmpdir: Path) -> None:
     subprocess.run(
         [
             util.GCC_PATH,
-            # *MULTICORE_CFLAGS,
+            "-DNP",
             "-o",
             "pan",
             "pan.c",
@@ -55,13 +54,12 @@ def compile_pan(tmpdir: Path) -> None:
     )
 
 
-N_COUNTEREXAMPLES = 5
+N_COUNTEREXAMPLES = 1
 
 
 def run_pan(tmpdir: Path) -> None:
     subprocess.run(
-        [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}", "-a"],
-        # [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}"],
+        [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}", "-l"],
         cwd=tmpdir,
         check=True,
         stdout=subprocess.DEVNULL,
@@ -100,6 +98,7 @@ def expand_trail_file(
             elif line == "<<<<<START OF CYCLE>>>>>":
                 has_loop = True
                 out.write("START OF CYCLE\n")
+    # print(expanded_trail.stdout)
     return has_loop
 
 
@@ -114,12 +113,13 @@ def check_mtl(
     compile_pan(tmpdir)
     run_pan(tmpdir)
     trail_files = list(tmpdir.glob("model.pml*.trail"))
+    if not trail_files:
+        raise exceptions.PropertyValidError
     output_files: list[Path] = []
     for i, trail_file in enumerate(trail_files):
         output_file = tmpdir / f"expanded_trail_{i+1}.txt"
         expand_trail_file(tmpdir, trail_file, output_file)
         output_files.append(output_file)
-    assert output_files, "No valid trail files with loops found"
     results: list[tuple[int, int]] = []
     for file in output_files:
         result = analyse_cex.main(
