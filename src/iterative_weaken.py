@@ -17,6 +17,7 @@ class Namespace(argparse.Namespace):
     model: Path
     mtl: str
     de_bruijn: list[int]
+    show_markings: bool
     log_level: str
 
 
@@ -28,6 +29,7 @@ def parse_args(argv: list[str]) -> Namespace:
     custom_args.add_model_argument(arg_parser)
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
+    custom_args.add_show_markings_argument(arg_parser)
     custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
@@ -64,7 +66,12 @@ def substitute_interval(
 BOUND_MIN = 20
 
 
-def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
+def main_nuxmv(
+    model_file: Path,
+    mtl_str: str,
+    de_bruijn: list[int],
+    show_markings: bool,  # noqa: FBT001
+) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     bound = (
@@ -88,6 +95,7 @@ def main_nuxmv(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
                     formula,
                     de_bruijn,
                     bound,
+                    show_markings,
                 )
         except exceptions.PropertyValidError:
             print(
@@ -117,17 +125,12 @@ def print_starting_interval(interval: tuple[int, int | None]) -> None:
     )
 
 
-def print_final_interval(
-    n_iterations: int,
-    elapsed: float,
-    total_elapsed: float,
+def main_spin(
+    model_file: Path,
+    mtl_str: str,
+    de_bruijn: list[int],
+    show_markings: bool,  # noqa: FBT001
 ) -> None:
-    print(f"Final weakened interval in {elapsed:.2f} seconds")
-    print(f"Total time: {total_elapsed:.2f} seconds")
-    print(f"Iterations: {n_iterations}")
-
-
-def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0
@@ -144,33 +147,39 @@ def main_spin(model_file: Path, mtl_str: str, de_bruijn: list[int]) -> None:
                     model_file,
                     formula,
                     de_bruijn,
+                    show_markings,
                 )
         except exceptions.PropertyValidError:
             elapsed = time.perf_counter() - start_time
+            total_elapsed += elapsed
             print_starting_interval(subformula.interval)
-            print_final_interval(n_iterations, elapsed, total_elapsed)
+            print(f"Final weakened interval in {elapsed:.2f} seconds")
             break
         except exceptions.NoWeakeningError:
             print_starting_interval(subformula.interval)
-            print(util.NO_WEAKENING_EXISTS_STR)
+            elapsed = time.perf_counter() - start_time
+            total_elapsed += elapsed
+            print(f"{util.NO_WEAKENING_EXISTS_STR}")
             break
         elapsed = time.perf_counter() - start_time
         total_elapsed += elapsed
         print_starting_interval(subformula.interval)
         if interval == prev_interval:
-            print_final_interval(n_iterations, elapsed, total_elapsed)
+            print(f"Final weakened interval in {elapsed:.2f} seconds")
             break
         print(
             f"{util.interval_to_str(interval)} in {elapsed:.2f} seconds",
         )
         subformula = substitute_interval(subformula, interval)
         prev_interval = interval
+    print(f"Total time: {total_elapsed:.2f} seconds")
+    print(f"Iterations: {n_iterations}")
 
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
     util.setup_logging(args.log_level)
     if args.model_checker == custom_args.ModelChecker.NUXMV:
-        main_nuxmv(args.model, args.mtl, args.de_bruijn)
+        main_nuxmv(args.model, args.mtl, args.de_bruijn, args.show_markings)
     else:
-        main_spin(args.model, args.mtl, args.de_bruijn)
+        main_spin(args.model, args.mtl, args.de_bruijn, args.show_markings)

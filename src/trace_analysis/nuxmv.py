@@ -90,12 +90,13 @@ def model_check(tmpdir: Path) -> None:
         )
 
 
-def check_mtl(
+def check_mtl(  # noqa: PLR0913 pylint: disable=too-many-arguments too-many-positional-arguments
     tmpdir: Path,
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
+    show_markings: bool,  # noqa: FBT001
 ) -> tuple[int, int]:
     write_commands_file(tmpdir, bound)
     generate_model_file(tmpdir, model_file, formula)
@@ -114,6 +115,7 @@ def check_mtl(
         de_bruijn,
         tmpdir / "trace.xml",
         custom_args.ModelChecker.NUXMV,
+        show_markings,
     )
     if result.startswith(util.NO_WEAKENING_EXISTS_STR):
         raise exceptions.NoWeakeningError
