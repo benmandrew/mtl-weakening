@@ -22,6 +22,7 @@ class Namespace(argparse.Namespace):
     de_bruijn: list[int]
     trace_file: Path | None
     model_checker: custom_args.ModelChecker
+    show_markings: bool
     log_level: str
 
 
@@ -36,6 +37,7 @@ def parse_args(argv: list[str]) -> Namespace:
     custom_args.add_de_bruijn_argument(arg_parser)
     custom_args.add_trace_file_argument(arg_parser)
     custom_args.add_model_checker_argument(arg_parser)
+    custom_args.add_show_markings_argument(arg_parser)
     custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
@@ -63,6 +65,7 @@ def main(
     de_bruijn: list[int],
     trace_file: Path | None,
     model_checker: custom_args.ModelChecker,
+    show_markings: bool = False,  # noqa: FBT001 FBT002
 ) -> str:
     lines = read_trace_input(trace_file)
     cex_trace = get_cex_trace(model_checker, lines)
@@ -73,7 +76,8 @@ def main(
     )
     w = weaken.Weaken(context, subformula, cex_trace)
     interval = w.weaken()
-    print(w.markings)
+    if show_markings:
+        print(w.markings)
     if interval is None:
         return util.NO_WEAKENING_EXISTS_STR
     return util.interval_to_str(interval)
@@ -84,5 +88,11 @@ if __name__ == "__main__":
     util.setup_logging(args.log_level)
     mtl_formula = parser.parse_mtl(args.mtl)
     print(
-        main(mtl_formula, args.de_bruijn, args.trace_file, args.model_checker),
+        main(
+            mtl_formula,
+            args.de_bruijn,
+            args.trace_file,
+            args.model_checker,
+            args.show_markings,
+        ),
     )

@@ -107,6 +107,7 @@ def check_mtl(
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
+    show_markings: bool = False,  # noqa: FBT001 FBT002
 ) -> tuple[int, int]:
     generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
@@ -127,6 +128,7 @@ def check_mtl(
             de_bruijn,
             file,
             custom_args.ModelChecker.SPIN,
+            show_markings,
         )
         if result.startswith(util.NO_WEAKENING_EXISTS_STR):
             raise exceptions.NoWeakeningError

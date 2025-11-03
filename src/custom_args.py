@@ -64,6 +64,16 @@ def add_model_checker_argument(
     )
 
 
+def add_show_markings_argument(
+    parser: argparse.ArgumentParser,
+) -> None:
+    parser.add_argument(
+        "--show-markings",
+        action="store_true",
+        help="Show the markings computed during analysis.",
+    )
+
+
 def add_log_level_arguments(
     parser: argparse.ArgumentParser,
     default_level: int = logging.WARNING,
