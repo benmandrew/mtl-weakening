@@ -90,33 +90,31 @@ def model_check(tmpdir: Path) -> None:
         )
 
 
-def check_mtl(  # noqa: PLR0913 pylint: disable=too-many-arguments too-many-positional-arguments
+def analyse(  # noqa: PLR0913 pylint: disable=too-many-arguments too-many-positional-arguments
     tmpdir: Path,
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
     show_markings: bool,  # noqa: FBT001
-) -> tuple[int, int]:
+) -> tuple[int, int | None]:
     write_commands_file(tmpdir, bound)
     generate_model_file(tmpdir, model_file, formula)
     model_check(tmpdir)
     with (tmpdir / "nuXmv.log").open("r", encoding="utf-8") as nuxmv_log:
-        nuxmv_log.seek(0)
-        # no_cex_string = (
-        #     f"no counterexample found with bound {bound} and loop at {loopback}"
-        # )
         no_cex_string = f"no counterexample found with bound {bound}"
         if no_cex_string in nuxmv_log.read():
             assert not Path(tmpdir / "trace.xml").exists()
             raise exceptions.PropertyValidError
-    result = analyse_cex.main(
+    analysis = analyse_cex.AnalyseCex(
         formula,
         de_bruijn,
         tmpdir / "trace.xml",
         custom_args.ModelChecker.NUXMV,
-        show_markings,
     )
-    if result.startswith(util.NO_WEAKENING_EXISTS_STR):
+    if show_markings:
+        print(f"\n{analysis.get_markings()}")
+    result = analysis.get_weakened_interval()
+    if result is None:
         raise exceptions.NoWeakeningError
-    return util.str_to_interval(result)
+    return result

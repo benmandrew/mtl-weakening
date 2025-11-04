@@ -5,6 +5,10 @@ import logging.config
 import sys
 import textwrap
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.logic import mtl
 
 SPIN_PATH = Path("/usr/local/bin/spin")
 NUXMV_PATH = Path("/usr/bin/nuXmv")
@@ -46,13 +50,15 @@ def format_expect(s: str) -> str:
     return textwrap.dedent(s).strip("\n")
 
 
-def interval_to_str(interval: tuple[int, int | None]) -> str:
+def interval_to_str(interval: mtl.Interval) -> str:
     start, end = interval
     end_str = str(end) if end is not None else "∞"
     return f"[{start},{end_str}]"
 
 
-def str_to_interval(interval: str) -> tuple[int, int]:
+def str_to_interval(interval: str) -> mtl.Interval:
     interval = interval.replace(" ", "").replace("[", "").replace("]", "")
-    start, end = map(int, interval.split(","))
+    start_str, end_str = interval.split(",")
+    start = int(start_str)
+    end = int(end_str) if end_str != "∞" else None
     return start, end
