@@ -18,16 +18,16 @@ class UniversalState:
 State = dict[str, bool | int | str] | UniversalState
 
 
-class BoolMarkings:
+class VarMarkings:
     """
     A list of boolean markings for a formula over a trace.
     Indexes beyond the length of the trace return True.
     """
 
-    def __init__(self, bs: list[bool]) -> None:
+    def __init__(self, bs: list[bool | int]) -> None:
         self.bs = bs
 
-    def __getitem__(self, i: int) -> bool:
+    def __getitem__(self, i: int) -> bool | int:
         if i >= len(self.bs):
             return True
         return self.bs[i]
@@ -35,10 +35,10 @@ class BoolMarkings:
     def __len__(self) -> int:
         return len(self.bs)
 
-    def __iter__(self) -> typing.Iterator[bool]:
+    def __iter__(self) -> typing.Iterator[bool | int]:
         return iter(self.bs)
 
-    def append(self, value: bool) -> None:  # noqa: FBT001
+    def append(self, value: bool | int) -> None:  # noqa: FBT001
         self.bs.append(value)
 
 
@@ -79,15 +79,15 @@ class Trace:
                 markings[f].append(v)
         return markings
 
-    def to_bool_markings(self) -> dict[m.Mtl, BoolMarkings]:
-        markings: dict[m.Mtl, BoolMarkings] = {}
+    def to_var_markings(self) -> dict[m.Mtl, VarMarkings]:
+        markings: dict[m.Mtl, VarMarkings] = {}
         for state in self.trace:
             for k, v in state.items():
-                if not isinstance(v, bool):
+                if not isinstance(v, (bool, int)):
                     continue
                 f = m.Prop(k)
                 if f not in markings:
-                    markings[f] = BoolMarkings([])
+                    markings[f] = VarMarkings([])
                 markings[f].append(v)
         return markings
 
@@ -123,24 +123,24 @@ class Trace:
 class Marking:
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         self.trace = trace
-        self.markings = trace.to_bool_markings()
+        self.markings = trace.to_var_markings()
         self[formula]  # pylint: disable=pointless-statement
 
-    def get(self, f: m.Mtl, i: int) -> bool:
+    def get(self, f: m.Mtl, i: int) -> bool | int:
         return self[f][self.trace.idx(i)]
 
-    def _get_and(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
-        return BoolMarkings(
+    def _get_and(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        return VarMarkings(
             [l and r for l, r in zip(self[left], self[right], strict=True)],
         )
 
-    def _get_or(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
-        return BoolMarkings(
+    def _get_or(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        return VarMarkings(
             [l or r for l, r in zip(self[left], self[right], strict=True)],
         )
 
-    def _get_implies(self, left: m.Mtl, right: m.Mtl) -> BoolMarkings:
-        return BoolMarkings(
+    def _get_implies(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        return VarMarkings(
             [
                 (not l) or r
                 for l, r in zip(self[left], self[right], strict=True)
@@ -151,37 +151,37 @@ class Marking:
         self,
         operand: m.Mtl,
         interval: m.Interval,
-    ) -> BoolMarkings:
+    ) -> VarMarkings:
         vs = self[operand]
-        bs = [False] * len(vs)
+        bs: list[bool | int] = [False] * len(vs)
         for i in range(len(vs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
             bs[i] = any(
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
             )
-        return BoolMarkings(bs)
+        return VarMarkings(bs)
 
-    def _get_always(self, operand: m.Mtl, interval: m.Interval) -> BoolMarkings:
+    def _get_always(self, operand: m.Mtl, interval: m.Interval) -> VarMarkings:
         vs = self[operand]
-        bs = [False] * len(vs)
+        bs: list[bool | int] = [False] * len(vs)
         for i in range(len(vs)):
             right_idx = interval[1] + 1 if interval[1] is not None else len(vs)
             bs[i] = all(
                 vs[self.trace.idx(j)]
                 for j in range(i + interval[0], i + right_idx)
             )
-        return BoolMarkings(bs)
+        return VarMarkings(bs)
 
     def _get_until(
         self,
         left: m.Mtl,
         right: m.Mtl,
         interval: m.Interval,
-    ) -> BoolMarkings:
+    ) -> VarMarkings:
         rights = self[right]
         lefts = self[left]
-        bs = [False] * len(rights)
+        bs: list[bool | int] = [False] * len(rights)
         for i in range(len(rights)):
             right_idx = (
                 interval[1] + 1 if interval[1] is not None else len(rights) - i
@@ -193,17 +193,17 @@ class Marking:
                     break
                 if not lefts[k]:
                     break
-        return BoolMarkings(bs)
+        return VarMarkings(bs)
 
     def _get_release(
         self,
         left: m.Mtl,
         right: m.Mtl,
         interval: m.Interval,
-    ) -> BoolMarkings:
+    ) -> VarMarkings:
         rights = self[right]
         lefts = self[left]
-        bs = [False] * len(rights)
+        bs: list[bool | int] = [False] * len(rights)
         for i in range(len(rights)):
             right_idx = (
                 interval[1] + 1 if interval[1] is not None else len(rights) - i
@@ -215,26 +215,26 @@ class Marking:
                 if lefts[k]:
                     bs[i] = True
                     break
-        return BoolMarkings(bs)
+        return VarMarkings(bs)
 
-    def _get_next(self, operand: m.Mtl) -> BoolMarkings:
+    def _get_next(self, operand: m.Mtl) -> VarMarkings:
         operands = self[operand]
-        return BoolMarkings(
+        return VarMarkings(
             [operands[self.trace.idx(i + 1)] for i in range(len(operands))],
         )
 
-    def __getitem__(self, f: m.Mtl) -> BoolMarkings:
+    def __getitem__(self, f: m.Mtl) -> VarMarkings:
         if f in self.markings:
             return self.markings[f]
         if isinstance(f, m.TrueBool):
-            return BoolMarkings([True] * len(self.trace))
+            return VarMarkings([True] * len(self.trace))
         if isinstance(f, m.FalseBool):
-            return BoolMarkings([False] * len(self.trace))
+            return VarMarkings([False] * len(self.trace))
         if isinstance(f, m.Prop):
             msg = f"Proposition '{f}' not found in markings. "
             raise TypeError(msg)
         if isinstance(f, m.Not):
-            bs = BoolMarkings([not v for v in self[f.operand]])
+            bs = VarMarkings([not v for v in self[f.operand]])
         elif isinstance(f, m.And):
             bs = self._get_and(f.left, f.right)
         elif isinstance(f, m.Or):
@@ -258,8 +258,8 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
-        bool_list_markings = {f: self.markings[f].bs for f in self.markings}
-        return bool_markings_to_str(bool_list_markings, self.trace.loop_start)
+        list_markings = {f: self.markings[f].bs for f in self.markings}
+        return markings_to_str(list_markings, self.trace.loop_start)
 
 
 def _get_trace_indices_str(trace_len: int, max_len: int) -> str:

@@ -49,7 +49,7 @@ def get_context_and_subformula(
 
 def substitute_interval(
     formula: mtl.Temporal,
-    interval: tuple[int, int],
+    interval: mtl.Interval,
 ) -> mtl.Temporal:
     if isinstance(formula, mtl.Always):
         return mtl.Always(formula.operand, interval)
@@ -89,7 +89,7 @@ def main_nuxmv(
         )
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                interval = nuxmv.check_mtl(
+                interval = nuxmv.analyse(
                     Path(tmpdir),
                     model_file,
                     formula,
@@ -112,13 +112,14 @@ def main_nuxmv(
             )
             bound -= 1
             continue
+        assert interval[1] is not None
         bound = max(BOUND_MIN, int(interval[1] * 1.5))
         print(util.interval_to_str(interval))
         subformula = substitute_interval(subformula, interval)
         n_iterations += 1
 
 
-def print_starting_interval(interval: tuple[int, int | None]) -> None:
+def print_starting_interval(interval: mtl.Interval) -> None:
     print(
         f"{util.interval_to_str(interval)} → ",
         end="",
@@ -140,9 +141,10 @@ def main_spin(
         start_time = time.perf_counter()
         n_iterations += 1
         formula = ctx.substitute(context, subformula)
+        print(f"{util.interval_to_str(subformula.interval)} → ", end="")
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                interval = spin.check_mtl(
+                interval = spin.analyse(
                     Path(tmpdir),
                     model_file,
                     formula,
@@ -152,18 +154,15 @@ def main_spin(
         except exceptions.PropertyValidError:
             elapsed = time.perf_counter() - start_time
             total_elapsed += elapsed
-            print_starting_interval(subformula.interval)
             print(f"Final weakened interval in {elapsed:.2f} seconds")
             break
         except exceptions.NoWeakeningError:
-            print_starting_interval(subformula.interval)
             elapsed = time.perf_counter() - start_time
             total_elapsed += elapsed
             print(f"{util.NO_WEAKENING_EXISTS_STR}")
             break
         elapsed = time.perf_counter() - start_time
         total_elapsed += elapsed
-        print_starting_interval(subformula.interval)
         if interval == prev_interval:
             print(f"Final weakened interval in {elapsed:.2f} seconds")
             break

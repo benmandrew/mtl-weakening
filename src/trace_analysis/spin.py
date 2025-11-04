@@ -1,3 +1,4 @@
+import io
 import shutil
 import subprocess
 from pathlib import Path
@@ -20,6 +21,12 @@ def generate_model_file(
         f.write("}\n")
 
 
+def spin_print_logs(log_file: io.TextIOWrapper) -> None:
+    for line in log_file:
+        if line.startswith("spin:"):
+            print(line.strip())
+
+
 def spin_generate_c(tmpdir: Path) -> None:
     try:
         with (tmpdir / "spin.log").open("w", encoding="utf-8") as log_file:
@@ -38,6 +45,8 @@ def spin_generate_c(tmpdir: Path) -> None:
         with (tmpdir / "spin.log").open("r", encoding="utf-8") as log_file:
             print(log_file.read())
         raise
+    with (tmpdir / "spin.log").open("r", encoding="utf-8") as log_file:
+        spin_print_logs(log_file)
 
 
 def compile_pan(tmpdir: Path) -> None:
@@ -102,13 +111,13 @@ def expand_trail_file(
     return has_loop
 
 
-def check_mtl(
+def analyse(
     tmpdir: Path,
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
     show_markings: bool = False,  # noqa: FBT001 FBT002
-) -> tuple[int, int]:
+) -> tuple[int, int | None]:
     generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
     compile_pan(tmpdir)
@@ -121,16 +130,22 @@ def check_mtl(
         output_file = tmpdir / f"expanded_trail_{i+1}.txt"
         expand_trail_file(tmpdir, trail_file, output_file)
         output_files.append(output_file)
-    results: list[tuple[int, int]] = []
+    results: list[mtl.Interval] = []
     for file in output_files:
-        result = analyse_cex.main(
+        analysis = analyse_cex.AnalyseCex(
             formula,
             de_bruijn,
             file,
             custom_args.ModelChecker.SPIN,
-            show_markings,
         )
-        if result.startswith(util.NO_WEAKENING_EXISTS_STR):
+        if show_markings:
+            print(f"\n{analysis.get_markings()}")
+        if analysis.does_formula_hold(formula):
+            continue
+        result = analysis.get_weakened_interval()
+        if result is None:
             raise exceptions.NoWeakeningError
-        results.append(util.str_to_interval(result))
-    return max(results, key=lambda interval: interval[1])
+        results.append(result)
+    if not results:
+        raise exceptions.PropertyValidError
+    return analysis.choose_weakest_interval(results)
