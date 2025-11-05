@@ -26,29 +26,29 @@ ASSIGN
   next(state) :=
     case
       state = resting & timer < TIME_R : { resting, leavingHome };
-      state = resting & timer = TIME_R : leavingHome;
+      state = resting & timer >= TIME_R : leavingHome;
 
-      state = leavingHome & timer = 2 : {leavingHome, randomWalk };
-      state = leavingHome & timer = 3 : randomWalk;
+      state = leavingHome & timer = 1 : {leavingHome, randomWalk };
+      state = leavingHome & timer >= 2 : randomWalk;
 
       state = randomWalk : { randomWalk, homing, moveToFood };
 
       state = moveToFood : { moveToFood, grabFood, homing, scanArena };
 
       state = scanArena & timer >= 1 & timer < 5 : { scanArena, homing, moveToFood, randomWalk };
-      state = scanArena & timer = 5 : { homing, moveToFood, randomWalk };
+      state = scanArena & timer >= 5 : { homing, moveToFood, randomWalk };
 
-      state = grabFood & timer = 2 : { grabFood, moveToHome };
-      state = grabFood & timer = 3 : moveToHome;
+      state = grabFood & timer = 1 : { grabFood, moveToHome };
+      state = grabFood & timer >= 2 : moveToHome;
 
       state = moveToHome & timer < TIME_D : { moveToHome, deposit };
-      state = moveToHome & timer = TIME_D : deposit;
+      state = moveToHome & timer >= TIME_D : deposit;
 
-      state = deposit & timer = 3 : { deposit, resting };
-      state = deposit & timer = 4 : resting;
+      state = deposit & timer = 2 : { deposit, resting };
+      state = deposit & timer >= 3 : resting;
 
       state = homing & timer < TIME_D : { homing, resting };
-      state = homing & timer = TIME_D : resting;
+      state = homing & timer >= TIME_D : resting;
 
       TRUE : state;
     esac;

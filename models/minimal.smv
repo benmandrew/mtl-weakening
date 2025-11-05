@@ -1,0 +1,19 @@
+MODULE main
+
+VAR
+  state : { a, b };
+
+DEFINE
+  a_p := state = a;
+  b_p := state = b;
+
+ASSIGN
+  init(state) := a;
+  next(state) :=
+    case
+      state = a : b;
+
+      state = b : { a, b };
+
+      TRUE : state;
+    esac;

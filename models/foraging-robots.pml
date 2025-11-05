@@ -102,7 +102,7 @@ init {
                :: next_state = moveToHome
                :: next_state = deposit
                fi
-          :: (state == moveToHome && timer == TIME_D) ->
+          :: (state == moveToHome && timer >= TIME_D) ->
                next_state = deposit
 
           :: (state == deposit && timer == 2) ->
