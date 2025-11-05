@@ -4,7 +4,3 @@ class PropertyValidError(Exception):
 
 class NoWeakeningError(Exception):
     pass
-
-
-class NoLoopError(Exception):
-    pass
