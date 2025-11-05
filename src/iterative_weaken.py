@@ -113,13 +113,6 @@ def main_nuxmv(
         n_iterations += 1
 
 
-def print_starting_interval(interval: mtl.Interval) -> None:
-    print(
-        f"{util.interval_to_str(interval)} → ",
-        end="",
-    )
-
-
 def main_spin(
     model_file: Path,
     mtl_str: str,

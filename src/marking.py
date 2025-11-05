@@ -321,11 +321,3 @@ def markings_to_str(
     if loop_start is not None:
         out += _get_loop_str(loop_start, max_formula_len, trace_len)
     return out
-
-
-def bool_markings_to_str(
-    markings: dict[m.Mtl, list[bool]],
-    loop_start: int | None,
-) -> str:
-    general_markings = typing.cast("dict[m.Mtl, list[bool | int]]", markings)
-    return markings_to_str(general_markings, loop_start)
