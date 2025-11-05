@@ -4,7 +4,7 @@ DEFINE
   TIME_R := 5;
   TIME_D := 5;
   MAX_TIMER := 10;
-  MAX_SEARCHING_TIMER := 40;
+  MAX_SEARCHING_TIMER := 20;
 
 VAR
   state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };

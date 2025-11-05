@@ -27,7 +27,7 @@ inline print_state(s, timer, searching_timer, next_state, next_timer, next_searc
 #define TIME_R 5
 #define TIME_D 5
 #define MAX_TIMER 10
-#define MAX_SEARCHING_TIMER 10
+#define MAX_SEARCHING_TIMER 20
 
 #define in_searching_state (state==leavingHome || state==randomWalk || state==moveToFood || state==scanArena)
 #define in_next_searching_state (next_state==leavingHome || next_state==randomWalk || next_state==moveToFood || next_state==scanArena)
