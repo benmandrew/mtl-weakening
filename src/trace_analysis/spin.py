@@ -66,13 +66,19 @@ def compile_pan(tmpdir: Path) -> None:
     )
 
 
-N_COUNTEREXAMPLES = 1
+N_COUNTEREXAMPLES = 5
 
 
 def run_pan(tmpdir: Path) -> None:
     """Run the pan executable to perform model checking."""
     subprocess.run(
-        [tmpdir / "pan", "-T", "-e", f"-c{N_COUNTEREXAMPLES}", "-a"],
+        [
+            tmpdir / "pan",
+            "-T",
+            "-e",
+            f"-c{N_COUNTEREXAMPLES}",
+            "-a",
+        ],
         cwd=tmpdir,
         check=True,
         stdout=subprocess.DEVNULL,

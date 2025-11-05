@@ -63,7 +63,7 @@ def substitute_interval(
     raise ValueError(msg)
 
 
-BOUND_MIN = 20
+BOUND_MIN = 30
 
 
 def main_nuxmv(
@@ -106,12 +106,6 @@ def main_nuxmv(
         except exceptions.NoWeakeningError:
             print(util.NO_WEAKENING_EXISTS_STR)
             break
-        except exceptions.NoLoopError:
-            print(
-                "No loop found in the trace, decreasing bound and retrying",
-            )
-            bound -= 1
-            continue
         assert interval[1] is not None
         bound = max(BOUND_MIN, int(interval[1] * 1.5))
         print(util.interval_to_str(interval))
