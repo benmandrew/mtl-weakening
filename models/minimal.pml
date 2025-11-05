@@ -3,60 +3,41 @@ mtype = {
      b,
 };
 
-inline print_state(s, timer) {
+inline print_state(s) {
      if
-     :: (s == a) -> printf("@@@ {\"state\": \"a\", \"timer\": %d}\n", timer)
-     :: (s == b) -> printf("@@@ {\"state\": \"b\", \"timer\": %d}\n", timer)
+     :: (s == a) -> printf("@@@ {\"state\": \"a\"}\n")
+     :: (s == b) -> printf("@@@ {\"state\": \"b\"}\n")
      fi
 }
 
-#define MAX_TIMER 9
-
 mtype state;
-int timer;
-
 mtype next_state;
-int next_timer;
 
 init {
      /* initial values */
      state = a;
-     timer = 1;
-     print_state(state, timer);
+     print_state(state);
 
      do
      :: atomic {
           /* --- compute next_state --- */
           if
           :: (state == a) ->
-          progress1:
                next_state = b
 
-          :: (state == b && timer < MAX_TIMER) ->
+          :: (state == b) ->
                if
                :: next_state = b
                :: next_state = a
                fi
 
-          :: (timer >= MAX_TIMER) ->
-          // progress2:
-               next_state = a
-
           :: else ->
                next_state = state
           fi
 
-          /* --- compute next_timer --- */
-          if
-          :: (next_state != state) -> next_timer = 1
-          :: (timer < MAX_TIMER)   -> next_timer = timer + 1
-          :: else                  -> next_timer = timer
-          fi
-
-          /* --- commit updates --- */
+          /* --- commit update --- */
           state = next_state;
-          timer = next_timer;
-          print_state(state, timer);
+          print_state(state);
      }
      od;
 }

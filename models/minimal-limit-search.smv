@@ -1,0 +1,33 @@
+MODULE main
+
+DEFINE
+  MAX_TIMER := 10;
+
+VAR
+  state : { a, b };
+  timer : 0..MAX_TIMER; -- Should be the maximum time that any transition can take
+
+DEFINE
+  a_p := state = a;
+  b_p := state = b;
+
+ASSIGN
+  init(state) := a;
+  next(state) :=
+    case
+      state = a : b;
+
+      state = b & timer < MAX_TIMER : { a, b };
+
+      state = b & timer >= MAX_TIMER : a;
+
+      TRUE : state;
+    esac;
+
+  init(timer) := 1;
+  next(timer) :=
+    case
+      next(state) != state : 1;      -- Reset timer on state change
+      timer < MAX_TIMER : timer + 1; -- Otherwise increment
+      TRUE : timer;                  -- Saturate timer
+    esac;
