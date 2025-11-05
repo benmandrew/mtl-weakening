@@ -7,6 +7,8 @@ from src import analyse_cex, custom_args, mtl2ltlspec, util
 from src.logic import mtl
 from src.trace_analysis import exceptions
 
+MODEL_FILE = "model.pml"
+
 
 def generate_model_file(
     tmpdir: Path,
@@ -15,8 +17,8 @@ def generate_model_file(
 ) -> None:
     """Generate Spin model file with embedded LTL specification, copied to `tmpdir`."""
     ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.SPIN, formula)
-    shutil.copy(model_file, Path(tmpdir / "model.pml"))
-    with (tmpdir / "model.pml").open("a", encoding="utf-8") as f:
+    shutil.copy(model_file, Path(tmpdir / MODEL_FILE))
+    with (tmpdir / MODEL_FILE).open("a", encoding="utf-8") as f:
         f.write("ltl formula\n{\n")
         f.write(f"  {ltlspec}\n")
         f.write("}\n")
@@ -37,7 +39,7 @@ def spin_generate_c(tmpdir: Path) -> None:
                 [
                     util.SPIN_PATH,
                     "-a",
-                    tmpdir / "model.pml",
+                    tmpdir / MODEL_FILE,
                 ],
                 cwd=tmpdir,
                 check=True,
@@ -110,7 +112,7 @@ def expand_trail_file(
             trail_file,
             "-l",
             "-g",
-            tmpdir / "model.pml",
+            tmpdir / MODEL_FILE,
         ],
         cwd=tmpdir,
         check=True,
@@ -144,7 +146,7 @@ def analyse(
     compile_pan(tmpdir)
     run_pan(tmpdir)
     # print_never_claim(tmpdir)
-    trail_files = list(tmpdir.glob("model.pml*.trail"))
+    trail_files = list(tmpdir.glob(f"{MODEL_FILE}*.trail"))
     if not trail_files:
         raise exceptions.PropertyValidError
     output_files: list[Path] = []

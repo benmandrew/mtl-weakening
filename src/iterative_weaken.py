@@ -81,7 +81,9 @@ def main_nuxmv(
     )
     bound = max(BOUND_MIN, bound)
     n_iterations = 0
+    total_elapsed = 0.0
     while True:
+        start_time = time.perf_counter()
         formula = ctx.substitute(context, subformula)
         print(
             f"Bound {bound}: {util.interval_to_str(subformula.interval)} → ",
@@ -98,19 +100,28 @@ def main_nuxmv(
                     show_markings,
                 )
         except exceptions.PropertyValidError:
+            elapsed = time.perf_counter() - start_time
+            total_elapsed += elapsed
             print(
-                f"Final weakened interval in {n_iterations} "
-                f"iterations: {subformula.interval}",
+                f"Final interval in {elapsed:.2f} seconds",
             )
             break
         except exceptions.NoWeakeningError:
-            print(util.NO_WEAKENING_EXISTS_STR)
+            elapsed = time.perf_counter() - start_time
+            total_elapsed += elapsed
+            print(f"{util.NO_WEAKENING_EXISTS_STR}")
             break
         assert interval[1] is not None
-        bound = max(BOUND_MIN, int(interval[1] * 1.5))
-        print(util.interval_to_str(interval))
+        elapsed = time.perf_counter() - start_time
+        total_elapsed += elapsed
+        print(
+            f"{util.interval_to_str(interval)} in {elapsed:.2f} seconds",
+        )
         subformula = substitute_interval(subformula, interval)
+        bound = max(BOUND_MIN, int(interval[1] * 1.5))
         n_iterations += 1
+    print(f"Total time: {total_elapsed:.2f} seconds")
+    print(f"Iterations: {n_iterations}")
 
 
 def main_spin(
@@ -123,7 +134,6 @@ def main_spin(
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0
     total_elapsed = 0.0
-    prev_interval = None
     while True:
         start_time = time.perf_counter()
         n_iterations += 1
@@ -141,7 +151,7 @@ def main_spin(
         except exceptions.PropertyValidError:
             elapsed = time.perf_counter() - start_time
             total_elapsed += elapsed
-            print(f"Final weakened interval in {elapsed:.2f} seconds")
+            print(f"Final interval in {elapsed:.2f} seconds")
             break
         except exceptions.NoWeakeningError:
             elapsed = time.perf_counter() - start_time
@@ -150,14 +160,10 @@ def main_spin(
             break
         elapsed = time.perf_counter() - start_time
         total_elapsed += elapsed
-        if interval == prev_interval:
-            print(f"Final weakened interval in {elapsed:.2f} seconds")
-            break
         print(
             f"{util.interval_to_str(interval)} in {elapsed:.2f} seconds",
         )
         subformula = substitute_interval(subformula, interval)
-        prev_interval = interval
     print(f"Total time: {total_elapsed:.2f} seconds")
     print(f"Iterations: {n_iterations}")
 
