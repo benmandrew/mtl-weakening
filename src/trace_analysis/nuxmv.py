@@ -112,7 +112,7 @@ def analyse_file(
     trace_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
-    show_markings: bool,  # noqa: FBT001
+    show_markings: bool,
 ) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
     analysis = analyse_cex.AnalyseCex(
         formula,
@@ -134,7 +134,7 @@ def analyse(
     formula: mtl.Mtl,
     de_bruijn: list[int],
     bound: int,
-    show_markings: bool,  # noqa: FBT001
+    show_markings: bool,
 ) -> tuple[int, int | None]:
     results: list[mtl.Interval] = []
     for loopback in range(bound):

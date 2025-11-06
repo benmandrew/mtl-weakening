@@ -21,7 +21,6 @@ class TestXMLTrace(unittest.TestCase):
         expected = util.format_expect(
             """
                    0 1 2
-        MAX_TIMER │*│*│*│
         timer     │0│1│0│
         """,
         )
@@ -41,7 +40,6 @@ class TestXMLTrace(unittest.TestCase):
         expected = util.format_expect(
             """
                    0 1 2
-        MAX_TIMER │*│*│*│
         timer     │0│1│0│
         =Lasso=      └─┘
         """,

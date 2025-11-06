@@ -35,7 +35,7 @@ class VarMarkings:
     def __iter__(self) -> typing.Iterator[bool | int]:
         return iter(self.bs)
 
-    def append(self, value: bool | int) -> None:  # noqa: FBT001
+    def append(self, value: bool | int) -> None:
         self.bs.append(value)
 
 
@@ -273,7 +273,7 @@ def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
     return out + "\n"
 
 
-def _marking_char(marking: bool | int) -> str:  # noqa: FBT001
+def _marking_char(marking: bool | int) -> str:
     if isinstance(marking, bool):
         return "●" if marking else " "
     string = str(marking)
@@ -299,9 +299,20 @@ def _get_loop_str(loop_start: int, max_formula_len: int, trace_len: int) -> str:
     return out + "\n"
 
 
+def _marking_all_false(f: m.Mtl, marking: list[bool | int]) -> bool:
+    if not isinstance(f, m.Prop):
+        return False
+    return all(isinstance(v, bool) and v is False for v in marking)
+
+
+def _is_constant(formula_s: str) -> bool:
+    return all(c.isupper() or c == "_" for c in formula_s)
+
+
 def markings_to_str(
     markings: dict[m.Mtl, list[bool | int]],
     loop_start: int | None,
+    filter_all_false: bool = False,
 ) -> str:
     subformulae = list(markings.keys())
     trace_len = len(markings[subformulae[0]])
@@ -310,9 +321,14 @@ def markings_to_str(
         max_formula_len = max(max_formula_len, len(LOOP_STR))
     out = _get_trace_indices_str(trace_len, max_formula_len)
     for f in reversed(subformulae):
+        f_marking = markings[f]
         s = m.to_string(f)
+        if _is_constant(s):
+            continue
+        if filter_all_false and _marking_all_false(f, f_marking):
+            continue
         out += f"{s:<{max_formula_len}} "
-        for marking in markings[f]:
+        for marking in f_marking:
             out += f"│{_marking_char(marking)}"
         out += "│\n"
     if loop_start is not None:

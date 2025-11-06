@@ -147,7 +147,7 @@ def analyse_file(
     expanded_trail_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
-    show_markings: bool = False,  # noqa: FBT001 FBT002
+    show_markings: bool = False,
 ) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
     analysis = analyse_cex.AnalyseCex(
         formula,
@@ -172,7 +172,7 @@ def analyse(
     model_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
-    show_markings: bool = False,  # noqa: FBT001 FBT002
+    show_markings: bool = False,
 ) -> tuple[int, int | None]:
     generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
