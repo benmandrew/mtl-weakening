@@ -63,7 +63,15 @@ def substitute_interval(
     raise ValueError(msg)
 
 
-BOUND_MIN = 30
+BOUND_MIN = 20
+
+
+def get_initial_bound(
+    interval: mtl.Interval,
+) -> int:
+    if interval[1] is None:
+        return BOUND_MIN
+    return max(BOUND_MIN, int(interval[1] * 1.5))
 
 
 def main_nuxmv(
@@ -74,12 +82,7 @@ def main_nuxmv(
 ) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
-    bound = (
-        BOUND_MIN
-        if subformula.interval[1] is None
-        else int(subformula.interval[1] * 1.5)
-    )
-    bound = max(BOUND_MIN, bound)
+    bound = get_initial_bound(subformula.interval)
     n_iterations = 0
     total_elapsed = 0.0
     while True:

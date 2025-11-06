@@ -134,6 +134,39 @@ def expand_trail_file(
     return has_loop
 
 
+def expand_trail_files(tmpdir: Path, trail_files: list[Path]) -> list[Path]:
+    output_files: list[Path] = []
+    for i, trail_file in enumerate(trail_files):
+        output_file = tmpdir / f"expanded_trail_{i+1}.txt"
+        expand_trail_file(tmpdir, trail_file, output_file)
+        output_files.append(output_file)
+    return output_files
+
+
+def analyse_file(
+    expanded_trail_file: Path,
+    formula: mtl.Mtl,
+    de_bruijn: list[int],
+    show_markings: bool = False,  # noqa: FBT001 FBT002
+) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
+    analysis = analyse_cex.AnalyseCex(
+        formula,
+        de_bruijn,
+        expanded_trail_file,
+        custom_args.ModelChecker.SPIN,
+    )
+    if show_markings:
+        print(f"\n{analysis.get_markings()}")
+    if analysis.does_formula_hold(formula):
+        # return None, analysis
+        msg = "Formula holds on the trace"
+        raise ValueError(msg)
+    result = analysis.get_weakened_interval()
+    if result is None:
+        raise exceptions.NoWeakeningError
+    return result, analysis
+
+
 def analyse(
     tmpdir: Path,
     model_file: Path,
@@ -149,26 +182,15 @@ def analyse(
     trail_files = list(tmpdir.glob(f"{MODEL_FILE}*.trail"))
     if not trail_files:
         raise exceptions.PropertyValidError
-    output_files: list[Path] = []
-    for i, trail_file in enumerate(trail_files):
-        output_file = tmpdir / f"expanded_trail_{i+1}.txt"
-        expand_trail_file(tmpdir, trail_file, output_file)
-        output_files.append(output_file)
+    output_files = expand_trail_files(tmpdir, trail_files)
     results: list[mtl.Interval] = []
     for file in output_files:
-        analysis = analyse_cex.AnalyseCex(
+        result, analysis = analyse_file(
+            file,
             formula,
             de_bruijn,
-            file,
-            custom_args.ModelChecker.SPIN,
+            show_markings,
         )
-        if show_markings:
-            print(f"\n{analysis.get_markings()}")
-        if analysis.does_formula_hold(formula):
-            continue
-        result = analysis.get_weakened_interval()
-        if result is None:
-            raise exceptions.NoWeakeningError
         results.append(result)
     if not results:
         raise exceptions.PropertyValidError
