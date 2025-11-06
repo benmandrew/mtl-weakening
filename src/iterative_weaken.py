@@ -73,7 +73,7 @@ def main_nuxmv(
     model_file: Path,
     mtl_str: str,
     de_bruijn: list[int],
-    show_markings: bool,  # noqa: FBT001
+    show_markings: bool,
 ) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
@@ -126,7 +126,7 @@ def main_spin(
     model_file: Path,
     mtl_str: str,
     de_bruijn: list[int],
-    show_markings: bool,  # noqa: FBT001
+    show_markings: bool,
 ) -> None:
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)

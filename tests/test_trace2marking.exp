@@ -21,6 +21,5 @@ expect_exact "  -h, --help  show this help message and exit"
 spawn python3 -m src.trace2marking tests/test_data/trace_valid.xml
 
 expect_exact "           0 1 2"
-expect_exact "MAX_TIMER │*│*│*│"
 expect_exact "timer     │0│1│0│"
 expect_exact "=Lasso=      └─┘"

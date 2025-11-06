@@ -29,6 +29,8 @@ lint.ignore = [
     "ERA001",  # Allow commented-out code
     "T201",  # Allow print statements
     "E741",  # Allow short variable names
+    "FBT001",
+    "FBT002",
 ]
 
 [tool.bandit]
