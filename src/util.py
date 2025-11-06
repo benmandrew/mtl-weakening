@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import logging.config
 import sys
 import textwrap
 from pathlib import Path
@@ -23,14 +21,6 @@ def eprint(  # type: ignore[no-untyped-def]
     **kwargs,  # noqa: ANN003
 ) -> None:
     print(*args, file=sys.stderr, **kwargs)
-
-
-def setup_logging(loglevel: str) -> None:
-    config_file = Path(__file__).parent / ".." / "logging.conf"
-    with config_file.open(encoding="utf-8") as f:
-        config = json.load(f)
-    config["loggers"]["root"]["level"] = loglevel
-    logging.config.dictConfig(config)
 
 
 Value = int | bool | str
