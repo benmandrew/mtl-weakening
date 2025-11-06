@@ -17,10 +17,11 @@ from src.trace_analysis import exceptions
 #   7   Empty Trace Plugin
 TRACE_PLUGIN = 4
 
-TRACE_FILE = "trace.xml"
 NUXMV_LOG = "nuXmv.log"
 COMMANDS_FILE = "commands.txt"
 MODEL_FILE = "model.smv"
+TRACE_FILE_GLOB = "*_trace.xml"
+TRACE_FILE = "trace.xml"
 
 
 def get_diameter(tmpdir: Path, model_file: Path) -> int:
@@ -56,18 +57,19 @@ def get_diameter(tmpdir: Path, model_file: Path) -> int:
 def write_commands_file(
     tmpdir: Path,
     bound: int,
+    loopback: int,
 ) -> None:
-    # loopback = random.randint(0, bound - 1)
-    loopback = "*"
-    commands = [
-        "set on_failure_script_quits 1\n",
-        "go_bmc\n",
-        f'check_ltlspec_bmc_onepb -k "{bound}" -l "{loopback}" -o "problem"\n',
-        f'show_traces -o "{TRACE_FILE}" -p "{TRACE_PLUGIN}"\n',
-        "quit\n",
-    ]
     with (tmpdir / COMMANDS_FILE).open("w", encoding="utf-8") as f:
-        f.writelines(commands)
+        f.writelines(
+            [
+                "set on_failure_script_quits 1\n",
+                "set counter_examples 1\n",
+                "go_bmc\n",
+                f'check_ltlspec_bmc_onepb -k "{bound}" -l "{loopback}"\n',
+                f'show_traces -p {TRACE_PLUGIN} -o "{loopback}_{TRACE_FILE}"\n',
+                "quit\n",
+            ],
+        )
 
 
 def generate_model_file(
@@ -106,26 +108,16 @@ def model_check(tmpdir: Path) -> None:
         raise
 
 
-def analyse(  # noqa: PLR0913 pylint: disable=too-many-arguments too-many-positional-arguments
-    tmpdir: Path,
-    model_file: Path,
+def analyse_file(
+    trace_file: Path,
     formula: mtl.Mtl,
     de_bruijn: list[int],
-    bound: int,
     show_markings: bool,  # noqa: FBT001
-) -> tuple[int, int | None]:
-    write_commands_file(tmpdir, bound)
-    generate_model_file(tmpdir, model_file, formula)
-    model_check(tmpdir)
-    with (tmpdir / NUXMV_LOG).open("r", encoding="utf-8") as nuxmv_log:
-        no_cex_string = f"no counterexample found with bound {bound}"
-        if no_cex_string in nuxmv_log.read():
-            assert not Path(tmpdir / TRACE_FILE).exists()
-            raise exceptions.PropertyValidError
+) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
     analysis = analyse_cex.AnalyseCex(
         formula,
         de_bruijn,
-        tmpdir / TRACE_FILE,
+        trace_file,
         custom_args.ModelChecker.NUXMV,
     )
     if show_markings:
@@ -133,4 +125,30 @@ def analyse(  # noqa: PLR0913 pylint: disable=too-many-arguments too-many-positi
     result = analysis.get_weakened_interval()
     if result is None:
         raise exceptions.NoWeakeningError
-    return result
+    return result, analysis
+
+
+def analyse(
+    tmpdir: Path,
+    model_file: Path,
+    formula: mtl.Mtl,
+    de_bruijn: list[int],
+    bound: int,
+    show_markings: bool,  # noqa: FBT001
+) -> tuple[int, int | None]:
+    results: list[mtl.Interval] = []
+    for loopback in range(bound):
+        write_commands_file(tmpdir, bound, loopback)
+        generate_model_file(tmpdir, model_file, formula)
+        model_check(tmpdir)
+    for trace_file in tmpdir.glob(TRACE_FILE_GLOB):
+        result, analysis = analyse_file(
+            trace_file,
+            formula,
+            de_bruijn,
+            show_markings,
+        )
+        results.append(result)
+    if not results:
+        raise exceptions.PropertyValidError
+    return analysis.choose_weakest_interval(results)
