@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import logging
 import typing
 
 from src.logic import mtl as m
-
-logger = logging.getLogger(__name__)
 
 
 class UniversalState:

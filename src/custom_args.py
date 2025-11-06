@@ -1,5 +1,4 @@
 import argparse
-import logging
 import pathlib
 from enum import Enum
 
@@ -72,23 +71,3 @@ def add_show_markings_argument(
         action="store_true",
         help="Show the markings computed during analysis.",
     )
-
-
-def add_log_level_arguments(
-    parser: argparse.ArgumentParser,
-    default_level: int = logging.WARNING,
-) -> None:
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--quiet",
-        action="store_const",
-        dest="log_level",
-        const=logging.ERROR,
-    )
-    group.add_argument(
-        "--debug",
-        action="store_const",
-        dest="log_level",
-        const=logging.DEBUG,
-    )
-    parser.set_defaults(log_level=default_level)

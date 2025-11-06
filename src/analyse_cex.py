@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import logging
 import sys
 import typing
 from enum import Enum
@@ -14,16 +13,12 @@ if typing.TYPE_CHECKING:
     from pathlib import Path
 
 
-logger = logging.getLogger(__name__)
-
-
 class Namespace(argparse.Namespace):
     mtl: str
     de_bruijn: list[int]
     trace_file: Path | None
     model_checker: custom_args.ModelChecker
     show_markings: bool
-    log_level: str
 
 
 def parse_args(argv: list[str]) -> Namespace:
@@ -38,7 +33,6 @@ def parse_args(argv: list[str]) -> Namespace:
     custom_args.add_trace_file_argument(arg_parser)
     custom_args.add_model_checker_argument(arg_parser)
     custom_args.add_show_markings_argument(arg_parser)
-    custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
@@ -123,7 +117,6 @@ class AnalyseCex:
 
 
 def main(args: Namespace) -> None:
-    util.setup_logging(args.log_level)
     mtl_formula = parser.parse_mtl(args.mtl)
     analysis = AnalyseCex(
         mtl_formula,

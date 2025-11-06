@@ -1,5 +1,4 @@
 import argparse
-import logging
 import sys
 import tempfile
 import time
@@ -9,8 +8,6 @@ from src import custom_args, util
 from src.logic import ctx, mtl, parser
 from src.trace_analysis import exceptions, nuxmv, spin
 
-logger = logging.getLogger(__name__)
-
 
 class Namespace(argparse.Namespace):
     model_checker: custom_args.ModelChecker
@@ -18,7 +15,6 @@ class Namespace(argparse.Namespace):
     mtl: str
     de_bruijn: list[int]
     show_markings: bool
-    log_level: str
 
 
 def parse_args(argv: list[str]) -> Namespace:
@@ -30,7 +26,6 @@ def parse_args(argv: list[str]) -> Namespace:
     custom_args.add_mtl_argument(arg_parser)
     custom_args.add_de_bruijn_argument(arg_parser)
     custom_args.add_show_markings_argument(arg_parser)
-    custom_args.add_log_level_arguments(arg_parser)
     return arg_parser.parse_args(argv, namespace=Namespace())
 
 
@@ -173,7 +168,6 @@ def main_spin(
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    util.setup_logging(args.log_level)
     if args.model_checker == custom_args.ModelChecker.NUXMV:
         main_nuxmv(args.model, args.mtl, args.de_bruijn, args.show_markings)
     else:

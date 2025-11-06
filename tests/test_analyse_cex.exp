@@ -7,7 +7,7 @@ source ./tests/util.exp
 
 spawn python3 -m src.analyse_cex -h
 
-expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--model-checker {NUXMV,SPIN}\] \[--show-markings\] \[--quiet | --debug\] trace_file"
+expect_exact "usage: analyse_cex.py \[-h\] \[--mtl MTL\] \[--de-bruijn DE_BRUIJN\] \[--model-checker {NUXMV,SPIN}\] \[--show-markings\] trace_file"
 expect_exact ""
 expect_exact "Determine the optimal weakening of an MTL formula to satisfy a given trace."
 expect_exact ""
@@ -22,5 +22,3 @@ expect_exact "                        De Bruijn index of the subformula as a lis
 expect_exact "  --model-checker {NUXMV,SPIN}"
 expect_exact "                        The model checker used (default: NUXMV)"
 expect_exact "  --show-markings       Show the markings computed during analysis."
-expect_exact "  --quiet"
-expect_exact "  --debug"

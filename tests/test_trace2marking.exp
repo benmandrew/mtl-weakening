@@ -7,7 +7,7 @@ source ./tests/util.exp
 
 spawn python3 -m src.trace2marking -h
 
-expect_exact "usage: trace2marking.py \[-h\] \[--quiet | --debug\] trace_file"
+expect_exact "usage: trace2marking.py \[-h\] trace_file"
 expect_exact ""
 expect_exact "Analyse NuXmv output."
 expect_exact ""
@@ -16,8 +16,6 @@ expect_exact "  trace_file  Path to the trace file to analyse. If not provided, 
 expect_exact ""
 expect_exact "options:"
 expect_exact "  -h, --help  show this help message and exit"
-expect_exact "  --quiet"
-expect_exact "  --debug"
 
 
 spawn python3 -m src.trace2marking tests/test_data/trace_valid.xml
