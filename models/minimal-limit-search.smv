@@ -5,7 +5,7 @@ DEFINE
 
 VAR
   state : { a, b };
-  timer : 0..MAX_TIMER; -- Should be the maximum time that any transition can take
+  timer : 0..MAX_TIMER;
 
 DEFINE
   a_p := state = a;
