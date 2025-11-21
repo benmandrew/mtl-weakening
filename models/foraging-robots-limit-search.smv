@@ -4,12 +4,13 @@ DEFINE
   TIME_R := 5;
   TIME_D := 5;
   MAX_TIMER := 10;
-  MAX_SEARCHING_TIMER := 20;
+  BATTERY_FULL_VALUE := 20;
+  BATTERY_ABORT_VALUE := 10;
 
 VAR
-  state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing };
+  state : { resting, leavingHome, randomWalk, moveToFood, scanArena, grabFood, moveToHome, deposit, homing, no_battery };
   timer : 1..MAX_TIMER; -- Should be the maximum time that any transition can take
-  searching_timer : 1..MAX_SEARCHING_TIMER;
+  battery_value : 0..BATTERY_FULL_VALUE;
 
 DEFINE
   resting_p :=     state = resting;
@@ -22,24 +23,27 @@ DEFINE
   deposit_p :=     state = deposit;
   homing_p :=      state = homing;
   searching_p :=   leavingHome_p | randomWalk_p | moveToFood_p | scanArena_p;
+  no_battery_p :=  state = no_battery;
 
 ASSIGN
   init(state) := resting;
   next(state) :=
     case
+      battery_value <= 0 : no_battery;
+
       state = resting & timer < TIME_R : { resting, leavingHome };
       state = resting & timer = TIME_R : leavingHome;
 
-      state = leavingHome & timer = 1 & searching_timer < MAX_SEARCHING_TIMER : {leavingHome, randomWalk };
-      state = leavingHome & timer = 2 & searching_timer < MAX_SEARCHING_TIMER : randomWalk;
+      state = leavingHome & timer = 1 & battery_value > BATTERY_ABORT_VALUE : {leavingHome, randomWalk };
+      state = leavingHome & timer = 2 & battery_value > BATTERY_ABORT_VALUE : randomWalk;
 
-      state = randomWalk & searching_timer < MAX_SEARCHING_TIMER : { randomWalk, homing, moveToFood };
+      state = randomWalk & battery_value > BATTERY_ABORT_VALUE : { randomWalk, homing, moveToFood };
 
-      state = moveToFood & searching_timer < MAX_SEARCHING_TIMER : { moveToFood, grabFood, homing, scanArena };
+      state = moveToFood & battery_value > BATTERY_ABORT_VALUE : { moveToFood, grabFood, homing, scanArena };
 
-      state = scanArena & searching_timer < MAX_SEARCHING_TIMER : { scanArena, homing, moveToFood, randomWalk };
+      state = scanArena & battery_value > BATTERY_ABORT_VALUE : { scanArena, homing, moveToFood, randomWalk };
 
-      searching_timer = MAX_SEARCHING_TIMER : { homing };
+      searching_p & battery_value <= BATTERY_ABORT_VALUE : { homing };
 
       state = grabFood & timer = 1 : { grabFood, moveToHome };
       state = grabFood & timer = 2 : moveToHome;
@@ -60,14 +64,14 @@ ASSIGN
   next(timer) :=
     case
       next(state) != state : 1;      -- Reset timer on state change
-      timer < MAX_TIMER : timer + 1; -- Otherwise increment
+      state != no_battery & timer < MAX_TIMER : timer + 1; -- Otherwise increment
       TRUE : timer;                  -- Saturate timer
     esac;
 
-  init(searching_timer) := 1;
-  next(searching_timer) :=
+  init(battery_value) := BATTERY_FULL_VALUE;
+  next(battery_value) :=
     case
-      next(searching_p) != searching_p : 1;      -- Reset timer if we start searching
-      searching_p & searching_timer < MAX_SEARCHING_TIMER : searching_timer + 1; -- Otherwise increment if we're searching
-      TRUE : searching_timer;                  -- Saturate timer
+      next(state) = resting : BATTERY_FULL_VALUE; -- Recharge when resting
+      battery_value > 0 : battery_value - 1; -- Decrease battery otherwise
+      TRUE : 0;
     esac;

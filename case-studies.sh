@@ -2,7 +2,7 @@
 
 echo "Case Study: Foraging Robots with Unlimited Searching"
 
-FORMULA="G(resting_p -> F[1,2](resting_p))"
+FORMULA="G(resting_p -> F[1,3](resting_p))"
 DE_BRUIJN="0,1"
 echo "  Formula: $FORMULA"
 unbuffer python3 -m src.iterative_weaken --model-checker NUXMV --model models/foraging-robots.smv --de-bruijn $DE_BRUIJN --mtl "$FORMULA" | sed 's/^/    /'
@@ -15,7 +15,7 @@ unbuffer python3 -m src.iterative_weaken --model-checker NUXMV --model models/fo
 
 echo "Case Study: Foraging Robots with Limited Searching"
 
-FORMULA="G(resting_p -> F[1,2](resting_p))"
+FORMULA="G(resting_p -> F[1,3](resting_p))"
 DE_BRUIJN="0,1"
 echo "  Formula: $FORMULA"
 unbuffer python3 -m src.iterative_weaken --model-checker NUXMV --model models/foraging-robots-limit-search.smv --de-bruijn $DE_BRUIJN --mtl "$FORMULA" | sed 's/^/    /'
