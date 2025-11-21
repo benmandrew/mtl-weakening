@@ -312,7 +312,7 @@ def _is_constant(formula_s: str) -> bool:
 def markings_to_str(
     markings: dict[m.Mtl, list[bool | int]],
     loop_start: int | None,
-    filter_all_false: bool = False,
+    filter_all_false: bool = True,
 ) -> str:
     subformulae = list(markings.keys())
     trace_len = len(markings[subformulae[0]])
