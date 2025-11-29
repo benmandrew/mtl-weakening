@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import textwrap
 from pathlib import Path
@@ -8,9 +9,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.logic import mtl
 
-SPIN_PATH = Path("/usr/local/bin/spin")
-NUXMV_PATH = Path("/usr/bin/nuXmv")
-GCC_PATH = Path("/usr/bin/gcc")
+SPIN_PATH = Path(os.getenv("SPIN_PATH", "/usr/local/bin/spin"))
+NUXMV_PATH = Path(os.getenv("NUXMV_PATH", "/usr/bin/nuXmv"))
+GCC_PATH = Path(os.getenv("GCC_PATH", "/usr/bin/gcc"))
 
 
 NO_WEAKENING_EXISTS_STR = "No suitable weakening of the interval exists"
