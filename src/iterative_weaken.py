@@ -58,7 +58,7 @@ def substitute_interval(
     raise ValueError(msg)
 
 
-BOUND_MIN = 20
+BOUND_MIN = 50
 
 
 def get_initial_bound(

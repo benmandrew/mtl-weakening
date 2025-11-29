@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 SPIN_PATH = Path("/usr/local/bin/spin")
 NUXMV_PATH = Path("/usr/bin/nuXmv")
 GCC_PATH = Path("/usr/bin/gcc")
-
+PYTHON3_PATH = Path("/usr/bin/python3")
 
 NO_WEAKENING_EXISTS_STR = "No suitable weakening of the interval exists"
 
