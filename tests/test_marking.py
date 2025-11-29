@@ -293,7 +293,6 @@ class TestMarkingLasso(unittest.TestCase):
             """
                            0 1 2
             (b R[0, 2] a) │ │ │ │
-            b             │ │ │ │
             a             │●│●│ │
             =Lasso=        └───┘
         """,

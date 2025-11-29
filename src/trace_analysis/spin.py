@@ -1,11 +1,17 @@
-import io
+from __future__ import annotations
+
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src import analyse_cex, custom_args, mtl2ltlspec, util
-from src.logic import mtl
 from src.trace_analysis import exceptions
+
+if TYPE_CHECKING:
+    import io
+
+    from src.logic import mtl
 
 MODEL_FILE = "model.pml"
 

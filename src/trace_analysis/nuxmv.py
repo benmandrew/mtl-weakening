@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src import analyse_cex, custom_args, mtl2ltlspec, util
-from src.logic import mtl
 from src.trace_analysis import exceptions
+
+if TYPE_CHECKING:
+    from src.logic import mtl
 
 # nuXmv trace plugins, controlled with flag `-p`:
 #   0   BASIC TRACE EXPLAINER - shows changes only
