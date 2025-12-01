@@ -132,4 +132,4 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mtl-weakening:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cegiw:latest

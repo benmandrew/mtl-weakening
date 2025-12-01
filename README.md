@@ -1,11 +1,11 @@
-# Metric Temporal Logic Weakening
+# Counterexample-Guided Interval Weakening (CEGIW)
 
 This project takes an ideal property in Metric Temporal Logic (MTL) that does not hold in the system, and weakens it by modifying the intervals of the temporal operators such that it either does hold, or deduces that no possible weakening exists.
 
 You can run the the interval weakening algorithm on the included examples yourself by running
 
 ```bash
-docker run benmandrew/mtl-weakening
+docker run benmandrew/cegiw
 ```
 
 Or set up and run locally, making sure you have `nuXmv 2.1.0` installed, with
