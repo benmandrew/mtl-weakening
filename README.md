@@ -56,3 +56,14 @@ $ python3 -m src.mtl2ltlspec --model-checker SPIN --mtl 'G(a -> F[0,2](b))'
 $ python3 -m src.mtl2ltlspec --model-checker NUXMV --mtl 'G(a -> F[0,2](b))'
 G ((a -> (b || X ((b || X (b))))))
 ```
+
+### Tests and linting
+
+```bash
+# Format
+$ make fmt
+# Lint
+$ make lint
+# Run tests
+$ make test
+```
