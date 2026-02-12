@@ -2,7 +2,7 @@
 
 Assume that we have an \MTL{} formula $\phi$ that has a temporal subformula $\psi\bintemporal{I}\psi'$ with an interval $I$ that we want to weaken. $\phi$ can be split into $\psi\bintemporal{I}\psi'$ and the surrounding \MTL{} context $C$, such that $\phi$ is logically equivalent to $C[\psi\bintemporal{I}\psi']$. Assume we also have a transition system $\model{}$. Using a model checker, we check whether $\phi$ holds on $\model{}$. If it holds then we are done, but if not, we will receive a counterexample trace $\pi$ through $\model{}$ for which $\pi\nvDash C[\psi\bintemporal{I}\psi']$. We can then weaken on this counterexample with
 \begin{equation}
-    I'=\weaken(C,\psi\bintemporal{I}\psi',\pi).
+    I'=\weakenaux(C,\psi\bintemporal{I}\psi',\pi,0).
 \end{equation}
 By \cref{theorem:weakening-algorithm-correctness}, if $I'=None$, then there exists no weakening $I''$ of $I$ such that $\pi\vDash C[\psi\bintemporal{I''}\psi']$, and so the same holds for the model $\model{}$. Otherwise, $I'$ is an interval such that $\pi\vDash C[\psi\bintemporal{I'}\psi']$. However, $C[\psi\bintemporal{I'}\psi']$ does not necessarily hold on $\model{}$, and so we model check again, creating an iterative loop that ends when we either produce an interval $I''$ that is a weakening of $I$ such that $C[\psi\bintemporal{I''}\psi']$ holds on $\model{}$, or show that no such weakening exists.
 

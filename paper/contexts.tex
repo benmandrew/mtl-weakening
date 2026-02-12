@@ -92,30 +92,30 @@ Thus, in both cases we have $P(C\release{I}\phi)$.
 
 We show that, depending on which temporal operator is used, by expanding or contracting its interval we can weaken or strengthen the surrounding formula.
 
-\begin{definition}[Right-modifications of intervals]\label{def:interval-extension}
-    Let $I=[a,b]$ be an interval. For any $i\in\N$, a right-modification of $I$ is either a right-extension $[a,b+i]$, or, provided $i\leq b - a$, a right-contraction $[a,b-i]$. A right-modification is \emph{strict} if $i>0$. The set of all right-modifications of $I$ is denoted $\rightmodifications(I)$.
+\begin{definition}[Right-bound modifications of intervals]\label{def:interval-extension}
+    Let $I=[a,b]$ be an interval. For any $i\in\N$, a right-bound modification of $I$ is either a right-bound extension $[a,b+i]$, or, provided $i\leq b - a$, a right-bound contraction $[a,b-i]$. A right-bound modification is \emph{strict} if $i>0$. The set of all right-bound modifications of $I$ is denoted $\rightmodifications(I)$.
 \end{definition}
 
 \begin{lemma}[Weakening of $\mathcal{U}$ interval]\label{lemma:until-i}
-    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-extension of $I$. Then, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
+    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-bound extension of $I$. Then, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
 \end{lemma}
 
 \begin{proof}
-    We assume that $I'$ is a right-extension of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\until{I}\psi$ and want to prove $\pi,t\vDash \phi\until{I'}\psi$. We know that there exists an $i\in I$ such that $\pi,t+i\vDash\psi$, and that for all $j\in [0,i)\cap I$ we have $\pi,t+j\vDash\phi$. Taking arbitrary $i$ and $j$, we have that $i,j\in I'$, and so $\pi,t\vDash \phi\until{I'}\psi$. Thus, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
+    We assume that $I'$ is a right-bound extension of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\until{I}\psi$ and want to prove $\pi,t\vDash \phi\until{I'}\psi$. We know that there exists an $i\in I$ such that $\pi,t+i\vDash\psi$, and that for all $j\in [0,i)\cap I$ we have $\pi,t+j\vDash\phi$. Taking arbitrary $i$ and $j$, we have that $i,j\in I'$, and so $\pi,t\vDash \phi\until{I'}\psi$. Thus, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
     %
     \qed
 \end{proof}
 
 \begin{lemma}[Weakening of $\mathcal{R}$ interval]\label{lemma:release-i}
-    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-contraction of $I$. Then, $\phi\release{I}\psi\wkn\phi\release{I'}\psi$.
+    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-bound contraction of $I$. Then, $\phi\release{I}\psi\wkn\phi\release{I'}\psi$.
 \end{lemma}
 
 \begin{proof}
-    We assume that $I'$ is a right-contraction of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\release{I}\psi$ and want to prove $\pi,t\vDash \phi\release{I'}\psi$. By the semantics of $\mathcal{R}$ there are two cases:
+    We assume that $I'$ is a right-bound contraction of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\release{I}\psi$ and want to prove $\pi,t\vDash \phi\release{I'}\psi$. By the semantics of $\mathcal{R}$ there are two cases:
     \begin{enumerate}
         \item For all $t'\in I$ we have $\pi,t+t'\vDash\psi$. Then, as $I'\subseteq I$, we know that for all $t''\in I'$ we have $\pi,t+t'\vDash\psi$, and so $\pi,t\vDash \phi\release{I'}\psi$.
         
-        \item There exists a $t'\in I$ such that $\pi,t+t'\vDash\phi$ and for all $t''\in I\cap[0,t']$, we have $\pi,t+t''\vDash\psi$. As $I'$ is a right-contraction of $I$, there are two further cases:
+        \item There exists a $t'\in I$ such that $\pi,t+t'\vDash\phi$ and for all $t''\in I\cap[0,t']$, we have $\pi,t+t''\vDash\psi$. As $I'$ is a right-bound contraction of $I$, there are two further cases:
         
         \begin{enumerate}
             \item If $t'\in I'$, then we still have that $\pi,t+t'\vDash\phi$ and for all $t''\in I'\cap[0,t']$, we have $\pi,t+t''\vDash\psi$, and so $\pi,t\vDash \phi\release{I'}\psi$.
@@ -128,20 +128,20 @@ We show that, depending on which temporal operator is used, by expanding or cont
     \qed
 \end{proof}
 
-Often in \cegiw{}, recursive calls will generate a set of intervals from which either the strongest or weakest must be chosen. We show that there is a total order of implication over the set of right-modifications of an interval, which allows us to make that choice.
+Often in \cegiw{}, recursive calls will generate a set of intervals from which either the strongest or weakest must be chosen. We show that there is a total order of implication over the set of right-bound modifications of an interval, which allows us to make that choice.
 
-\begin{lemma}[Extension-weakening order of right-modifications]\label{lemma:extension-weakening-order}
+\begin{lemma}[Extension-weakening order of right-bound modifications]\label{lemma:extension-weakening-order}
     Let $I$ be an interval. Then, $\rightmodifications(I)$ has a total order $\supseteq$, where for all \MTL{} contexts $C$, \MTL{} formulae $\phi$ and $\phi'$, and all $I',I''\in\rightmodifications(I)$, if $I''\supseteq I'$ then we have $C[\phi\until{I'}\phi']\wkn C[\phi\until{I''}\phi']$.
 \end{lemma}
 
 \begin{proof}
-    For any pair of intervals in $\mathcal{M}_r(I)$ we can order the resulting subformulae by applying \cref{lemma:until-i} to get $\phi\until{I'}\phi'\wkn\phi\until{I''}\phi'$ (or the reverse), and then order the full formulae with their contexts by applying \cref{theorem:context-wkn} to get $C[\phi\until{I'}\phi']\wkn C[\phi\until{I''}\phi']$ (or the reverse).
+    For any pair of intervals $I'$ and $I''$ in $\rightmodifications(I)$ we can order the resulting subformulae by applying \cref{lemma:until-i} to get $\phi\until{I'}\phi'\wkn\phi\until{I''}\phi'$ (or the reverse), and then order the full formulae with their contexts by applying \cref{theorem:context-wkn} to get $C[\phi\until{I'}\phi']\wkn C[\phi\until{I''}\phi']$ (or the reverse).
     %
     \qed
 \end{proof}
 
 
-\begin{lemma}[Contraction-weakening order of right-modifications]\label{lemma:contraction-weakening-order}
+\begin{lemma}[Contraction-weakening order of right-bound modifications]\label{lemma:contraction-weakening-order}
     Let $I$ be an interval. Then, $\rightmodifications(I)$ has a total order $\subseteq$, where for all \MTL{} contexts $C$, \MTL{} formulae $\phi$ and $\phi'$, and all $I',I''\in\rightmodifications(I)$, if $I''\subseteq I'$ then we have $C[\phi\release{I'}\phi']\wkn C[\phi\release{I''}\phi']$.
 
 \end{lemma}
