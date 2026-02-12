@@ -1,0 +1,156 @@
+\appendix
+
+\section{Remaining Algorithm and Proofs}\label{sec:appendix}
+
+\begin{algorithm}[t]
+\SetAlgoNlRelativeSize{-1}
+\caption{Directly weakening interval of $\mathcal{R}$}
+\label{alg:weaken-direct-release}
+\Function{\weakenreleasedirect($\psi_l$, $\psi_r$, $[a,b]$, $t$)}{
+    $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
+    \For{$i \gets a$ \KwTo $\bfin$}{
+        \If{$\pi,t+i\nvDash\psi_r$}{
+            \If{$i=a$}{
+                \Return $None$
+            }
+            \Return $[a,i-1]$
+        }
+        \If{$\pi,t+i\vDash\psi_l$}{
+            \Return $[a,b]$
+        }
+    }
+    \Return $[a,b]$
+}
+\end{algorithm}
+
+Proof of \cref{lemma:weakening-algorithm-direct-release}, directly weakening the interval of $\mathcal{R}$.
+
+\begin{proof}
+    We take an arbitrary $t$. Our proof for \cref{alg:weaken-direct-release} uses the loop invariant that for all $j\in\covering_\pi(I)$ with $j<i$, we have that $\sat{\pi}{t+j}\psi_r$ and $\nsat{\pi}{t+j}\psi_l$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know that $\nsat{\pi}{t+i}\psi_r$ and $\sat{\pi}{t+i}\psi_l$, and so in combination with the loop invariant we know that for all $j\in\covering_\pi(I)$ with $j\leq i$, we have that $\nsat{\pi}{t+j}\psi_r$ and $\sat{\pi}{t+j}\psi_l$. Thus the loop invariant is preserved. Suppose at the start of iteration $i$ the loop invariant holds. If $\nsat{\pi}{t+i}\psi_r$ then we have two cases:
+    \begin{enumerate}
+        \item If $i=a$ we have that $\nsat{\pi}{t+a}\psi_r$, so for all possible right-contractions $I'$ of $I$ we have that $\nsat{\pi}{t}\psi_l\release{I'}\psi_r$. Thus, there is no suitable interval and we return $None$.
+    
+        \item Otherwise, we return $I'=[a,i-1]$, which is an optimal right contraction of $I$. By the loop invariant we know for all $j\in\covering_\pi(I)$ with $j<i$ that $\sat{\pi}{t+j}\psi_r$, so we can conclude that $\sat{\pi}{t}\psi_l\release{I'}\psi_r$.
+    \end{enumerate}
+    If during this iteration $i$ we have that $\sat{\pi}{t+i}\psi_l$, then as this is after the above case is checked for we know that $\sat{\pi}{t+i}\psi_r$, and in combination with the loop invariant we have that $\sat{\pi}{t}\psi_l\release{I}\psi_r$. If we run the loop to completion, then by the loop invariant we know that for all $i\in\covering_\pi(I)$ we have $\sat{\pi}{t+j}\psi_r$. If $\covering_\pi(I)=I$ then we have
+    $$
+    \sat{\pi}{t}\psi_l\release{I}\psi_r
+    $$
+    If $\covering_\pi(I)=[a,\rightidx_\pi(a)]$ for some $a\in\N$, then by \cref{lemma:lasso-trace-coverage} we have that for all $i\in\N$ with $i\geq a$ we have $\sat{\pi}{t+j}\psi_r$, and so the above holds here too.
+    %
+    \qed
+\end{proof}
+
+\begin{algorithm}[t]
+\label{alg:aux-until-right}
+\SetAlgoNlRelativeSize{-1}
+\caption{Weakening within $\mathcal{U}$ on the right}
+\Function{\weakenuntilright($C$, $\phi$, $[a,b]$, $t$)}{
+    $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
+    $intervals \gets [\;]$ \\
+    \For{$i \gets a$ \KwTo $\bfin$}{
+        $I \gets \weakenaux(C, t + i)$\\
+        \If{$I \neq None$}{
+            append $I$ to $intervals$
+        }
+        \If{$\pi, t + i \nvDash \phi$}{
+            \textbf{break}
+        }
+    }
+    \If{intervals is empty}{
+        \Return $None$
+    }
+    \Return interval in $intervals$ with minimal absolute difference to $\Iorig$
+}
+\end{algorithm}
+
+Proof of \cref{lemma:weakening-algorithm-inductive-until-right}, weakening within $\mathcal{U}$ on the right.
+
+\begin{proof}
+    We assume the inductive hypothesis $P(C)$, and want to prove $P(\phi\until{J}C)$. We take an arbitrary $t$. We distinguish two cases, according to whether $\triangle$ is $\mathcal{U}$ or $\mathcal{R}$. In either case, by the induction hypothesis each recursive call evaluates to either $None$ or an interval $I'$ related to $I$ by the corresponding relation (right-extension or \mbox{-contraction} respectively) such that $\sat{\pi}{t+t'} C[\psi\bintemporal{I'}\psi']$.
+    
+    We use the loop invariant that for all $j\in\covering_\pi(J)$ with $j<i$, we have that $\sat{\pi}{t+j}\phi$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know for all $j\in\covering_\pi(J)$ with $j\leq i$ that $\sat{\pi}{t+j}\phi$, and so the loop invariant is preserved. Suppose at the start of iteration $i$ the loop invariant holds. If $\nsat{\pi}{t+i}\phi$ we exit the loop, and if the list of intervals is empty then by the loop invariant we know that there are no appropriate intervals $I'$ for any $j\in\covering_\pi(J)$ with $j<i$ for which $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$, and so the same holds for $\sat{\pi}{t} (\phi\until{J}C)[\psi\bintemporal{I'}\psi']$.
+    
+    Otherwise, by the loop invariant we know that for all $j\in \covering_\pi(J)$ with $j<i$ we have $\sat{\pi}{t+j}\phi$ and, as we have passed the check above, that for at least one of these $j$ we have an interval $I'$ such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. Thus, we have
+    $$
+    \sat{\pi}{t} (\phi\until{J}C)[\psi\bintemporal{I'}\psi']
+    $$
+    %
+    \qed
+\end{proof}
+
+\begin{algorithm}[t]
+\label{alg:aux-release-right}
+\SetAlgoNlRelativeSize{-1}
+\caption{Weakening within $\mathcal{U}$ on the right}
+\Function{\weakenreleaseright($C$, $\phi$, $[a,b]$, $t$)}{
+    $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
+    $intervals \gets [\;]$ \\
+    \For{$i \gets a$ \KwTo $\bfin$}{
+        $I \gets \weakenaux(C, t + i)$\\
+        \If{I $=$ None}{
+            \Return $None$
+        }
+        append $I$ to $intervals$\\
+        \If{$\pi, t + i \vDash \phi$}{
+            \textbf{break}
+        }
+    }
+    \Return interval in $intervals$ with maximal absolute difference to $\Iorig$
+}
+\end{algorithm}
+
+Proof of \cref{lemma:weakening-algorithm-inductive-release-right}, weakening within $\mathcal{R}$ on the right.
+
+\begin{proof}
+    We assume the inductive hypothesis $P(C)$, and want to prove $P(C\release{J}\phi)$. We take an arbitrary $t$. We distinguish two cases, according to whether $\triangle$ is $\mathcal{U}$ or $\mathcal{R}$. In either case, by the induction hypothesis each recursive call evaluates to either $None$ or an interval $I'$ related to $I$ by the corresponding relation (right-extension or \mbox{-contraction} respectively) such that $\sat{\pi}{t+t'} C[\psi\bintemporal{I'}\psi']$.
+    
+    We use the loop invariant that for all $j\in\covering_\pi(J)$ with $j<i$, we have that $\sat{\pi}{t+j}\phi$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know that for all $j\in\covering_\pi(J)$ with $j\leq i$ that $\sat{\pi}{t+j}\phi$, so the loop invariant holds. Suppose at the start of iteration $i$ the loop invariant holds. If $\nsat{\pi}{t+i}\phi$ we exit the loop, and if the list of intervals is empty then we know that there are no appropriate intervals $I'$ for any $j\in\covering_\pi(J)$ with $j<i$ for which $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$, and so the same holds for $\sat{\pi}{t} (C\release{J}\phi)[\psi\bintemporal{I'}\psi']$.
+    
+    Otherwise, by the loop invariant we know that for all $j\in\covering_\pi(J)$ with $j<i$ we have $\sat{\pi}{t+j}\phi$, and, as we have passed the check above, that for at least one of these $j$ we have an interval $I'$ such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. Thus, we have
+    $$
+    \sat{\pi}{t}(C\release{J}\phi)[\psi\bintemporal{I'}\psi']
+    $$
+    %
+    \qed
+\end{proof}
+
+\begin{algorithm}[t]
+\label{alg:aux-release-left}
+\SetAlgoNlRelativeSize{-1}
+\caption{Weakening within $\mathcal{R}$ on the left}
+\Function{\weakenreleaseleft($C$, $\phi$, $[a,b]$, $t$)}{
+    $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
+    $intervals \gets [\;]$ \\
+    \For{$i \gets a$ \KwTo $\bfin$}{
+        \If{$\pi, t + i \nvDash \phi$}{
+            \textbf{break}
+        }
+        $I \gets \weakenaux(C, t + i)$\\
+        \If{$I \neq None$}{
+            append $I$ to $intervals$
+        }
+    }
+    \If{intervals is empty}{
+        \Return $None$
+    }
+    \Return interval in $intervals$ with minimal absolute difference to $\Iorig$
+}
+\end{algorithm}
+
+Proof of \cref{lemma:weakening-algorithm-inductive-release-right}, weakening within $\mathcal{R}$ on the right.
+
+\begin{proof}
+    We assume the inductive hypothesis $P(C)$, and want to prove $P(\phi\release{J}C)$. We take an arbitrary $t$. We distinguish two cases, according to whether $\triangle$ is $\mathcal{U}$ or $\mathcal{R}$. In either case, by the induction hypothesis each recursive call evaluates to either $None$ or an interval $I'$ related to $I$ by the corresponding relation (right-extension or \mbox{-contraction} respectively) such that $\sat{\pi}{t+t'} C[\psi\bintemporal{I'}\psi']$.
+    
+    We use the loop invariant that for all $j\in\covering_\pi(J)$ with $j<i$, we have that $\nsat{\pi}{t+j}\phi$ and that $I'=\weakenaux(C,\psi\bintemporal{I}\psi',t+j)$ is an interval such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know that $\weakenaux(C,\psi\bintemporal{I}\psi',t+i)\neq None$, and so by the induction hypothesis the recursive call must have produced a suitable interval $I'$. As we also know that $\nsat{\pi}{t+i}\phi$, the loop invariant is thus preserved for $j\in\covering_\pi(J)$ with $j\leq i$. Suppose at the start of iteration $i$ the loop invariant holds. If $I'=\weakenaux(C,\psi\bintemporal{I}\psi',t+i) = None$ then by the induction hypothesis we know that there is no suitable interval $I''$ for which $\sat{\pi}{t+i} C[\psi\bintemporal{I''}\psi']$, and by the loop invariant that there is no $j\in\covering_\pi(J)$ with $j<i$ for which $\sat{\pi}{t+j}\phi$. Thus, there is no interval $I''$ for which $\sat{\pi}{t} (C\until{J}\phi)[\psi\bintemporal{I''}\psi']$.
+    
+    If $\sat{\pi}{t+i}\phi$, then we exit the loop. As this check occurred after the recursive call to $\weakenaux$, we know that we have found at least one suitable interval. By the loop invariant we know that for all $j\in\covering_\pi(J)$ with $j<i$ we have an interval $I'$ such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. Applying \cref{lemma:extension-weakening-order} if $\triangle=\mathcal{U}$, or \cref{lemma:contraction-weakening-order} if $\triangle=\mathcal{R}$, we obtain a maximum interval $I''$ such that for all $j\in\covering_\pi(J)$ with $j\leq i$ we have $\sat{\pi}{t+j} C[\psi\bintemporal{I''}\psi']$, and so
+    $$
+    \sat{\pi}{t} (\phi\release{J}C)[\psi\bintemporal{I''}\psi']
+    $$
+    If we run the loop to completion, then by the loop invariant for each $i\in\covering_\pi(J)$ we have a suitable interval $I'$ where $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. If $\covering_\pi(J)=J$ then by the same reasoning as above we have a suitable maximum interval. If $\covering_\pi(J)=[a,\rightidx_\pi(a)]$ for some $a$ then by \cref{lemma:lasso-trace-coverage} this property holds for all $i\in\N$ with $i\geq a$, and so in this case we also have a maximum interval.
+    %
+    \qed
+\end{proof}
+

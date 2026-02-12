@@ -1,0 +1,7 @@
+\section{Algorithm for Interval Weakening}\label{sec:algorithm}
+
+\cegiw{} is split into two levels. First, there is a function \textit{weaken} that, given an \MTL{} formula $\phi$, an interval $I=[a,b]$ in $\phi$ to weaken, and a counterexample trace $\pi$, weakens $I$ such that the new formula $\phi'$ holds on $\pi$ (\cref{subsec:cex-relative-weakening}). However, this does not guarantee that $\phi'$ holds on the model itself, and so we need to repeat the process, finding a new counterexample trace for $\phi'$ and weakening the interval again. The second part of \cegiw{} is this iterative process that finds counterexample traces by model checking (\cref{subsec:iterative-weakening}).
+
+\input{paper/algorithm/cex-relative}
+
+\input{paper/algorithm/iterative}

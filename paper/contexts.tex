@@ -1,0 +1,151 @@
+\section{Weakening Within Contexts}\label{sec:contexts}
+
+We briefly state the syntax and semantics of Metric Temporal Logic~\cite{koymans1990} (\MTL{}). Let $\mathcal{P}$ be a set of propositional variables. Well-formed \MTL{} formulae are formed according to the rule:
+\begin{equation}
+    \phi := p \bnfsep \top \bnfsep \neg \phi \bnfsep \phi \land \phi \bnfsep \phi \until{I} \phi \bnfsep \phi \release{I} \phi
+\end{equation}
+where $p\in\mathcal{P}$ and $I$ is an interval of the form $[a,b]$ for $a\in\N$ and $b\in\N\cup\{\infty\}$ where $a\leq b$. Other constructs can be defined in the standard way, e.g. $\eventually{I}\phi=\top\until{I}\phi$. While the release operator $\mathcal{R}$ can be defined in terms of the until operator $\mathcal{U}$, this would leave a negation as the outermost operator, complicating our weakening algorithm. We consider \MTL{} formulae with a pointwise semantics over the natural numbers~\cite{alur1993}, defined according to a trace $\pi$ which is an infinite sequence of states in which atomic propositions can hold, and an index of the trace $t \in \N$. The set of atomic propositions that hold in the $t$-th state is denoted by $\pi(t)$. A trace $\pi$ satisfies an \MTL{} formula $\phi$, denoted by $\pi\vDash\phi$, if and only if $\sat{\pi}{0}\phi$.
+\begin{align*}
+    \pi, t & \vDash p && \text{iff}&& p \in \pi(t) \\
+    \pi, t & \vDash \neg \phi && \text{iff}&& \pi, t \nvDash \phi \\
+    \pi, t & \vDash \phi_1 \land \phi_2 && \text{iff}&& \pi, t \vDash \phi_1 \text{ and } \pi, t \vDash \phi_2 \\
+    \pi, t & \vDash \phi_1 \until{I} \phi_2 && \text{iff}&& \exists i \in I.\, ((\pi, t+i \vDash \phi_2) \land \forall j \in [0,i) \cap I.\, (\pi, t+j \vDash \phi_1)) \\
+    \pi, t & \vDash \phi_1 \release{I} \phi_2 && \text{iff}&& \forall i \in I.\, (\pi, t+i \vDash \phi_1) \\
+    & && && \lor \exists i \in I.\, (\pi, t+i \vDash \phi_2 \land \forall j \in [0,i] \cap I.\, (\pi, t+j \vDash \phi_1))
+\end{align*}
+
+\cegiw{} weakens a constituent subformula of a larger formula. We show, using the notion of \emph{contexts}, that a weakening of a subformula implies a weakening of the larger formula.
+%
+\begin{definition}[Contexts]
+\MTL{} Contexts are like \MTL{} formulae with a single hole $[-]$, and are formed according to the rule:
+\begin{equation}
+C ::= [-] \bnfsep C \land \phi \bnfsep \phi \land C \bnfsep C \lor \phi \bnfsep \phi \lor C \bnfsep C \until{I} \phi \bnfsep \phi \until{I} C \bnfsep C \release{I} \phi \bnfsep \phi \release{I} C
+\end{equation}
+where $\phi$ is an \MTL{} formula and $I$ is an interval. Note that our definition of contexts does not allow negations on the path to the hole $[-]$, similarly to the restriction imposed by negation normal form (NNF). However, adjacent \MTL{} subformulae $\phi$ are not required to be in NNF and can contain negations.
+\end{definition}
+%
+We define the notion of \emph{context substitution}, where an \MTL{} formula $\psi$ is substituted into the hole of a context $C$ to produce an \MTL{} formula $C[\psi]$.
+
+\makeatletter
+\refstepcounter{equation}%
+\noindent\begin{minipage}{\textwidth}
+\begin{minipage}{.5\linewidth}
+\begin{align*}
+[-][\psi] &= \psi \\
+(C\land\phi)[\psi] &= C[\psi]\land\phi \\
+(\phi\land C)[\psi] &= \phi\land C[\psi] \\
+(C\lor\phi)[\psi] &= C[\psi]\lor\phi \\
+(\phi\lor C)[\psi] &= \phi\lor C[\psi]
+\end{align*}
+\end{minipage}%
+\begin{minipage}{.5\linewidth}
+\begin{align*}
+(C\until{I}\phi)[\psi] &= C[\psi]\until{I}\phi \\
+(\phi\until{I} C)[\psi] &= \phi\until{I} C[\psi] \\
+(C\release{I}\phi)[\psi] &= C[\psi]\release{I}\phi \\
+(\phi\release{I} C)[\psi] &= \phi\release{I} C[\psi]
+\end{align*}
+\end{minipage}%
+\makebox[0pt][r]{\tagform@{\theequation}}%
+\label{eqn:my-equation}%
+\end{minipage}
+\makeatother
+\vspace{\baselineskip}
+
+\noindent Note that, by pushing negations inwards, an \MTL{} formula $\phi$ can always be transformed into a context $C$ and subformula $\psi$ where $\phi$ is logically equivalent to $C[\psi]$.
+
+
+\begin{definition}[Weakening and strengthening of \MTL{} formulae]
+    Let $\phi$ and $\phi'$ be \MTL{} formulae. $\phi'$ is a weakening of $\phi$, denoted
+    \begin{equation}
+    \phi\wkn\phi'
+    \end{equation}
+    % \centereqn{\phi\wkn\phi'}
+    \noindent if and only if, for all traces $\pi$ and time-points $t$, if $\sat{\pi}{t}\phi$, then $\sat{\pi}{t}\phi'$. In this case, symmetrically, $\phi$ is a strengthening of $\phi'$. Note that an \MTL{} formula $\phi$ is always both a strengthening and a weakening of itself, i.e. $\phi\wkn\phi$.
+\end{definition}
+
+
+\begin{theorem}[Weakening of contexts]\label{theorem:context-wkn}
+Let $C$ be a context and $\psi$ and $\psi'$ be \MTL{} formulae. If $\psi\wkn\psi'$, then $C[\psi]\wkn C[\psi']$.
+\end{theorem}
+
+\begin{proof}
+We do an induction proof over the grammar of contexts using the induction hypothesis $P(C)$, that $C[\psi]\wkn C[\psi']$. The non-temporal inductive cases are omitted for brevity.
+\begin{description}
+\item \textsc{Base case $[-]$:} We assume that $\psi\wkn\psi'$, and by the definition of context substitution we have that $[-][\psi]\wkn[-][\psi']$ and thus $P([-])$.
+
+\item \textsc{Inductive case $C\until{I}\phi$:} Assuming $P(C)$, we take an arbitrary trace $\pi$ and time-point $t$, assume $\pi,t\vDash C[\psi]\until{I}\phi$, and want to prove $\pi,t\vDash C[\psi']\until{I}\phi$. We know that there exists an $i\in I$ such that $\pi,t+i\vDash\phi$, and that for all $j\in[0,i)\cap I$ we have $\pi,t+j\vDash C[\psi]$. Taking arbitrary $i$ and $j$, by the induction hypothesis we have that $\pi,t+j\vDash C[\psi']$, and so by the semantics $\pi,t\vDash C[\psi']\until{I}\phi$. Thus, we have $P(C\until{I}\phi)$.
+
+\item \textsc{Inductive case $\phi\until{I}C$:} Similar to the above case.
+
+\item \textsc{Inductive case $C\release{I}\phi$:} Assuming $P(C)$, we take an arbitrary trace $\pi$ and time-point $t$, assume $\pi,t\vDash C[\psi]\release{I}\phi$, and want to prove $\pi,t\vDash C[\psi']\release{I}\phi$. By the semantics of $\mathcal{R}$ there are two cases:
+\begin{enumerate}
+    \item For all $i\in I$ we have $\pi,t+i\vDash\phi$, thus we have $\pi,t+i\vDash C[\psi']$, and so we have $\pi,t\vDash C[\psi']\release{I}\phi$.
+
+    \item There exists an $i\in I$ such that $\pi,t+i\vDash C[\psi]$, and that for all $j\in[0,i]\cap I$ we have $\pi,t+j\vDash\phi$. Taking arbitrary $i$ and $j$, by the assumptions we have that $\pi,t+i\vDash C[\psi']$ and $\pi,t+j\vDash\phi$, and then by the semantics we have $\pi,t\vDash C[\psi']\release{I}\phi$.
+\end{enumerate}
+Thus, in both cases we have $P(C\release{I}\phi)$.
+
+\item \textsc{Inductive case $\phi\release{I}C$:} Similar to the above case.\qed
+\end{description}
+\end{proof}
+
+We show that, depending on which temporal operator is used, by expanding or contracting its interval we can weaken or strengthen the surrounding formula.
+
+\begin{definition}[Right-modifications of intervals]\label{def:interval-extension}
+    Let $I=[a,b]$ be an interval. For any $i\in\N$, a right-modification of $I$ is either a right-extension $[a,b+i]$, or, provided $i\leq b - a$, a right-contraction $[a,b-i]$. A right-modification is \emph{strict} if $i>0$. The set of all right-modifications of $I$ is denoted $\rightmodifications(I)$.
+\end{definition}
+
+\begin{lemma}[Weakening of $\mathcal{U}$ interval]\label{lemma:until-i}
+    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-extension of $I$. Then, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
+\end{lemma}
+
+\begin{proof}
+    We assume that $I'$ is a right-extension of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\until{I}\psi$ and want to prove $\pi,t\vDash \phi\until{I'}\psi$. We know that there exists an $i\in I$ such that $\pi,t+i\vDash\psi$, and that for all $j\in [0,i)\cap I$ we have $\pi,t+j\vDash\phi$. Taking arbitrary $i$ and $j$, we have that $i,j\in I'$, and so $\pi,t\vDash \phi\until{I'}\psi$. Thus, $\phi\until{I}\psi\wkn\phi\until{I'}\psi$.
+    %
+    \qed
+\end{proof}
+
+\begin{lemma}[Weakening of $\mathcal{R}$ interval]\label{lemma:release-i}
+    Let $\phi$ and $\psi$ be \MTL{} formulae, and $I$ and $I'$ be intervals, where $I'$ is a right-contraction of $I$. Then, $\phi\release{I}\psi\wkn\phi\release{I'}\psi$.
+\end{lemma}
+
+\begin{proof}
+    We assume that $I'$ is a right-contraction of $I$, and so, taking an arbitrary trace $\pi$ and time-point $t$, we assume $\pi,t\vDash \phi\release{I}\psi$ and want to prove $\pi,t\vDash \phi\release{I'}\psi$. By the semantics of $\mathcal{R}$ there are two cases:
+    \begin{enumerate}
+        \item For all $t'\in I$ we have $\pi,t+t'\vDash\psi$. Then, as $I'\subseteq I$, we know that for all $t''\in I'$ we have $\pi,t+t'\vDash\psi$, and so $\pi,t\vDash \phi\release{I'}\psi$.
+        
+        \item There exists a $t'\in I$ such that $\pi,t+t'\vDash\phi$ and for all $t''\in I\cap[0,t']$, we have $\pi,t+t''\vDash\psi$. As $I'$ is a right-contraction of $I$, there are two further cases:
+        
+        \begin{enumerate}
+            \item If $t'\in I'$, then we still have that $\pi,t+t'\vDash\phi$ and for all $t''\in I'\cap[0,t']$, we have $\pi,t+t''\vDash\psi$, and so $\pi,t\vDash \phi\release{I'}\psi$.
+    
+            \item If $t'\notin I'$, then $I'\cap[0,t']=I'$ and so we know that for all $t''\in I'$, we have $\pi,t+t''\vDash\psi$, and so $\pi,t\vDash \phi\release{I'}\psi$.
+        \end{enumerate}
+    \end{enumerate}
+    Thus, in all cases we have that $\phi\release{I}\psi\wkn\phi\release{I'}\psi$.
+    %
+    \qed
+\end{proof}
+
+Often in \cegiw{}, recursive calls will generate a set of intervals from which either the strongest or weakest must be chosen. We show that there is a total order of implication over the set of right-modifications of an interval, which allows us to make that choice.
+
+\begin{lemma}[Extension-weakening order of right-modifications]\label{lemma:extension-weakening-order}
+    Let $I$ be an interval. Then, $\rightmodifications(I)$ has a total order $\supseteq$, where for all \MTL{} contexts $C$, \MTL{} formulae $\phi$ and $\phi'$, and all $I',I''\in\rightmodifications(I)$, if $I''\supseteq I'$ then we have $C[\phi\until{I'}\phi']\wkn C[\phi\until{I''}\phi']$.
+\end{lemma}
+
+\begin{proof}
+    For any pair of intervals in $\mathcal{M}_r(I)$ we can order the resulting subformulae by applying \cref{lemma:until-i} to get $\phi\until{I'}\phi'\wkn\phi\until{I''}\phi'$ (or the reverse), and then order the full formulae with their contexts by applying \cref{theorem:context-wkn} to get $C[\phi\until{I'}\phi']\wkn C[\phi\until{I''}\phi']$ (or the reverse).
+    %
+    \qed
+\end{proof}
+
+
+\begin{lemma}[Contraction-weakening order of right-modifications]\label{lemma:contraction-weakening-order}
+    Let $I$ be an interval. Then, $\rightmodifications(I)$ has a total order $\subseteq$, where for all \MTL{} contexts $C$, \MTL{} formulae $\phi$ and $\phi'$, and all $I',I''\in\rightmodifications(I)$, if $I''\subseteq I'$ then we have $C[\phi\release{I'}\phi']\wkn C[\phi\release{I''}\phi']$.
+
+\end{lemma}
+
+\begin{proof}
+    Similar to the proof of \cref{lemma:extension-weakening-order}, but uses \cref{lemma:release-i} to order $\phi\release{I'}\phi'$ and $\phi\release{I''}\phi'$.\qed
+\end{proof}
