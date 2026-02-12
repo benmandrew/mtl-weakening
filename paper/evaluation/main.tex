@@ -1,0 +1,15 @@
+\section{Evaluation}\label{sec:evaluation}
+
+We evaluate how \textit{effective} interval weakening is in understanding the temporal behaviour of specifications, and how applicable it is to real-world requirements. To this end, we investigate the following research questions:
+\begin{itemize}
+    % \item[\textbf{RQ1:}] To what extent is \cegiw{} useful during the system design phase? (\cref{subsec:demonstration})
+    \item[\textbf{RQ1:}] How can \cegiw{} be used to explore and diagnose timing margins in \MTL{} specifications during early design? (\cref{subsec:demonstration})
+    % \item[\textbf{RQ2:}] To what extent can \cegiw{} be used in real-world requirements? (\cref{subsec:case-studies})
+    \item[\textbf{RQ2:}] To what extent do existing real-world requirements provide practical targets for interval weakening, and are such weakenings meaningful in their application domains? (\cref{subsec:case-studies})
+\end{itemize}
+%
+\textbf{Choosing a model checker.} There are no industrial-strength model checkers for \MTL{} with pointwise semantics~\cite{brihaye2018, akshay2025}, yet many efficient tools exist for linear temporal logic~\cite{cavada2014,holzmann1997} (\LTL{}). Thus, we translate \MTL{} formulae into \LTL{} using the \emph{next} ($X$) operator~\cite[Remark~5.15]{baier2008a} and use an \LTL{} model checker. During preliminary investigation, it was found that symbolic \LTL{} model checkers such as \nuXmv{}~\cite{cavada2014} and \spin{}~\cite{holzmann1997} typically generate minimal counterexample traces. Weakening intervals with these usually only increments or decrements the bound rather than modifying it by a larger amount, which increases the number of calls made to the model checker dramatically. Our implementation uses \nuXmv{} in bounded model checking (BMC) mode, producing multiple counterexamples for a specific bound length, finding the optimal interval for each of them and returning the weakest, making it more likely that we make fewer calls to the model checker. For our implementation we require the user to choose the BMC bound, but theoretical completeness can be preserved as completeness thresholds do exist for BMC~\cite{clarke2004a}.
+
+\input{paper/evaluation/demonstration}
+
+\input{paper/evaluation/case-studies}
