@@ -1,0 +1,50 @@
+requirement,fretish-timing
+CR_STAY_OFF,always
+CR_STAY_ON,always
+CR_TURN_OFF,at the next timepoint
+CR_TURN_ON,at the next timepoint
+DR_STAY_OFF,always
+DR_STAY_ON,always
+DR_TURN_OFF,at the next timepoint
+DR_TURN_ON,at the next timepoint
+FCS_STAY_OFF,always
+FCS_STAY_ON,always
+FCS_TURN_OFF,at the next timepoint
+FCS_TURN_ON,at the next timepoint
+INIT_CR,immediately
+INIT_DR,immediately
+INIT_FCS,immediately
+INIT_HOVER_MODE,immediately
+INIT_KIAS,immediately
+INIT_LIFT_MODE,immediately
+KIAS_0,always
+KIAS_DERIVATIVE,always
+KIAS_KGS,always
+KIAS_KGS_WIND_SPEED,always
+LIFT_MODE,always
+REACH_HOVER_06,within 6 ticks
+REACH_HOVER_10,within 10 ticks
+REACH_HOVER_11,within 11 ticks
+REACH_HOVER_12,within 12 ticks
+REACH_HOVER_13,within 13 ticks
+REACH_HOVER_14,within 14 ticks
+REACH_HOVER_15,within 15 ticks
+REACH_HOVER_16,within 16 ticks
+REACH_NOT_FCS_09,within 9 ticks
+REACH_NOT_FCS_10,within 10 ticks
+REACH_NOT_FCS_11,within 11 ticks
+REARPROP,always
+STB_STAY_ON_pre,always
+STB_STAY_ON_until,always
+STB_TO_SWB,at the next timepoint
+STB_TO_TB,at the next timepoint
+SWB_STAY_ON_pre,always
+SWB_STAY_ON_until,always
+SWB_TO_STB,at the next timepoint
+SWB_TO_WB,at the next timepoint
+TB_STAY_ON_pre,always
+TB_STAY_ON_until,always
+TB_TO_STB,at the next timepoint
+WB_STAY_ON_pre,always
+WB_STAY_ON_until,always
+WB_TO_STB,at the next timepoint

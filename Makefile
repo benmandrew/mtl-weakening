@@ -1,4 +1,4 @@
-.PHONY: test unittest expect_test fmt fmt-ci lint ruff pylint mypy bandit
+.PHONY: test unittest expect_test fmt fmt-ci lint ruff pylint mypy bandit doc
 
 all: fmt lint test
 
@@ -41,3 +41,6 @@ vulture:
 
 bandit:
 	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q
+
+doc:
+	python3 doc/count-requirements.py
