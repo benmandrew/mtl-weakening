@@ -43,4 +43,4 @@ bandit:
 	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q
 
 doc:
-	python3 doc/count-requirements.py
+	python3 doc/count_requirements.py
