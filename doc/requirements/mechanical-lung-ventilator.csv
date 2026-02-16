@@ -1,0 +1,122 @@
+requirement,fretish-timing
+CONT3,at the next timepoint
+CONT4,at the next timepoint
+CONT5,at the next timepoint
+CONT6,at the next timepoint
+CONT7,at the next timepoint
+CONT8,at the next timepoint
+CONT9,at the next timepoint
+CONT10,at the next timepoint
+CONT11,at the next timepoint
+CONT15,at the next timepoint
+CONT16,at the next timepoint
+CONT21,at the next timepoint
+CONT23,for 40 seconds
+CONT24,at the next timepoint
+CONT26,at the next timepoint
+CONT27,until buttonUnPressOr60Seconds
+CONT30,at the next timepoint
+CONT32,until (P_insp >= MaxP_insp | inspClock >= inspiratoryTime)
+CONT33,at the next timepoint
+CONT34,for 40 seconds
+CONT35,at the next timepoint
+CONT36_1,at the next timepoint
+CONT36_2,until buttonUnPressOr60Seconds
+CONT37,at the next timepoint
+CONT41_1,at the next timepoint
+CONT42_1,at the next timepoint
+CONT43,at the next timepoint
+CONT43_1,at the next timepoint
+CONT44,at the next timepoint
+FUN5,at the next timepoint
+FUN7,at the next timepoint
+FUN8_7,at the next timepoint
+FUN8_8,at the next timepoint
+FUN8_9,at the next timepoint
+FUN8_10,at the next timepoint
+FUN9,at the next timepoint
+FUN10_2,at the next timepoint
+FUN10_4,at the next timepoint
+FUN18_2,at the next timepoint
+FUN21_1,at the next timepoint
+FUN21_2,at the next timepoint
+FUN22,at the next timepoint
+FUN23,at the next timepoint
+FUN23_3,at the next timepoint
+FUN25,at the next timepoint
+FUN26,at the next timepoint
+FUN27,at the next timepoint
+FUN27_1,at the next timepoint
+FUN27_2,at the next timepoint
+FUN28,at the next timepoint
+FUN29,at the next timepoint
+FUN33,at the next timepoint
+FUN34,at the next timepoint
+FUN37,at the next timepoint
+FUN38_1,at the next timepoint
+FUN40,at the next timepoint
+FUN41,at the next timepoint
+CONT1,always
+CONT1_1,eventually
+CONT1_3,always
+CONT1_6,always
+CONT2,always
+CONT11_1,eventually
+CONT12,eventually
+CONT13,eventually
+CONT14,eventually
+CONT18,eventually
+CONT19,until off
+CONT20,always
+CONT22,always
+CONT25,always
+CONT28,always
+CONT36_3,always
+CONT38,always
+CONT39,always
+CONT40,always
+CONT41,eventually
+CONT41_2,after 40 seconds
+CONT42,eventually
+CONT42_2,after 40 seconds
+CONT43_2,after 10 seconds
+CONT43_3,always
+CONT45,after 700 milliseconds
+CONT46,until off
+FUN4,always
+FUN5_1,eventually
+FUN5_2,eventually
+FUN5_3,always
+FUN6,eventually
+FUN6_1,eventually
+FUN6_2,eventually
+FUN6_3,eventually
+FUN6_4,eventually
+FUN6_5,eventually
+FUN6_6,eventually
+FUN8,always
+FUN8_5,always
+FUN8_11,always
+FUN8_12,always
+FUN10,eventually
+FUN10_1,eventually
+FUN10_3,eventually
+FUN10_5,eventually
+FUN10_6,after 15 minutes
+FUN11,always
+FUN12,always
+FUN13,always
+FUN14,always
+FUN15,always
+FUN16,always
+FUN17,always
+FUN18,always
+FUN18_1,always
+FUN20,always
+FUN21,always
+FUN23_1,eventually
+FUN23_2,always
+FUN30,always
+FUN31,always
+FUN32,always
+FUN39,eventually

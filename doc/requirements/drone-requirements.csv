@@ -1,0 +1,63 @@
+requirement,fretish-timing
+REQ001,eventually
+REQ001_1,within 10 milliseconds
+REQ001_2,within 10 milliseconds
+REQ001_3,within 10 milliseconds
+REQ002,always
+REQ002_1,within 10 milliseconds
+REQ002_2,within 10 milliseconds
+REQ002_3,within 10 milliseconds
+REQ003,always
+REQ004,always
+REQ005,always
+REQ006,always
+REQ007,always
+REQ008,within 10 milliseconds
+REQ008_1,within 10 milliseconds
+REQ008_2,within 10 milliseconds
+REQ009,always
+REQ010,at the next timepoint
+REQ010_1,within 10 milliseconds
+REQ010_2,within 10 milliseconds
+REQ011,always
+REQ013,always
+REQ013_1,within 10 milliseconds
+REQ013_2,within 10 milliseconds
+REQ013_3,within 10 milliseconds
+REQ013_4,within 10 milliseconds
+REQ014,always
+REQ015,always
+REQ016,within 10 milliseconds
+REQ017,always
+REQ018,within 12 milliseconds
+REQ019,within 6 milliseconds
+REQ033,always
+REQ034,always
+REQ035,always
+REQ036,always
+REQ037,always
+REQ038,always
+REQ038_1,always
+REQ039,always
+REQ040,always
+REQ041,always
+REQ042,always
+REQ043,always
+REQ044,always
+REQ045,always
+REQ046,always
+REQ047,always
+REQ050,always
+REQ051,always
+REQ052,always
+REQ053,always
+REQ054,always
+REQ055,always
+REQ056,always
+REQ057,always
+REQ058,always
+REQ059,always
+REQ060,always
+REQ063,always
+REQ064,always
+REQ065,always
