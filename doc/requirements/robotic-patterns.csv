@@ -1,0 +1,37 @@
+requirement,fretish-timing
+Visit 1,eventually
+Visit 2,eventually
+Sequenced visit,eventually
+Ordered visit,until l0
+Strict ordered visit,immediately
+Fair visit 1,at the next timepoint
+Fair visit 2,at the next timepoint
+Visit with reaction,eventually
+Weak sequenced visit,eventually
+Continuous visit with reaction,eventually
+Deliver after visit,eventually
+Patrolling 1,eventually
+Patrolling 2,eventually
+Sequenced patrolling,always
+Ordered patrolling 1,until l0
+Ordered patrolling 2,eventually
+Ordered patrolling 3,at the next timepoint
+Strict ordered patrolling,at the next timepoint
+Weak patrolling,eventually
+Fair patrolling 1,at the next timepoint
+Fair patrolling 2,at the next timepoint
+Past avoidance 1,until p
+Past avoidance 2,eventually
+Global avoidance,never
+Future avoidance,never
+Upper restricted avoidance,immediately
+Lower restricted avoidance,eventually
+Exact restricted avoidance,immediately
+Instant reaction,immediately
+Delayed reaction,eventually
+Prompt reaction,at the next timepoint
+Bound reaction,always
+Bound delay,always
+Wait 1,until p
+Wait 2,eventually
+Maintain safe space,always

@@ -19,6 +19,10 @@ $ python3 -m src.iterative_weaken --model models/foraging-robots-limit-search.sm
 
 Note that the De Bruijn index ([wikipedia](https://en.wikipedia.org/wiki/De_Bruijn_index)) specifies which interval in the formula is to be weakened.
 
+## Artefacts
+
+The [docs](doc/README.md) contain full proofs of correctness and optimality, as well as input data for the interval-weakenable requirements in FRET case studies.
+
 ## Tools
 
 ### `iterative_weaken.py`

@@ -1,0 +1,16 @@
+requirement,fretish-timing
+R1,always
+R1.1,always
+R1.2,always
+R1.3,always
+R1.4,always
+R1.5,always
+R1.6,always
+R2,always
+R2.1,always
+R2.2,always
+R2.2.2,immediately
+R2.2.3,always
+R2.6,always
+R3.2,after 1 tick
+R3.5,always
