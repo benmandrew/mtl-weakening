@@ -9,13 +9,16 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
+\usepackage[hidelinks]{hyperref}
 \usepackage[toc,page]{appendix}
 \usepackage{subcaption}
 \usepackage[utf8]{inputenc}
 \usepackage[
+    giveninits=true,
     backend=biber,
     url=false,
     isbn=false,
+    doi=false,
     maxbibnames=20
 ]{biblatex}
 \bibliography{bibliography.bib}
@@ -25,7 +28,9 @@
     \clearlist{publisher}%
     \clearlist{location}%
     \clearfield{month}%
+    \clearfield{pages}%
 }
+\usepackage[misc,geometry]{ifsym}
 
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \newcommand{\weakenuntildirect}{\ensuremath{Weaken\mathcal{U}Direct}}
@@ -148,7 +153,7 @@
 
 \title{Counterexample-Guided Interval Weakening}
 
-\author{Ben M. Andrew \and
+\author{Ben M. Andrew$^{(\textrm{\Letter})}$ \and
 Marie Farrell \and
 Louise A. Dennis \and
 Michael Fisher}
@@ -161,12 +166,12 @@ Michael Fisher}
 \authorrunning{B.M. Andrew et al.}
 
 \institute{Department of Computer Science, University of Manchester, UK\\
-\email{\{first.last\}@manchester.ac.uk}}
+\email{benjamin.andrew@manchester.ac.uk}}
 
 \maketitle
 
 \begin{abstract}
-Systems that are deployed in unpredictable environments for long periods of time are prone to sensor and component degradation. These degradations impact the tasks that the system, including its software, can accomplish. When designing critical systems for hazardous environments, we often specify and verify that they obey temporal logic properties. With degradation, these properties may not hold perfectly throughout long-term deployments. However, \textit{weakened} versions of these properties may still hold and be useful to provide system guarantees and assurance under degradation. For example, we may want to verify the property that an elevator will always arrive within 30 seconds of calling it, but due to motor degradation we may only be able to guarantee arrival within 60 seconds. Although weaker, this property is still useful and allows the system to maintain a reasonable level of operation. In this paper we present \cegiw{}, an iterative, counterexample-guided algorithm for automatically weakening the intervals of timing properties in Metric Temporal Logic such that the properties hold in the degraded system. We prove the correctness and optimality of \cegiw{}, and conduct an empirical evaluation to demonstrate the practicality of interval weakening using formalised requirements from a number of real-world case-studies. Using a model checker to produce counterexamples, \cegiw{} either weakens an interval of the property so that it holds on the counterexamples or detects whether no weakening exists.
+Systems deployed for long periods in dynamic environments may experience performance degradation that affects timing guarantees, even when their functional behaviour remains unchanged. In the design and verification of critical systems, such timing guarantees are often expressed using Metric Temporal Logic (\MTL{}). Under degradation, these specifications may no longer hold as stated, although weaker variants that relax timing bounds may still be satisfied and remain meaningful. For example, while an elevator may initially be required to arrive within 30 seconds of a request, degradation of its motor may only allow us to guarantee arrival within 60 seconds. Although weaker, this guarantee is still useful and allows the system to maintain a reasonable level of operation. In this paper we present \cegiw{}, an iterative, counterexample-guided algorithm for automatically weakening timing intervals in \MTL{} specifications so that they hold for a given system model. The algorithm preserves the logical structure of the original specification and weakens only interval bounds. We prove the correctness and optimality of \cegiw{}, and conduct an empirical evaluation to demonstrate the practicality of interval weakening using formalised requirements from a number of real-world case-studies. Using a model checker to produce counterexamples, \cegiw{} either identifies the strongest interval weakening under which the specification holds, or determines that no such weakening exists.
 
 \keywords{System degradation \and Specification weakening \and \\Formal methods \and Metric temporal logic}
 \end{abstract}
@@ -181,8 +186,9 @@ Systems that are deployed in unpredictable environments for long periods of time
 
 \input{paper/conclusion}
 
-\printbibliography
 
-\input{paper/appendix}
+\printbibliography
+% \clearpage
+% \input{paper/appendix}
 
 \end{document}

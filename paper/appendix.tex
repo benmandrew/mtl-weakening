@@ -6,7 +6,7 @@
 \SetAlgoNlRelativeSize{-1}
 \caption{Directly weakening interval of $\mathcal{R}$}
 \label{alg:weaken-direct-release}
-\Function{\weakenreleasedirect($\psi_l$, $\psi_r$, $[a,b]$, $t$)}{
+\Function{\weakenreleasedirect($\psi_l$, $\psi_r$, $[a,b]$, $\pi$, $t$)}{
     $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
     \For{$i \gets a$ \KwTo $\bfin$}{
         \If{$\pi,t+i\nvDash\psi_r$}{
@@ -45,11 +45,11 @@ Proof of \cref{lemma:weakening-algorithm-direct-release}, directly weakening the
 \label{alg:aux-until-right}
 \SetAlgoNlRelativeSize{-1}
 \caption{Weakening within $\mathcal{U}$ on the right}
-\Function{\weakenuntilright($C$, $\phi$, $[a,b]$, $t$)}{
+\Function{\weakenuntilright($C$, $\phi$, $[a,b]$, $\psi\bintemporal{\Iorig}\psi'$, $\pi$, $t$)}{
     $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
     $intervals \gets [\;]$ \\
     \For{$i \gets a$ \KwTo $\bfin$}{
-        $I \gets \weakenaux(C, \psi\bintemporal{I}\psi',\pi, t + i)$\\
+        $I \gets \weakenaux(C, \psi\bintemporal{\Iorig}\psi',\pi, t + i)$\\
         \If{$I \neq None$}{
             append $I$ to $intervals$
         }
@@ -82,7 +82,7 @@ Proof of \cref{lemma:weakening-algorithm-inductive-until-right}, weakening withi
 \begin{algorithm}[t]
 \label{alg:aux-release-right}
 \SetAlgoNlRelativeSize{-1}
-\caption{Weakening within $\mathcal{U}$ on the right}
+\caption{Weakening within $\mathcal{R}$ on the right}
 \Function{\weakenreleaseright($C$, $\phi$, $[a,b]$, $t$)}{
     $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
     $intervals \gets [\;]$ \\
@@ -153,4 +153,3 @@ Proof of \cref{lemma:weakening-algorithm-inductive-release-right}, weakening wit
     %
     \qed
 \end{proof}
-

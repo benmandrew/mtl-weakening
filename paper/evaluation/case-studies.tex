@@ -1,22 +1,21 @@
-\subsection{Feasibility of Approach in Real-World Case Studies (RQ2)}\label{subsec:case-studies}
-
+\subsection{Applicability of Interval Weakening to Real-World Requirements (RQ2)}\label{subsec:case-studies}
+%
 \begin{table}[t]
 \caption{Interval-weakenable requirements in \fret{} case studies.}
-% \marienote{there should be 42 requirements in the aircraft engine controller }
 \label{table:weakenable-reqs-case-studies}
 \centering
 \begin{tabular}{ |l|r|r| } 
 \hline
 \textbf{Case study} & \textbf{Total requirements} & \textbf{Weakenable requirements} \\\hline
-Mechanical lung ventilator~\cite{farrell2024} & 121 & 63 \\\hline
+Mechanical lung ventilator~\cite{farrell2024} & 121 & 57 \\\hline
 Autonomous drone~\cite{sheridan2025} & 62 & 19 \\\hline
-Lift-plus-cruise aircraft~\cite{pressburger2023} & 49 & 30 \\\hline
+Lift-plus-cruise aircraft~\cite{pressburger2023} & 49 & 29 \\\hline
 Aircraft engine controller~\cite{farrell2022} & 42 & 0 \\\hline
-Inspection rover~\cite{bourbouh2021} & 15 & 2 \\\hline
+Inspection rover~\cite{bourbouh2021} & 15 & 1 \\\hline
 Grasping for debris removal~\cite{farrell2022a} & 20 & 0 \\\hline
-Robotic patterns~\cite{vazquez2024} & 28 & 9 \\\hline
-LMCP challenges~\cite{mavridou2020} & 73 & 7 \\\hline
-\textbf{Total} & \textbf{410} & \textbf{130} \\\hline
+Robotic patterns~\cite{vazquez2024} & 36 & 11 \\\hline
+LMCP challenges~\cite{mavridou2020} & 74 & 7 \\\hline
+\textbf{Total} & \textbf{419} & \textbf{124} \\\hline
 \end{tabular}
 \end{table}
 %
@@ -43,10 +42,11 @@ LMCP challenges~\cite{mavridou2020} & 73 & 7 \\\hline
         \label{fig:example-fret-requirement-FUN37}
     \end{subfigure}%
     \caption{Example \fretish{} requirements from the case studies. Both are taken from systems that are fully implemented and operational in real-world settings.}
-    % \marienote{more detail please: The first one is taken from an autonomous drone use case which references the time taken for the control loop to complete and the second one describes the behaviour of the inspiratory pause button in a mechanical lung ventilator system. Both of these are taken from systems that are fully implemented and operational in real world settings.}
 \end{figure*}
 %
-We analyse the requirement sets from a number of case studies, which are formalised using the Formal Requirements Elicitation Tool (\fret{})~\cite{giannakopoulou2020a}. Requirements are written in \fretish{}, a structured natural language that can be translated to \MTL{}~\cite{giannakopoulou2021}. \fretish{} requirements can have a \texttt{\textcolor{fret_timing}{timing}} field, on which we can use interval weakening to weaken the requirement itself. The number of requirements that can be weakened using interval weakening per case study is shown in \cref{table:weakenable-reqs-case-studies}. As an example, the requirement in \cref{fig:example-fret-requirement-REQ018} from the autonomous drone case study~\cite{sheridan2025} uses the \texttt{\textcolor{fret_timing}{within 12 milliseconds}} timing which specifies that if the condition holds in one state, then the consequent must hold within the next twelve states (assuming that state transitions correspond to a millisecond of time passing). The \MTL{} translation of this timing corresponds to the \MTL{} temporal operator $\Diamond_{[0,12]}$, and so the requirement corresponds to
+In this section, we analyse existing requirements from a number of real-world case studies to assess how often interval weakening is applicable, and how weakened timing bounds can be interpreted in their respective domains. These requirements are formalised using the Formal Requirements Elicitation Tool (\fret{})~\cite{giannakopoulou2020a} and are written in \fretish{}, a structured natural language that can be translated to \MTL{}~\cite{giannakopoulou2021}. \fretish{} requirements can have a \texttt{\textcolor{fret_timing}{timing}} field, on which we can use interval weakening to weaken the requirement itself. The number of requirements that can be weakened using interval weakening per case study is shown in \cref{table:weakenable-reqs-case-studies}. As an example, the requirement in \cref{fig:example-fret-requirement-REQ018} from the autonomous drone case study~\cite{sheridan2025} uses the \texttt{\textcolor{fret_timing}{within 12 milliseconds}} timing which specifies that if the condition holds in one state, then the consequent must hold within the next twelve states (assuming that state transitions correspond to a millisecond of time passing). The \MTL{} translation of this timing corresponds to the \MTL{} temporal operator $\Diamond_{[0,12]}$, and so the requirement corresponds to
+%
+% We analyse the requirement sets from a number of case studies, which are formalised using the Formal Requirements Elicitation Tool (\fret{})~\cite{giannakopoulou2020a}. Requirements are written in \fretish{}, a structured natural language that can be translated to \MTL{}~\cite{giannakopoulou2021}. \fretish{} requirements can have a \texttt{\textcolor{fret_timing}{timing}} field, on which we can use interval weakening to weaken the requirement itself. The number of requirements that can be weakened using interval weakening per case study is shown in \cref{table:weakenable-reqs-case-studies}. As an example, the requirement in \cref{fig:example-fret-requirement-REQ018} from the autonomous drone case study~\cite{sheridan2025} uses the \texttt{\textcolor{fret_timing}{within 12 milliseconds}} timing which specifies that if the condition holds in one state, then the consequent must hold within the next twelve states (assuming that state transitions correspond to a millisecond of time passing). The \MTL{} translation of this timing corresponds to the \MTL{} temporal operator $\Diamond_{[0,12]}$, and so the requirement corresponds to
 %
 \begin{equation}\label{eqn:example-fret-requirement-REQ018}
 \Box(\texttt{\textcolor{fret_condition}{ControlLoopStart}}\rightarrow \eventually{[0,12]}(\texttt{\textcolor{fret_response}{ControlLoopFinish}})).
@@ -57,8 +57,6 @@ Under system degradation, for example if the onboard communications network is d
 \begin{equation}\label{eqn:example-fret-requirement-REQ018-weakened}
 \Box(\texttt{\textcolor{fret_condition}{ControlLoopStart}}\rightarrow \eventually{[0,24]}(\texttt{\textcolor{fret_response}{ControlLoopFinish}})).
 \end{equation}
-%
-% \marienote{Are there consequences of the control loop taking  24 time units to complete? What kind of degraded operation might cause this? (we can email Leandro if needed)}
 %
 An example requirement from the mechanical lung ventilator case study~\cite{farrell2024} is shown in \cref{fig:example-fret-requirement-FUN37}, and as the \fretish{} timing \texttt{\textcolor{fret_timing}{for 120 minutes}} corresponds to the \MTL{} temporal operator $\Box_{[1,120]}$, the corresponding \MTL{} property is
 %
@@ -72,6 +70,8 @@ This is a regulatory requirement~\cite{iso2023} and so, if it does not hold in t
 \Box(\texttt{\textcolor{fret_condition}{powerFailure}} \rightarrow  \generally{[1,90]}(\neg\texttt{\textcolor{fret_response}{off}})).
 \end{equation}
 %
+Of the 127 interval-weakenable requirements in \cref{table:weakenable-reqs-case-studies}, 116 can be weakened by interval extension as in \cref{eqn:example-fret-requirement-REQ018-weakened}, and 11 by interval contraction as in \cref{eqn:example-fret-requirement-FUN37-weakened}.
+
 Several case studies in \cref{table:weakenable-reqs-case-studies} have few or no requirements that can be weakened with interval weakening. These requirements are typically liveness properties specified with the \texttt{\textcolor{fret_timing}{eventually}} timing, which cannot be weakened further, or safety properties specified with the \texttt{\textcolor{fret_timing}{always}} timing, for which interval weakening would not be appropriate. For example, from the grasping for debris removal case study~\cite{farrell2022a},
 %
 \begin{equation}\label{eqn:example-fret-requirement-always}
@@ -80,7 +80,5 @@ Several case studies in \cref{table:weakenable-reqs-case-studies} have few or no
 \textcolor{fret_timing}{always}
 \textcolor{fret_response}{satisfy !collide(SV, TGT)}}.
 \end{equation}
-
-To answer \textbf{RQ2}, we have shown that interval weakening can be applied to the requirements of a number of real-world systems, as nearly a third of the analysed requirements could be weakened. We also used example requirements to demonstrate how these weakenings would be useful in domain-specific settings for understanding how safety-critical guarantees change under system degradation. We also answered \textbf{RQ1} by using \cegiw{} to identify problems in a specification, and then deduce useful timing properties in the fixed system.
-% \marienote{specifically refer to the research questions somewhere in the above paragraph}
-% \marienote{so what are the answers to \textbf{RQ1} and \textbf{RQ2}: a summary would be nice here}
+%
+To answer \textbf{RQ2}, we have shown that interval weakening is applicable to a substantial proportion of existing temporal requirements, and that such weakenings have meaningful interpretations in safety-critical domains. We have also answered \textbf{RQ1} by using \cegiw{} to identify problems in a specification, and then deduce useful timing properties in the fixed system.

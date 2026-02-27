@@ -18,8 +18,7 @@ The suffix-covering interval of $\pi$, defined with respect to an interval $[a,b
 \begin{equation}
 \covering_\pi([a,b]) = [a, \min(b,\rightidx_\pi(a))]
 \end{equation}
-% \centereqn{\covering_\pi([a,b]) = [a, \min(b,\rightidx_\pi(a))]}
-where
+where we specify a finite \emph{end} of the infinite trace with
 \begin{equation}
 \rightidx_\pi(a) =
 \begin{cases*}
@@ -89,7 +88,7 @@ We also define the \emph{optimality} of weakenings, used to prove that \cegiw{} 
 }
 \end{algorithm}
 
-The proof of correctness and optimality follows the inductive structure of \cegiw{}, with base cases for directly weakening the intervals of $\until{I}$ and $\release{I}$ (\cref{lemma:weakening-algorithm-direct-until,lemma:weakening-algorithm-direct-release}), and inductive cases for weakening within both operators on either side (\cref{lemma:weakening-algorithm-inductive-until-left,lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right}). Note that the temporal subformula $\psi\bintemporal{\Iorig}\psi'$ with original interval $\Iorig$ is globally visible in all of the recursive function calls.
+The entrypoint of \cegiw{} is \cref{alg:aux}, which recurses following the inductive structure of the \MTL{} context grammar. The proof of correctness and optimality follows the same inductive structure, with base cases for directly weakening the intervals of $\until{I}$ and $\release{I}$ (\cref{lemma:weakening-algorithm-direct-until,lemma:weakening-algorithm-direct-release}), and inductive cases for weakening within both operators on either side (\cref{lemma:weakening-algorithm-inductive-until-left,lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right}).
 
 \begin{algorithm}[t]
 \SetAlgoNlRelativeSize{-1}
@@ -107,6 +106,10 @@ The proof of correctness and optimality follows the inductive structure of \cegi
     \Return $None$
 }
 \end{algorithm}
+
+% For directly weakening the interval of $\mathcal{U}_I$, \cref{alg:weaken-direct-until} takes a subformula $\psi_l\until{[a,b]}\psi_r$ and a trace $\pi$ at timestep $t$, and extends the interval $[a,b]$ on the right until $\sat{\pi}{t}\psi_l\until{[a,b]}\psi_r$ holds.
+
+Intuitively, to weaken a $\mathcal{U}$ formula $\psi_l \until{I} \psi_r$ in \cref{alg:weaken-direct-until}, the algorithm considers how the interval can be adjusted so that the formula becomes satisfied. Starting from time $t$, if the formula does not hold under the original interval, the only admissible weakening is to extend the right bound, thereby allowing additional time for the right subformula $\psi_r$ to become true while the left subformula $\psi_l$ continues to hold. The algorithm therefore extends the right bound incrementally until either the $\mathcal{U}$ formula holds on the given trace or no further extension is possible. In the former case, it returns the smallest such extension, yielding an optimal weakening; in the latter case, it reports that no interval weakening exists.
 
 \begin{lemma}[$\mathcal{U}$ base case]\label{lemma:weakening-algorithm-direct-until}
     Let $I$ be an interval, $\psi_l$ and $\psi_r$ \MTL{} formulae, and $\pi$ a lasso trace. Then, for all timepoints $t\in\N$ with
@@ -137,7 +140,7 @@ The proof of correctness and optimality follows the inductive structure of \cegi
 \end{lemma}
 
 \begin{proof}
-Proof in \cref{sec:appendix}.
+Full proof and pseudocode is available in our repository.
 %
 \qed
 \end{proof}
@@ -150,6 +153,7 @@ We prove the inductive cases with an \MTL{} context $C$, an interval $I$, \MTL{}
 \end{compactitem}
 If $I'=None$, then there exists no such interval in each case.
 
+Intuitively, when weakening within the left subformula of a $\mathcal{U}$ operator in \cref{alg:aux-until-left}, we must ensure that the left subformula holds at every relevant timestep until the right subformula becomes true. Starting from time $t$, the algorithm therefore examines each timestep $t+i$ within the original interval and determines the interval weakening required for the left subformula to hold on the given trace at that point. Because the left operand of $\mathcal{U}$ is interpreted universally over the interval, the overall weakening must be strong enough to satisfy all such requirements. The algorithm therefore selects the weakest interval that subsumes all interval weakenings computed for individual timesteps. If no such interval exists, or if weakening fails at any timestep, the algorithm reports that no valid weakening can be found.
 
 \begin{algorithm}[t]
 \SetAlgoNlRelativeSize{-1}
@@ -210,7 +214,7 @@ If $I'=None$, then there exists no such interval in each case.
     Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, and $\pi$ a lasso trace. If $P(C)$ holds, then so does $P(\phi\release{J}C)$.
 \end{lemma}
 %
-Proofs for \cref{lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right} are located in \cref{sec:appendix}. We use these supporting lemmas to prove the correctness and optimality of \cegiw{}.
+Full proofs for \cref{lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right} are available in our repository. We use these supporting lemmas to prove the correctness and optimality of \cegiw{}.
 %
 \begin{theorem}[Correctness for weakening]\label{theorem:weakening-algorithm-correctness}
     Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, $\pi$ a lasso trace, and $t\in\N$ be a timepoint. Let $I'=\weakenaux(C,\psi\bintemporal{I}\psi',\pi,t)$. If $I'$ is an interval then $\pi \vDash C[\psi\bintemporal{I'}\psi']$, and

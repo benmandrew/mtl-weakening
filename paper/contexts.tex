@@ -4,7 +4,7 @@ We briefly state the syntax and semantics of Metric Temporal Logic~\cite{koymans
 \begin{equation}
     \phi := p \bnfsep \top \bnfsep \neg \phi \bnfsep \phi \land \phi \bnfsep \phi \until{I} \phi \bnfsep \phi \release{I} \phi
 \end{equation}
-where $p\in\mathcal{P}$ and $I$ is an interval of the form $[a,b]$ for $a\in\N$ and $b\in\N\cup\{\infty\}$ where $a\leq b$. Other constructs can be defined in the standard way, e.g. $\eventually{I}\phi=\top\until{I}\phi$. While the release operator $\mathcal{R}$ can be defined in terms of the until operator $\mathcal{U}$, this would leave a negation as the outermost operator, complicating our weakening algorithm. We consider \MTL{} formulae with a pointwise semantics over the natural numbers~\cite{alur1993}, defined according to a trace $\pi$ which is an infinite sequence of states in which atomic propositions can hold, and an index of the trace $t \in \N$. The set of atomic propositions that hold in the $t$-th state is denoted by $\pi(t)$. A trace $\pi$ satisfies an \MTL{} formula $\phi$, denoted by $\pi\vDash\phi$, if and only if $\sat{\pi}{0}\phi$.
+where $p\in\mathcal{P}$ and $I$ is an interval, $[a,b]$, for $a\in\N$ and $b\in\N\cup\{\infty\}$ and $a\leq b$. Other constructs can be defined as usual, e.g. $\eventually{I}\phi=\top\until{I}\phi$. While the release operator $\mathcal{R}$ can be defined in terms of the until operator $\mathcal{U}$, this would leave a negation as the outermost operator, complicating our weakening algorithm. We consider \MTL{} formulae with a pointwise semantics over the natural numbers~\cite{alur1993}, defined according to a trace $\pi$ which is an infinite sequence of states in which atomic propositions can hold, and an index of the trace $t \in \N$. The set of atomic propositions that hold in the $t$-th state is denoted by $\pi(t)$. A trace $\pi$ satisfies an \MTL{} formula $\phi$, denoted by $\pi\vDash\phi$, if and only if $\sat{\pi}{0}\phi$.
 \begin{align*}
     \pi, t & \vDash p && \text{iff}&& p \in \pi(t) \\
     \pi, t & \vDash \neg \phi && \text{iff}&& \pi, t \nvDash \phi \\
@@ -21,7 +21,7 @@ where $p\in\mathcal{P}$ and $I$ is an interval of the form $[a,b]$ for $a\in\N$ 
 \begin{equation}
 C ::= [-] \bnfsep C \land \phi \bnfsep \phi \land C \bnfsep C \lor \phi \bnfsep \phi \lor C \bnfsep C \until{I} \phi \bnfsep \phi \until{I} C \bnfsep C \release{I} \phi \bnfsep \phi \release{I} C
 \end{equation}
-where $\phi$ is an \MTL{} formula and $I$ is an interval. Note that our definition of contexts does not allow negations on the path to the hole $[-]$, similarly to the restriction imposed by negation normal form (NNF). However, adjacent \MTL{} subformulae $\phi$ are not required to be in NNF and can contain negations.
+where $\phi$ is an \MTL{} formula and $I$ is an interval. Our definition of contexts does not allow negations on the path to the hole $[-]$, similarly to the restriction imposed by negation normal form (NNF). However, adjacent \MTL{} subformulae $\phi$ are not required to be in NNF and can contain negations.
 \end{definition}
 %
 We define the notion of \emph{context substitution}, where an \MTL{} formula $\psi$ is substituted into the hole of a context $C$ to produce an \MTL{} formula $C[\psi]$.
@@ -40,6 +40,7 @@ We define the notion of \emph{context substitution}, where an \MTL{} formula $\p
 \end{minipage}%
 \begin{minipage}{.5\linewidth}
 \begin{align*}
+\\
 (C\until{I}\phi)[\psi] &= C[\psi]\until{I}\phi \\
 (\phi\until{I} C)[\psi] &= \phi\until{I} C[\psi] \\
 (C\release{I}\phi)[\psi] &= C[\psi]\release{I}\phi \\
@@ -52,7 +53,7 @@ We define the notion of \emph{context substitution}, where an \MTL{} formula $\p
 \makeatother
 \vspace{\baselineskip}
 
-\noindent Note that, by pushing negations inwards, an \MTL{} formula $\phi$ can always be transformed into a context $C$ and subformula $\psi$ where $\phi$ is logically equivalent to $C[\psi]$.
+By pushing negations inwards, an \MTL{} formula $\phi$ can always be transformed into a context $C$ and subformula $\psi$ where $\phi$ is logically equivalent to $C[\psi]$.
 
 
 \begin{definition}[Weakening and strengthening of \MTL{} formulae]
