@@ -5,17 +5,7 @@ PDF = $(MAIN).pdf
 BUILD_DIR = build
 
 # LaTeX source files
-TEX_FILES = $(MAIN).tex \
-	paper/introduction.tex \
-	paper/contexts.tex \
-	paper/conclusion.tex \
-	paper/appendix.tex \
-	paper/algorithm/main.tex \
-	paper/algorithm/cex-relative.tex \
-	paper/algorithm/iterative.tex \
-	paper/evaluation/main.tex \
-	paper/evaluation/demonstration.tex \
-	paper/evaluation/case-studies.tex
+TEX_FILES = $(wildcard *.tex paper/*.tex paper/*/*.tex)
 
 # Bibliography and style files
 BIB_FILES = bibliography.bib
