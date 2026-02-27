@@ -1,0 +1,242 @@
+\subsection{Weakening on a Counterexample}\label{subsec:cex-relative-weakening}
+
+Model checkers generally produce a specific type of infinite counterexample trace, called a \emph{lasso trace}.
+
+\begin{definition}[Lasso traces]
+A trace $\pi$ is \emph{lasso} if it can be separated into a finite prefix $\pipre$ and an infinitely repeating finite suffix $\pisuf$, forming
+\begin{equation}
+\pi=\pipre(\pisuf)^\omega.
+\end{equation}
+% \centereqn{\pi=\pipre(\pisuf)^\omega.}
+This restricts us to a subset of infinite traces that can be finitely represented. The finite length of a lasso trace is then defined as $|\pi|=|\pipre| + |\pisuf|$.
+\end{definition}
+%
+We show that we can prove properties of an entire infinite lasso trace using only a finite \emph{covering interval}. Without this, we may need to iterate over the entire infinite trace, impacting completeness.
+%
+\begin{definition}[Covering intervals]
+The suffix-covering interval of $\pi$, defined with respect to an interval $[a,b]$, is
+\begin{equation}
+\covering_\pi([a,b]) = [a, \min(b,\rightidx_\pi(a))]
+\end{equation}
+where we specify a finite \emph{end} of the infinite trace with
+\begin{equation}
+\rightidx_\pi(a) =
+\begin{cases*}
+  |\pi|        & if $a<|\pipre|$ \\
+  a+|\pisuf|-1 & otherwise.
+\end{cases*}
+\end{equation}
+\end{definition}
+
+\begin{lemma}[Lasso trace coverage]\label{lemma:lasso-trace-coverage}
+    Let $\phi$ be an \MTL{} formula, $\pi$ be a lasso trace, and $a\in\N$. If for all $t\in[a,\rightidx_\pi(a)]$ we have $\sat{\pi}{t}\phi$, then for all $t'\in\N$ with $t'\geq a$ we have $\sat{\pi}{t'}\phi$.
+\end{lemma}
+
+\begin{proof}
+    We assume that for all $t\in[a,\rightidx_\pi(a)]$ we have $\sat{\pi}{t}\phi$, and, taking an arbitrary $t'\in\N$ with $t'\geq a$ want to prove that $\sat{\pi}{t'}\phi$. There are two cases. Firstly, if $t'<|\pi|$ then we know that this is within the $[a,\rightidx_\pi(a)]$ range and so we have $\sat{\pi}{t'}\phi$. Otherwise, if $t'\geq|\pi|$, we split $\pi$ into its prefix $\pipre$ and infinitely repeating suffix $\pisuf$, and want to prove that $\sat{\pipre(\pisuf)^\omega}{t'}\phi$. As $t'\geq|\pi|$, we can split it into $t'=|\pipre| + n\cdot|\pisuf| + m$ for some $n,m\in\N$ with $n\geq 1$ and $m<|\pisuf|$.
+    \begin{align}
+    \begin{split}
+    & \sat{\pipre(\pisuf)^\omega}{|\pipre| + n\cdot|\pisuf| + m}\phi\\
+    \implies& \sat{(\pisuf)^\omega}{n\cdot|\pisuf| + m}\phi\\
+    \implies& \sat{(\pisuf)^\omega}{m}\phi\\
+    \implies& \sat{\pipre(\pisuf)^\omega}{|\pipre| + m}\phi
+    \end{split}
+    \end{align}
+    We know that $|\pipre| + m$ is in the $[a,\rightidx_\pi(a)]$ interval, so we have $\sat{\pi}{t'}\phi$.
+    %
+    \qed
+\end{proof}
+
+We also define the \emph{optimality} of weakenings, used to prove that \cegiw{} will not produce an interval weakening that is any stronger than it needs to be.
+
+\begin{definition}[Optimality of right-bound extensions and contractions]
+    An interval $I'$ is an optimal right-bound extension (resp.\ contraction) of an interval $I$ with respect to a context $C$, \MTL{} formulae $\psi$ and $\psi'$, a temporal operator $\triangle\in\{\mathcal{U},\mathcal{R}\}$, trace $\pi$, and time-step $t$, if
+    \begin{equation}
+    \sat{\pi}{t}C[\psi\bintemporal{I'}\psi']
+    \end{equation}
+    % \centereqn{\sat{\pi}{t}C[\psi\bintemporal{I'}\psi']}
+    and either (a) $I=I'$, or (b) there exists no strict right-bound contraction (resp.\ extension) $I''$ of $I'$ such that $\sat{\pi}{t}C[\psi\bintemporal{I''}\psi']$.
+\end{definition}
+%
+\begin{algorithm}[t]
+\SetAlgoNlRelativeSize{-1}
+\caption{Weakening within a context $C$}
+\label{alg:aux}
+
+\Function{\weakenaux($C$, $\psi\bintemporal{\Iorig}\psi'$, $\pi$, $t$)}{
+    \uIf{$C = [-]$}{
+        \uIf{$\triangle = \mathcal{U}$}{
+            \Return \weakenuntildirect$(\psi, \psi', \Iorig, \pi, t)$
+        }
+        \uElse(\tcp*[h]{$\triangle = \mathcal{R}$}){
+            \Return \weakenreleasedirect$(\psi, \psi', \Iorig, \pi, t)$
+        }
+    }
+    $\cdots$\\
+    \uElseIf{$C = C \until{J} \phi$}{
+        \Return \weakenuntilleft$(C, \phi, J, \psi\bintemporal{\Iorig}\psi', \pi, t)$
+    }
+    \uElseIf{$C = \phi \until{J} C$}{
+        \Return \weakenuntilright$(\phi, C, J, \psi\bintemporal{\Iorig}\psi', \pi, t)$
+    }
+    \uElseIf{$C = C \release{J} \phi$}{
+        \Return \weakenreleaseleft$(C, \phi, J, \psi\bintemporal{\Iorig}\psi', \pi, t)$
+    }
+    \uElseIf{$C = \phi \release{J} C$}{
+        \Return \weakenreleaseright$(\phi, C, J, \psi\bintemporal{\Iorig}\psi', \pi, t)$
+    }
+}
+\end{algorithm}
+
+The entrypoint of \cegiw{} is \cref{alg:aux}, which recurses following the inductive structure of the \MTL{} context grammar. The proof of correctness and optimality follows the same inductive structure, with base cases for directly weakening the intervals of $\until{I}$ and $\release{I}$ (\cref{lemma:weakening-algorithm-direct-until,lemma:weakening-algorithm-direct-release}), and inductive cases for weakening within both operators on either side (\cref{lemma:weakening-algorithm-inductive-until-left,lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right}).
+
+\begin{algorithm}[t]
+\SetAlgoNlRelativeSize{-1}
+\caption{Directly weakening interval of $\mathcal{U}$}
+\label{alg:weaken-direct-until}
+\Function{\weakenuntildirect($\psi_l$, $\psi_r$, $[a,b]$, $\pi$, $t$)}{
+    \For{$i \gets a$ \KwTo $\rightidx_\pi(a)$}{
+        \If{$\pi, t+i\vDash \psi_r$}{\label{line:weaken-direct-until-1}
+            \Return $[a, \max(b,i)]$
+        }
+        \If{$\pi, t+i\nvDash \psi_l$}{\label{line:weaken-direct-until-2}
+            \textbf{break}
+        }
+    }
+    \Return $None$
+}
+\end{algorithm}
+
+% For directly weakening the interval of $\mathcal{U}_I$, \cref{alg:weaken-direct-until} takes a subformula $\psi_l\until{[a,b]}\psi_r$ and a trace $\pi$ at timestep $t$, and extends the interval $[a,b]$ on the right until $\sat{\pi}{t}\psi_l\until{[a,b]}\psi_r$ holds.
+
+Intuitively, to weaken a $\mathcal{U}$ formula $\psi_l \until{I} \psi_r$ in \cref{alg:weaken-direct-until}, the algorithm considers how the interval can be adjusted so that the formula becomes satisfied. Starting from time $t$, if the formula does not hold under the original interval, the only admissible weakening is to extend the right bound, thereby allowing additional time for the right subformula $\psi_r$ to become true while the left subformula $\psi_l$ continues to hold. The algorithm therefore extends the right bound incrementally until either the $\mathcal{U}$ formula holds on the given trace or no further extension is possible. In the former case, it returns the smallest such extension, yielding an optimal weakening; in the latter case, it reports that no interval weakening exists.
+
+\begin{lemma}[$\mathcal{U}$ base case]\label{lemma:weakening-algorithm-direct-until}
+    Let $I$ be an interval, $\psi_l$ and $\psi_r$ \MTL{} formulae, and $\pi$ a lasso trace. Then, for all timepoints $t\in\N$ with
+    \begin{equation}
+    I'=\weakenuntildirect(\psi_l,\psi_r,I,\pi,t),
+    \end{equation}
+    \noindent either $I'$ is an optimal right-bound extension of $I$ such that $\sat{\pi}{t}\psi_l\until{I'}\psi_r$, or $I'=None$, in which case there exists no such interval.
+\end{lemma}
+
+\begin{proof}
+    We take an arbitrary $t$. Our proof for \cref{alg:weaken-direct-until} uses the loop invariant that $\forall j\in[a,\rightidx_\pi(a)]$ with $j<i$ (where $I=[a,b]$), we have that $\nsat{\pi}{t+j}\psi_r$ and $\sat{\pi}{t+j}\psi_l$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know that $\nsat{\pi}{t+i}\psi_r$ and $\sat{\pi}{t+i}\psi_l$, and so in combination with the loop invariant we know that $\forall j\in I$ where $j\leq i$, we have $\nsat{\pi}{t+j}\psi_r$ and $\sat{\pi}{t+j}\psi_l$. Thus, the loop invariant is preserved. Suppose at the start of iteration $i$ the loop invariant holds. If $\sat{\pi}{t+j}\psi_r$ on \cref{line:weaken-direct-until-1} then we return $I'=[a,\max(b,i)]$. This is an optimal right-bound extension of $I$ and we have that $\sat{\pi}{t}\psi_l\until{I'}\psi_r$.
+    
+    If $None$ is returned, then either we broke out of the loop early because for some $i\in[a,\rightidx_\pi(a)]$ we have $\nsat{\pi}{t+i}\psi_l$ at \cref{line:weaken-direct-until-2}, or we ran the loop to completion. In the first case, we know that $\nsat{\pi}{t+i}\psi_r$ as this is checked before at \cref{line:weaken-direct-until-1}, and so combining with the loop invariant we know that $\psi_r$ never held up until $\psi_l$ stopped holding, and so there is no right-bound extension $I'$ for which $\sat{\pi}{t}\psi_l\until{I'}\psi_r$.
+    
+    In the second case, by the loop invariant we have that for all $i\in[a,\rightidx_\pi(a)]$ we have $\sat{\pi}{t+i}\psi_l$ and $\nsat{\pi}{t+i}\psi_r$. By \cref{lemma:lasso-trace-coverage} we then have the same for all $i\in\N$ with $i\geq a$, and so there exists no right-bound extension $I'$ of $I$ that satisfies $\sat{\pi}{t}\psi_l\until{I'}\psi_r$.
+    %
+    \qed
+\end{proof}
+
+
+\begin{lemma}[$\mathcal{R}$ base case]\label{lemma:weakening-algorithm-direct-release}
+    Let $I$ be an interval, $\psi_l$ and $\psi_r$ \MTL{} formulae, and $\pi$ a lasso trace. Then, for all timepoints $t\in\N$ with
+    \begin{equation}
+    I'=\weakenreleasedirect(\psi_l,\psi_r,I,\pi,t),
+    \end{equation}
+    % \centereqn{I'=$\weakenreleasedirect$(\psi_l,\psi_r,I,t),}
+    \noindent either $I'$ is an optimal right-bound contraction of $I$ such that $\sat{\pi}{t}\psi_l\release{I'}\psi_r$, or $I'=None$, in which case there exists no such interval.
+\end{lemma}
+
+\begin{proof}
+Full proof and pseudocode is available in our repository.
+%
+\qed
+\end{proof}
+
+We prove the inductive cases with an \MTL{} context $C$, an interval $I$, \MTL{} formulae $\psi$ and $\psi'$, a temporal operator $\triangle\in\{\mathcal{U}, \mathcal{R}\}$, and a lasso trace $\pi$. We use the induction hypothesis $P(C)$, that for all timepoints $t\in\N$ with $I'=\weakenaux(C,\psi\bintemporal{I}\psi', \pi,t)$, if $I'$ is an interval then $\pi,t\vDash C[\psi\bintemporal{I}\psi']$, and
+\begin{compactitem}
+    \item[1.] If $\triangle=\mathcal{U}$, then $I'$ is an optimal right-bound extension of $I$;
+
+    \item[2.] If $\triangle=\mathcal{R}$, then $I'$ is an optimal right-bound contraction of $I$.
+\end{compactitem}
+If $I'=None$, then there exists no such interval in each case.
+
+Intuitively, when weakening within the left subformula of a $\mathcal{U}$ operator in \cref{alg:aux-until-left}, we must ensure that the left subformula holds at every relevant timestep until the right subformula becomes true. Starting from time $t$, the algorithm therefore examines each timestep $t+i$ within the original interval and determines the interval weakening required for the left subformula to hold on the given trace at that point. Because the left operand of $\mathcal{U}$ is interpreted universally over the interval, the overall weakening must be strong enough to satisfy all such requirements. The algorithm therefore selects the weakest interval that subsumes all interval weakenings computed for individual timesteps. If no such interval exists, or if weakening fails at any timestep, the algorithm reports that no valid weakening can be found.
+
+\begin{algorithm}[t]
+\SetAlgoNlRelativeSize{-1}
+\caption{Weakening within $\mathcal{U}$ on the left}
+\label{alg:aux-until-left}
+
+\Function{\weakenuntilleft($C$, $\phi$, $[a,b]$, $\psi\bintemporal{\Iorig}\psi'$, $\pi$, $t$)}{
+    $\bfin \gets \min(b, \rightidx_\pi(a))$ \\
+    $intervals \gets [\;]$ \\
+    \For{$i \gets a$ \KwTo $\bfin$}{
+        \If{$\pi, t + i \vDash \phi$}{\label{line:weaken-until-left-1}
+            \If{$i = a$}{
+                \Return $\Iorig$
+            }
+            \Return interval in $intervals$ with maximal absolute difference to $\Iorig$
+        }
+        $I \gets \weakenaux(C, \psi\bintemporal{\Iorig}\psi', \pi, t + i)$\\
+        \If{$I = None$}{\label{line:weaken-until-left-2}
+            \Return $None$
+        }
+        append $I$ to $intervals$
+    }
+    \Return $None$
+}
+\end{algorithm}
+
+\begin{lemma}[$\mathcal{U}$-left inductive case]\label{lemma:weakening-algorithm-inductive-until-left}
+    Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, and $\pi$ a lasso trace. If $P(C)$ holds, then so does $P(C\until{J}\phi)$.
+\end{lemma}
+
+\begin{proof}
+    For \cref{alg:aux-until-left} we assume the inductive hypothesis $P(C)$ and want to prove $P(C\until{J}\phi)$. We take an arbitrary $t$ and distinguish two cases, according to whether $\triangle$ is $\mathcal{U}$ or $\mathcal{R}$. In either case, by the induction hypothesis each recursive call evaluates to either $None$ or an optimal interval $I'$ related to $I$ by the corresponding relation (right-bound extension or contraction respectively) such that $\sat{\pi}{t+t'} C[\psi\bintemporal{I'}\psi']$.
+    
+    We use the loop invariant that, for all $j\in\covering_\pi(J)$ with $j<i$, we have that $\nsat{\pi}{t+j}\phi$ and that $I'=\weakenaux(C,\psi\bintemporal{I}\psi',\pi,t+j)$ is an interval such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. On first entry to the loop there is no such $j$, so this is trivially true. On reaching the end of the loop body, we know that $\weakenaux(C,\psi\bintemporal{I}\psi',\pi,t+i)\neq None$ from \cref{line:weaken-until-left-2}, and so by the induction hypothesis the recursive call must have produced a suitable interval $I'$. As we also know that $\nsat{\pi}{t+i}\phi$ from \cref{line:weaken-until-left-1}, the loop invariant is thus preserved for $j\leq i$. Suppose at the start of iteration $i$ the loop invariant holds. If $\weakenaux(C,\psi\bintemporal{I}\psi',\pi,t+i) = None$ at \cref{line:weaken-until-left-2} then by the induction hypothesis we know that there is no suitable interval $I''$ for which $\sat{\pi}{t+i} C[\psi\bintemporal{I''}\psi']$, and by the loop invariant that there is no $j<i$ for which $\sat{\pi}{t+j}\phi$. Thus, there is no suitable interval $I''$ for which $\sat{\pi}{t} (C\until{J}\phi)[\psi\bintemporal{I''}\psi']$. If $\sat{\pi}{t+j}\phi$ at \cref{line:weaken-until-left-1} then we split on whether it is our first iteration or not. If $i=a$ (where $J=[a,b]$) then we know that $\sat{\pi}{t+a}\phi$, and so any interval will work. We simply return the original interval $\Iorig$.
+
+    Otherwise, by the loop invariant we know that for all $j\in\covering_\pi(J)$ with $j<i$ --- of which there must be at least one as $i>a$ --- we have an interval $I'$ such that $\sat{\pi}{t+j} C[\psi\bintemporal{I'}\psi']$. Applying \cref{lemma:extension-weakening-order} if $\triangle=\mathcal{U}$, or \cref{lemma:contraction-weakening-order} if $\triangle=\mathcal{R}$, we obtain a maximum interval $I''$ such that for all $j\in\covering_\pi(J)$ with $j<i$ we have $\sat{\pi}{t+j} C[\psi\bintemporal{I''}\psi']$. If $\covering_\pi(J)=J$ then we have
+    \begin{equation}
+    \sat{\pi}{t} (C\until{J}\phi)[\psi\bintemporal{I''}\psi'].
+    \end{equation}
+    % \centereqn{\sat{\pi}{t} (C\until{J}\phi)[\psi\bintemporal{I''}\psi'].}
+    Otherwise, if $\covering_\pi(J)=[a,\rightidx_\pi(a)]$, then by \cref{lemma:lasso-trace-coverage} for all $k\in\N$ with $k\geq a$ we have $\sat{\pi}{t+k} C[\psi\bintemporal{I''}\psi']$, and so the above holds here too.
+    %
+    \qed
+\end{proof}
+
+
+\begin{lemma}[$\mathcal{U}$-right inductive case]\label{lemma:weakening-algorithm-inductive-until-right}
+    Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, and $\pi$ a lasso trace. If $P(C)$ holds, then so does $P(\phi\until{J}C)$.
+\end{lemma}
+
+
+\begin{lemma}[$\mathcal{R}$-left inductive case]\label{lemma:weakening-algorithm-inductive-release-left}
+    Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, and $\pi$ a lasso trace. If $P(C)$ holds, then so does $P(C\release{J}\phi)$.
+\end{lemma}
+
+
+\begin{lemma}[$\mathcal{R}$-right inductive case]\label{lemma:weakening-algorithm-inductive-release-right}
+    Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, and $\pi$ a lasso trace. If $P(C)$ holds, then so does $P(\phi\release{J}C)$.
+\end{lemma}
+%
+Full proofs for \cref{lemma:weakening-algorithm-inductive-until-right,lemma:weakening-algorithm-inductive-release-left,lemma:weakening-algorithm-inductive-release-right} are available in our repository. We use these supporting lemmas to prove the correctness and optimality of \cegiw{}.
+%
+\begin{theorem}[Correctness for weakening]\label{theorem:weakening-algorithm-correctness}
+    Let $C$ be an \MTL{} context, $I$ and $J$ intervals, $\phi$, $\psi$, and $\psi'$ \MTL{} formulae, $\triangle\in\{\mathcal{U}, \mathcal{R}\}$ a temporal operator, $\pi$ a lasso trace, and $t\in\N$ be a timepoint. Let $I'=\weakenaux(C,\psi\bintemporal{I}\psi',\pi,t)$. If $I'$ is an interval then $\pi \vDash C[\psi\bintemporal{I'}\psi']$, and
+    \begin{compactitem}
+        \item[1.] If $\triangle=\mathcal{U}$, then $I'$ is an optimal right-bound extension of $I$;
+        
+        \item[2.] If $\triangle=\mathcal{R}$, then $I'$ is an optimal right-bound contraction of $I$.
+    \end{compactitem}
+    If $I'=None$, then there exists no such interval in each case.
+\end{theorem}
+
+\begin{proof}
+    We use the same induction hypothesis $P(C)$ defined for the preceding inductive lemmas. The non-temporal inductive cases are omitted for brevity.
+    \begin{description}
+    \item \textsc{Base case $[-]$:} By \cref{lemma:weakening-algorithm-direct-until} if $\triangle=\mathcal{U}$, and \cref{lemma:weakening-algorithm-direct-release} if $\triangle=\mathcal{R}$, we have $P([-])$.
+    \item \textsc{Inductive case $C\until{J}\phi$:} Assuming $P(C)$, by \cref{lemma:weakening-algorithm-inductive-until-left} we have $P(C\until{J}\phi)$.
+    \item \textsc{Inductive case $\phi\until{J}C$:} Assuming $P(C)$, by \cref{lemma:weakening-algorithm-inductive-until-right} we have $P(\phi\until{J}C)$.
+    \item \textsc{Inductive case $C\release{J}\phi$:} Assuming $P(C)$, by \cref{lemma:weakening-algorithm-inductive-release-left} we have $P(C\release{J}\phi)$.
+    \item \textsc{Inductive case $\phi\release{J}C$:} Assuming $P(C)$, by \cref{lemma:weakening-algorithm-inductive-release-right} we have $P(\phi\release{J}C)$.
+    \end{description}
+    %
+    \qed
+\end{proof}
+%
+The time complexity of \cref{alg:aux} is $O(|\pi|^{\texttt{td}(\phi)})$. where $\pi$ is the counterexample trace and $\texttt{td}(\phi)$ is the \emph{temporal depth} of the \MTL{} formula $\phi$, i.e.\ the maximum number of nested temporal operators along any path in the syntax tree.

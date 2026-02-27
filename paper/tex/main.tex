@@ -1,0 +1,194 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.21 of 2022/01/12
+%
+\documentclass[runningheads, envcountsame, a4paper]{llncs}
+%
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[hidelinks]{hyperref}
+\usepackage[toc,page]{appendix}
+\usepackage{subcaption}
+\usepackage[utf8]{inputenc}
+\usepackage[
+    giveninits=true,
+    backend=biber,
+    url=false,
+    isbn=false,
+    doi=false,
+    maxbibnames=20
+]{biblatex}
+\bibliography{bibliography.bib}
+\AtEveryBibitem{%
+    \clearname{editor}%
+    \clearfield{copyright}%
+    \clearlist{publisher}%
+    \clearlist{location}%
+    \clearfield{month}%
+    \clearfield{pages}%
+}
+\usepackage[misc,geometry]{ifsym}
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\newcommand{\weakenuntildirect}{\ensuremath{Weaken\mathcal{U}Direct}}
+\newcommand{\weakenreleasedirect}{\ensuremath{Weaken\mathcal{R}Direct}}
+\newcommand{\weakenuntilleft}{\ensuremath{Weaken\mathcal{U}Left}}
+\newcommand{\weakenuntilright}{\ensuremath{Weaken\mathcal{U}Right}}
+\newcommand{\weakenreleaseleft}{\ensuremath{Weaken\mathcal{R}Left}}
+\newcommand{\weakenreleaseright}{\ensuremath{Weaken\mathcal{R}Right}}
+% \newcommand{\weaken}{\ensuremath{Weaken}}
+\newcommand{\weakenaux}{\ensuremath{Weaken}}
+
+\usepackage{color}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\urlstyle{rm}
+\usepackage{paralist}
+\usepackage{mathtools}
+\usepackage{listingsutf8}
+\usepackage{pmboxdraw}
+\protected\def\ucrightarrow{\ensuremath{\rightarrow}}
+% \DeclareUnicodeCharacter{25CF}{\bullet}
+\lstset{
+    literate={→}{\ucrightarrow}1
+}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{patterns}
+\usetikzlibrary{arrows.meta, positioning}
+\tikzset{
+    state/.style={
+        draw=black,
+        shape=rectangle,
+        minimum width=2cm,
+        minimum height=1cm,
+        text=black,
+    },
+    cex/.style={
+        draw=black,
+        shape=rectangle,
+        minimum height=0.75cm,
+        text=black,
+    },
+    >=Stealth,
+    every edge/.append style={draw=black,->,font=\small,text=black}
+}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[capitalise]{cleveref}
+\usepackage{xcolor}
+\definecolor{fret_scope}{HTML}{9F0500}
+\definecolor{fret_condition}{HTML}{FB9E00}
+\definecolor{fret_component}{HTML}{68BC00}
+\definecolor{fret_shall}{HTML}{000000}
+\definecolor{fret_probability}{HTML}{009CE0}
+\definecolor{fret_timing}{HTML}{0062B1}
+\definecolor{fret_response}{HTML}{653294}
+
+\newcommand{\bnfsep}{\;|\;}
+\newcommand{\until}[1]{\;\mathcal{U}_{#1}\,}
+\newcommand{\wuntil}[1]{\;\mathcal{W}_{#1}\,}
+\newcommand{\release}[1]{\;\mathcal{R}_{#1}\,}
+\newcommand{\bintemporal}[1]{\,\triangle_{#1}}
+\newcommand{\generally}[1]{\Box_{#1}}
+\newcommand{\eventually}[1]{\Diamond_{#1}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+
+\newcommand{\model}{\mathcal{M}}
+\newcommand{\wkn}{\sqsubseteq}
+\newcommand{\MTL}{\textsf{MTL}}
+\newcommand{\LTL}{\textsf{LTL}}
+\newcommand{\Iorig}{I_{\mathrm{orig}}}
+\newcommand{\pipre}{\pi_{\mathrm{pre}}}
+\newcommand{\pisuf}{\pi_{\mathrm{suf}}}
+\newcommand{\bfin}{b_\mathrm{fin}}
+\newcommand{\pifin}{\pi_\mathrm{fin}}
+\SetKwProg{Function}{\textbf{function} }{}{}
+\DeclareMathOperator{\rightidx}{end}
+\DeclareMathOperator{\covering}{cov}
+\newcommand{\rightmodifications}{\mathcal{B}_R}
+\newcommand{\sat}[2]{#1,#2\vDash}
+\newcommand{\nsat}[2]{#1,#2\nvDash}
+\newcommand{\univset}{\mathbb{S}}
+\newcommand{\fret}{FRET}
+\newcommand{\fretish}{\textsc{fretish}}
+
+\newcommand{\nuXmv}{\textsc{nuXmv}}
+\newcommand{\SMV}{\textsc{SMV}}
+\newcommand{\spin}{\textsc{Spin}}
+\newcommand{\cegiw}{\textsc{CEGIW}}
+
+
+% \usepackage[colorinlistoftodos]{todonotes}
+% \usepackage[disable]{todonotes}
+% \newcommand{\marienote}[1]{\todo[inline, color=orange!65, author=Marie]{#1}}
+
+\makeatletter
+\newcommand{\centereqn}[1]{%
+  \refstepcounter{equation}%
+  \noindent
+  \makebox[\textwidth]{%
+    \hfill
+    \makebox[0pt][c]{$#1$}% centered equation
+    \hfill\tagform@{\theequation}%
+  }%
+}
+\makeatother
+
+\expandafter\def\expandafter\normalsize\expandafter{%
+    \normalsize%
+    \setlength\abovedisplayskip{4pt}%
+    \setlength\belowdisplayskip{4pt}%
+    \setlength\abovedisplayshortskip{4pt}%
+    \setlength\belowdisplayshortskip{4pt}%
+}
+
+\begin{document}
+
+\title{Counterexample-Guided Interval Weakening}
+
+\author{Ben M. Andrew$^{(\textrm{\Letter})}$ \and
+Marie Farrell \and
+Louise A. Dennis \and
+Michael Fisher}
+
+% \author{Ben M. Andrew\orcidID{0009-0009-8910-5899} \and
+% Marie Farrell\orcidID{0000-0001-7708-3877} \and
+% Louise A. Dennis\orcidID{0000-0003-1426-1896} \and
+% Michael Fisher\orcidID{0000-0002-0875-3862}}
+
+\authorrunning{B.M. Andrew et al.}
+
+\institute{Department of Computer Science, University of Manchester, UK\\
+\email{benjamin.andrew@manchester.ac.uk}}
+
+\maketitle
+
+\begin{abstract}
+Systems deployed for long periods in dynamic environments may experience performance degradation that affects timing guarantees, even when their functional behaviour remains unchanged. In the design and verification of critical systems, such timing guarantees are often expressed using Metric Temporal Logic (\MTL{}). Under degradation, these specifications may no longer hold as stated, although weaker variants that relax timing bounds may still be satisfied and remain meaningful. For example, while an elevator may initially be required to arrive within 30 seconds of a request, degradation of its motor may only allow us to guarantee arrival within 60 seconds. Although weaker, this guarantee is still useful and allows the system to maintain a reasonable level of operation. In this paper we present \cegiw{}, an iterative, counterexample-guided algorithm for automatically weakening timing intervals in \MTL{} specifications so that they hold for a given system model. The algorithm preserves the logical structure of the original specification and weakens only interval bounds. We prove the correctness and optimality of \cegiw{}, and conduct an empirical evaluation to demonstrate the practicality of interval weakening using formalised requirements from a number of real-world case-studies. Using a model checker to produce counterexamples, \cegiw{} either identifies the strongest interval weakening under which the specification holds, or determines that no such weakening exists.
+
+\keywords{System degradation \and Specification weakening \and \\Formal methods \and Metric temporal logic}
+\end{abstract}
+
+\input{paper/introduction}
+
+\input{paper/contexts}
+
+\input{paper/algorithm/main}
+
+\input{paper/evaluation/main}
+
+\input{paper/conclusion}
+
+
+\printbibliography
+% \clearpage
+% \input{paper/appendix}
+
+\end{document}
