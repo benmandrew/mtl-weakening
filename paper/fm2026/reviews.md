@@ -115,28 +115,14 @@ Software running on real-world devices is designed to fulfill a given specificat
 
 ## Weaknesses
 
-- While the implementation is available on GitHub there is no
-data-availability statement and no information on how to reproduce
-the results.
+- While the implementation is available on GitHub there is no data-availability statement and no information on how to reproduce the results.
 - The presented algorithms and their descriptions have room for improvement:
-- Algorithms 1, 2, and 3 make use of undefined symbols or ask for
-parameters that will not be used in the future (pi is used in
-Algorithms 2 and 3 but not passed, ψ △ ψ′ is passed to WeakenC
-but only used in WeakenRec while WeakenRec does not have it as
-input).
-- Algorithm 1 is referenced only once and that after Algorithm 3
-is already introduced.
-While the algorithms are in principle understandable, they should
-at least be referenced and explained on a high level in the text
-near their introduction.
-- All algorithms come with a proof but the intuitive explanations
-are missing.
-- The motivating example is nice but not picked up later.
-Adding such an example and demonstrating one iteration of the counter-example guided approach would be very insightful.
+- Algorithms 1, 2, and 3 make use of undefined symbols or ask for parameters that will not be used in the future (pi is used in Algorithms 2 and 3 but not passed, ψ △ ψ′ is passed to WeakenC but only used in WeakenRec while WeakenRec does not have it as input).
+- Algorithm 1 is referenced only once and that after Algorithm 3 is already introduced. While the algorithms are in principle understandable, they should at least be referenced and explained on a high level in the text near their introduction.
+- All algorithms come with a proof but the intuitive explanations are missing.
+- The motivating example is nice but not picked up later. Adding such an example and demonstrating one iteration of the counter-example guided approach would be very insightful.
 - There are typos and unlinked references in the paper (e.g., Fig. 1.)
 - Parts of the evaluation are confusing (cf. below).
-
-
 
 The authors claim that the weakening of the specification with respect to a given implementation and real counterexamples is novel. The idea to weaken the original specification only by adjusting the intervals is a relevant thought in the real world. It is desired to be tolerant against reasonable performance decreases. The presented approach is sound. The theorems are supported by proofs.
 
