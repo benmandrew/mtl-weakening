@@ -1,3 +1,5 @@
+"""LTL formula AST definitions for backend compatibility."""
+
 from dataclasses import dataclass
 
 
@@ -72,6 +74,7 @@ class Release(Ltl):
 
 
 def to_nuxmv(formula: Ltl) -> str:
+    """Render an LTL AST in NuXmv syntax."""
     if isinstance(formula, TrueBool):
         return "TRUE"
     if isinstance(formula, FalseBool):
@@ -101,6 +104,7 @@ def to_nuxmv(formula: Ltl) -> str:
 
 
 def to_spin(formula: Ltl) -> str:
+    """Render an LTL AST in SPIN/Promela syntax."""
     if isinstance(formula, TrueBool):
         return "true"
     if isinstance(formula, FalseBool):
@@ -130,4 +134,5 @@ def to_spin(formula: Ltl) -> str:
 
 
 def to_string(formula: Ltl) -> str:
+    """Render an LTL AST using the canonical textual form."""
     return to_nuxmv(formula)

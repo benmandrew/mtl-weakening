@@ -1,3 +1,5 @@
+"""Unit tests for NuXmv XML trace parsing."""
+
 import pathlib
 import unittest
 

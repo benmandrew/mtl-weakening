@@ -1,3 +1,5 @@
+"""MTL (Metric Temporal Logic) formula AST and transformation operations."""
+
 from dataclasses import dataclass
 
 from src.logic import ltl
@@ -7,9 +9,11 @@ Interval = tuple[int, int | None]
 
 class Mtl:
     def __str__(self) -> str:
+        """Return the canonical textual form of this MTL formula."""
         return to_string(self)
 
     def __repr__(self) -> str:
+        """Return a concise debug representation for this formula."""
         return to_string(self)
 
 
@@ -147,6 +151,7 @@ def _mtl_to_ltl_release(formula: Release) -> ltl.Ltl:
 
 
 def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
+    """Translate an MTL AST into an equivalent LTL AST."""
     if isinstance(formula, TrueBool):
         return ltl.TrueBool()
     if isinstance(formula, FalseBool):
@@ -176,12 +181,14 @@ def mtl_to_ltl(formula: Mtl) -> ltl.Ltl:
 
 
 def apply_next_k(formula: ltl.Ltl, k: int) -> ltl.Ltl:
+    """Prefix an LTL formula with k nested next operators."""
     for _ in range(k):
         formula = ltl.Next(formula)
     return formula
 
 
 def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
+    """Build a left-associated disjunction from a list of terms."""
     if not terms:
         return ltl.Prop("FALSE")
     result = terms[0]
@@ -206,6 +213,7 @@ class DeBruijnIndexError(IndexError):
 
 
 def fmt_interval(interval: Interval) -> str:
+    """Format an interval using the project's textual MTL convention."""
     low, high = interval
     if high is None:
         if low == 0:
@@ -215,6 +223,7 @@ def fmt_interval(interval: Interval) -> str:
 
 
 def to_string(formula: Mtl) -> str:
+    """Render an MTL AST as canonical textual syntax."""
     if isinstance(formula, TrueBool):
         return "TRUE"
     if isinstance(formula, FalseBool):

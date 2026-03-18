@@ -1,7 +1,8 @@
+"""Unit tests for MTL/LTL parser functionality."""
+
 import unittest
 
 import lark
-
 from src.logic import mtl, parser
 
 

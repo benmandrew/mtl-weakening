@@ -1,3 +1,5 @@
+"""Utility functions for trace analysis and temporal logic operations."""
+
 from __future__ import annotations
 
 import os
@@ -21,6 +23,7 @@ def eprint(  # type: ignore[no-untyped-def]
     *args,  # noqa: ANN002
     **kwargs,  # noqa: ANN003
 ) -> None:
+    """Print a message to stderr."""
     print(*args, file=sys.stderr, **kwargs)
 
 
@@ -28,6 +31,7 @@ Value = int | bool | str
 
 
 def str_to_value(s: str) -> Value:
+    """Parse a serialized trace token into a typed Python value."""
     if s == "TRUE":
         return True
     if s == "FALSE":
@@ -38,16 +42,19 @@ def str_to_value(s: str) -> Value:
 
 
 def format_expect(s: str) -> str:
+    """Normalize multiline text for expect-style golden comparisons."""
     return textwrap.dedent(s).strip("\n")
 
 
 def interval_to_str(interval: mtl.Interval) -> str:
+    """Format an interval tuple as canonical human-readable text."""
     start, end = interval
     end_str = str(end) if end is not None else "∞"
     return f"[{start},{end_str}]"
 
 
 def str_to_interval(interval: str) -> mtl.Interval:
+    """Parse a string interval into the internal tuple representation."""
     interval = interval.replace(" ", "").replace("[", "").replace("]", "")
     start_str, end_str = interval.split(",")
     start = int(start_str)

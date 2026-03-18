@@ -1,3 +1,5 @@
+"""Compute trace-guided interval weakenings for temporal subformulas."""
+
 from __future__ import annotations
 
 from typing import cast
@@ -7,16 +9,14 @@ from src.logic import ctx, mtl
 
 
 def min_option(a: int, b: int | None) -> int:
-    """
-    Get the minimum of two integers, treating `b` as infinity if `b` is None.
-    """
+    """Return min(a, b), treating None as an unbounded upper value."""
     if b is None:
         return a
     return min(a, b)
 
 
 class Weaken:
-    """Performs trace-guided interval weakening of MTL subformulas."""
+    """Compute trace-guided interval weakenings for temporal subformulas."""
 
     def __init__(
         self,
@@ -25,6 +25,7 @@ class Weaken:
         trace: marking.Trace,
         markings: marking.Marking | None = None,
     ) -> None:
+        """Initialize weakening analysis for one context, subformula, and trace."""
         self.context = context
         self.subformula = subformula
         self.trace = trace
@@ -296,4 +297,5 @@ class Weaken:
         raise ValueError(msg)
 
     def weaken(self) -> mtl.Interval | None:
+        """Return the best weakening for the configured context and trace."""
         return self._aux(self.context, 0)

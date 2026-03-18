@@ -1,7 +1,8 @@
+"""Unit tests for interval weakening computations."""
+
 import unittest
 
 import timeout_decorator
-
 from src import marking, weaken
 from src.logic import ctx, mtl, parser
 
