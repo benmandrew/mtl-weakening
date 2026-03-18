@@ -141,6 +141,7 @@ def expand_trail_file(
 
 
 def expand_trail_files(tmpdir: Path, trail_files: list[Path]) -> list[Path]:
+    """Expand all SPIN trail files into normalized text traces."""
     output_files: list[Path] = []
     for i, trail_file in enumerate(trail_files):
         output_file = tmpdir / f"expanded_trail_{i+1}.txt"
@@ -155,6 +156,7 @@ def analyse_file(
     de_bruijn: list[int],
     show_markings: bool = False,
 ) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
+    """Analyze one expanded SPIN trace and return a weakening result."""
     analysis = analyse_cex.AnalyseCex(
         formula,
         de_bruijn,
@@ -180,6 +182,7 @@ def analyse(
     de_bruijn: list[int],
     show_markings: bool = False,
 ) -> tuple[int, int | None]:
+    """Run SPIN end to end and choose a weakening from produced traces."""
     generate_model_file(tmpdir, model_file, formula)
     spin_generate_c(tmpdir)
     compile_pan(tmpdir)

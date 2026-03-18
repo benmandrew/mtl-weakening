@@ -16,6 +16,7 @@ lint.select = [
     # "TID", # flake8-tidy-imports
     "ALL"
 ]
+src = ["src", "tests"]
 
 lint.ignore = [
     "S101",  # Allow assert
@@ -43,7 +44,7 @@ skips = [
 [tool.pylint.basic]
 no-docstring-rgx = ".*"
 disable = [
-    "missing-module-docstring",
+    # "missing-module-docstring",
     "too-many-return-statements",
     "too-many-branches",
     "too-few-public-methods",

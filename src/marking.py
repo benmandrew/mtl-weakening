@@ -9,6 +9,7 @@ class UniversalState:
     """A state in which all formulae are true."""
 
     def __getitem__(self, _key: str) -> bool:
+        """Return True for any proposition lookup."""
         return True
 
 
@@ -22,20 +23,25 @@ class VarMarkings:
     """
 
     def __init__(self, bs: list[bool | int]) -> None:
+        """Create a marking wrapper over precomputed proposition values."""
         self.bs = bs
 
     def __getitem__(self, i: int) -> bool | int:
+        """Return the marking at index i, defaulting to True out of range."""
         if i >= len(self.bs):
             return True
         return self.bs[i]
 
     def __len__(self) -> int:
+        """Return the finite number of stored markings."""
         return len(self.bs)
 
     def __iter__(self) -> typing.Iterator[bool | int]:
+        """Iterate over stored marking values in order."""
         return iter(self.bs)
 
     def append(self, value: bool | int) -> None:
+        """Append one marking value at the end of the sequence."""
         self.bs.append(value)
 
 
@@ -61,10 +67,12 @@ class Trace:
         trace: list[dict[str, bool | int | str]],
         loop_start: int | None,
     ) -> None:
+        """Create a trace with optional lasso loop metadata."""
         self.trace = expand_trace_states(trace)
         self.loop_start = loop_start
 
     def to_markings(self) -> dict[m.Mtl, list[bool | int]]:
+        """Convert trace states into proposition-to-values markings."""
         markings: dict[m.Mtl, list[bool | int]] = {}
         for state in self.trace:
             for k, v in state.items():
@@ -77,6 +85,7 @@ class Trace:
         return markings
 
     def to_var_markings(self) -> dict[m.Mtl, VarMarkings]:
+        """Convert trace states into lazy-safe proposition markings."""
         markings: dict[m.Mtl, VarMarkings] = {}
         for state in self.trace:
             for k, v in state.items():
@@ -89,6 +98,7 @@ class Trace:
         return markings
 
     def idx(self, i: int) -> int:
+        """Map a logical time index into the concrete lasso trace index."""
         if self.loop_start is None:
             return i
         if i >= len(self.trace):
@@ -106,24 +116,29 @@ class Trace:
         return a + suf_len - 1
 
     def __len__(self) -> int:
+        """Return the number of explicit states in the trace."""
         return len(self.trace)
 
     def __getitem__(self, i: int) -> State:
+        """Return state i using lasso semantics when applicable."""
         if self.loop_start is None and i >= len(self.trace):
             return UniversalState()
         return self.trace[self.idx(i)]
 
     def __iter__(self) -> typing.Iterator[dict[str, bool | int | str]]:
+        """Iterate over concrete trace states."""
         return iter(self.trace)
 
 
 class Marking:
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
+        """Initialize cached markings for one formula over a trace."""
         self.trace = trace
         self.markings = trace.to_var_markings()
         self[formula]  # pylint: disable=pointless-statement
 
     def get(self, f: m.Mtl, i: int) -> bool | int:
+        """Get the value of formula f at logical position i."""
         return self[f][self.trace.idx(i)]
 
     def _get_and(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
@@ -221,6 +236,7 @@ class Marking:
         )
 
     def __getitem__(self, f: m.Mtl) -> VarMarkings:
+        """Return cached or computed markings for formula f."""
         if f in self.markings:
             return self.markings[f]
         if isinstance(f, m.TrueBool):
@@ -255,6 +271,7 @@ class Marking:
         return bs
 
     def __str__(self) -> str:
+        """Render cached markings as a human-readable table."""
         list_markings = {f: self.markings[f].bs for f in self.markings}
         return markings_to_str(list_markings, self.trace.loop_start)
 
@@ -314,6 +331,7 @@ def markings_to_str(
     loop_start: int | None,
     filter_all_false: bool = True,
 ) -> str:
+    """Render markings as an aligned table for human inspection."""
     subformulae = list(markings.keys())
     trace_len = len(markings[subformulae[0]])
     max_formula_len = max(len(m.to_string(f)) for f in subformulae)

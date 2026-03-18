@@ -22,6 +22,7 @@ class Namespace(argparse.Namespace):
 
 
 def parse_args(argv: list[str]) -> Namespace:
+    """Parse CLI arguments for counterexample-based interval analysis."""
     arg_parser = argparse.ArgumentParser(
         description=(
             "Determine the optimal weakening "
@@ -37,6 +38,7 @@ def parse_args(argv: list[str]) -> Namespace:
 
 
 def read_trace_input(trace_file: Path | None) -> list[str]:
+    """Load trace text from a file or standard input."""
     if trace_file:
         return trace_file.read_text(encoding="utf-8").splitlines()
     return sys.stdin.readlines()
@@ -46,6 +48,7 @@ def get_cex_trace(
     model_checker: custom_args.ModelChecker,
     lines: list[str],
 ) -> marking.Trace:
+    """Parse raw trace lines using the selected model-checker format."""
     if model_checker == custom_args.ModelChecker.NUXMV:
         return nuxmv_xml_trace.parse("".join(lines))
     if model_checker == custom_args.ModelChecker.SPIN:
@@ -67,6 +70,7 @@ class AnalyseCex:
         trace_file: Path | None,
         model_checker: custom_args.ModelChecker,
     ) -> None:
+        """Build analysis state for weakening one temporal subformula."""
         lines = read_trace_input(trace_file)
         cex_trace = get_cex_trace(model_checker, lines)
         context, subformula = ctx.split_formula(formula, de_bruijn)
@@ -77,12 +81,15 @@ class AnalyseCex:
         self.w = weaken.Weaken(context, subformula, cex_trace)
 
     def get_markings(self) -> marking.Marking:
+        """Return the computed truth markings for the analyzed formula."""
         return self.w.markings
 
     def get_weakened_interval(self) -> mtl.Interval | None:
+        """Compute the best interval weakening for the selected subformula."""
         return self.w.weaken()
 
     def does_formula_hold(self, formula: mtl.Mtl) -> bool:
+        """Check whether a formula holds at the initial trace position."""
         bl = self.w.markings[formula]
         if len(bl) == 0:
             return False
@@ -90,6 +97,7 @@ class AnalyseCex:
         return bl[0]
 
     def get_weakening_type(self) -> WeakeningType:
+        """Classify weakening as extension or contraction for the subformula."""
         if isinstance(self.w.subformula, (mtl.Eventually, mtl.Until)):
             return WeakeningType.EXTENSION
         if isinstance(self.w.subformula, (mtl.Always, mtl.Release)):
@@ -101,6 +109,7 @@ class AnalyseCex:
         self,
         intervals: list[mtl.Interval],
     ) -> mtl.Interval:
+        """Select the weakest interval from candidate weakenings."""
         weakening_type = self.get_weakening_type()
         if weakening_type == WeakeningType.EXTENSION:
             return max(
@@ -117,6 +126,7 @@ class AnalyseCex:
 
 
 def main(args: Namespace) -> None:
+    """Run CLI analysis and print either a weakened interval or failure text."""
     mtl_formula = parser.parse_mtl(args.mtl)
     analysis = AnalyseCex(
         mtl_formula,

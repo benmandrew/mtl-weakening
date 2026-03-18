@@ -64,6 +64,7 @@ def write_commands_file(
     bound: int,
     loopback: int,
 ) -> None:
+    """Write the NuXmv command script for one bounded-check attempt."""
     with (tmpdir / COMMANDS_FILE).open("w", encoding="utf-8") as f:
         f.writelines(
             [
@@ -82,6 +83,7 @@ def generate_model_file(
     model_file: Path,
     formula: mtl.Mtl,
 ) -> None:
+    """Create a temporary NuXmv model with the current LTLSPEC appended."""
     ltlspec = mtl2ltlspec.main(custom_args.ModelChecker.NUXMV, formula)
     shutil.copy(model_file, Path(tmpdir / MODEL_FILE))
     with (tmpdir / MODEL_FILE).open("a", encoding="utf-8") as f:
@@ -89,6 +91,7 @@ def generate_model_file(
 
 
 def model_check(tmpdir: Path) -> None:
+    """Run NuXmv with the prepared model and command script."""
     try:
         with (tmpdir / NUXMV_LOG).open("w", encoding="utf-8") as nuxmv_log:
             subprocess.run(
@@ -119,6 +122,7 @@ def analyse_file(
     de_bruijn: list[int],
     show_markings: bool,
 ) -> tuple[mtl.Interval, analyse_cex.AnalyseCex]:
+    """Analyze one produced counterexample trace and return a weakening."""
     analysis = analyse_cex.AnalyseCex(
         formula,
         de_bruijn,
@@ -141,6 +145,7 @@ def analyse(
     bound: int,
     show_markings: bool,
 ) -> tuple[int, int | None]:
+    """Run NuXmv bounded checking and aggregate weakenings across traces."""
     results: list[mtl.Interval] = []
     for loopback in range(bound):
         write_commands_file(tmpdir, bound, loopback)
