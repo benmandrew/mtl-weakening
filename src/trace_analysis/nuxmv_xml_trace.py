@@ -1,3 +1,5 @@
+"""Parsing of NuXmv XML-formatted execution traces."""
+
 from __future__ import annotations
 
 import typing
@@ -11,6 +13,7 @@ if typing.TYPE_CHECKING:
 
 
 def parse(s: str) -> marking.Trace:
+    """Parse NuXmv XML trace text into the internal trace model."""
     return xml_to_trace(ElementTree.fromstring(s))
 
 
@@ -31,6 +34,7 @@ def _parse_loops(loops: Element) -> int | None:
 
 
 def xml_to_trace(xml_element: Element) -> marking.Trace:
+    """Convert a parsed NuXmv XML element tree into a trace."""
     states: list[dict[str, util.Value]] = []
     loop: int | None = None
     for node in xml_element:

@@ -1,3 +1,5 @@
+"""CLI argument parsing utilities for model checking and trace analysis."""
+
 import argparse
 import pathlib
 from enum import Enum
@@ -8,6 +10,7 @@ def _list_of_ints(arg: str) -> list[int]:
 
 
 def add_model_argument(parser: argparse.ArgumentParser) -> None:
+    """Register the model-file argument on a CLI parser."""
     parser.add_argument(
         "--model",
         type=pathlib.Path,
@@ -16,10 +19,12 @@ def add_model_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_mtl_argument(parser: argparse.ArgumentParser) -> None:
+    """Register the MTL specification argument on a CLI parser."""
     parser.add_argument("--mtl", type=str, help="MTL specification")
 
 
 def add_de_bruijn_argument(parser: argparse.ArgumentParser) -> None:
+    """Register the De Bruijn selector argument on a CLI parser."""
     parser.add_argument(
         "--de-bruijn",
         type=_list_of_ints,
@@ -28,6 +33,7 @@ def add_de_bruijn_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
+    """Register an optional trace-file input argument on a CLI parser."""
     parser.add_argument(
         "trace_file",
         type=pathlib.Path,
@@ -41,10 +47,12 @@ class ModelChecker(Enum):
     SPIN = "spin"
 
     def __str__(self) -> str:
+        """Return the enum name for CLI-facing display."""
         return self.name
 
     @staticmethod
     def from_string(s: str) -> "ModelChecker":
+        """Convert a string token into a known model-checker enum value."""
         try:
             return ModelChecker[s]
         except KeyError as err:
@@ -54,6 +62,7 @@ class ModelChecker(Enum):
 def add_model_checker_argument(
     parser: argparse.ArgumentParser,
 ) -> None:
+    """Register the model-checker selection argument on a CLI parser."""
     parser.add_argument(
         "--model-checker",
         type=ModelChecker.from_string,
@@ -66,6 +75,7 @@ def add_model_checker_argument(
 def add_show_markings_argument(
     parser: argparse.ArgumentParser,
 ) -> None:
+    """Register a flag that prints computed markings during analysis."""
     parser.add_argument(
         "--show-markings",
         action="store_true",

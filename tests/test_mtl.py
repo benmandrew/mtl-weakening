@@ -1,3 +1,5 @@
+"""Unit tests for MTL formula definitions and transformations."""
+
 import unittest
 
 from src.logic import ltl, mtl, parser

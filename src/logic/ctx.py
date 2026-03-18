@@ -1,3 +1,5 @@
+"""Formula context representation and manipulation for trace-guided analysis."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,9 +9,11 @@ from src.logic import mtl
 
 class Ctx:
     def __str__(self) -> str:
+        """Return the canonical textual form of this context."""
         return to_string(self)
 
     def __repr__(self) -> str:
+        """Return a concise debug representation for this context."""
         return to_string(self)
 
 
@@ -105,6 +109,7 @@ class ReleaseRight(Ctx):
 
 
 def substitute(c: Ctx, f: mtl.Mtl) -> mtl.Mtl:
+    """Fill the context hole with formula f and return the full formula."""
     if isinstance(c, Hole):
         return f
     if isinstance(c, Not):
@@ -140,6 +145,7 @@ def substitute(c: Ctx, f: mtl.Mtl) -> mtl.Mtl:
 
 
 def to_string(c: Ctx) -> str:
+    """Render a context as textual MTL with an explicit hole marker."""
     if isinstance(c, Hole):
         return "[-]"
     if isinstance(c, Not):
@@ -263,6 +269,7 @@ def _split_formula_aux(
 
 
 def split_formula(formula: mtl.Mtl, indices: list[int]) -> tuple[Ctx, mtl.Mtl]:
+    """Split a formula into context and selected subformula by index path."""
     return _split_formula_aux(formula, indices, 0)
 
 
@@ -319,7 +326,7 @@ def _partial_nnf_ctx_neg(c: Ctx) -> tuple[Ctx, bool]:
 
 
 def partial_nnf_ctx(c: Ctx) -> tuple[Ctx, bool]:
-    """Convert the context `c` to partial negation normal form (PNNF)."""
+    """Convert context c to partial negation normal form."""
 
     if isinstance(c, Hole):
         return c, True
@@ -373,10 +380,7 @@ def partial_nnf(
     c: Ctx,
     subf: mtl.Temporal,
 ) -> tuple[Ctx, mtl.Temporal]:
-    """Convert the context `c` and the subformula `subf` to partial negation
-    normal form (PNNF). The returned context and subformula are logically
-    equivalent to the original ones.
-    """
+    """Convert context and temporal subformula to equivalent partial NNF."""
 
     ctx, polarity = partial_nnf_ctx(c)
     if polarity:
@@ -399,7 +403,7 @@ def partial_nnf(
 
 
 def get_de_bruijn(c: Ctx) -> list[int]:
-    """Get the De Bruijn indices of the context `c`."""
+    """Recover the index path that reaches the hole in context c."""
     if isinstance(c, Hole):
         return []
     if isinstance(c, (Not, Next, Eventually, Always)):

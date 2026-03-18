@@ -1,3 +1,5 @@
+"""Utilities for analyzing and counting system requirements."""
+
 import csv
 from pathlib import Path
 
@@ -26,8 +28,9 @@ NEITHER_TYPE = [
     "after ",
 ]
 
-INPUT_GLOB = "doc/requirements/*.csv"
-OUTPUT_FILE = Path("doc/requirements.csv")
+SCRIPT_DIR = Path(__file__).resolve().parent
+REQUIREMENTS_DIR = SCRIPT_DIR / "requirements"
+OUTPUT_FILE = SCRIPT_DIR / "requirements.csv"
 MIN_COLUMNS = 2
 
 
@@ -77,7 +80,7 @@ def main() -> None:
                 "contraction-type",
             ],
         )
-        for path in Path().glob(INPUT_GLOB):
+        for path in REQUIREMENTS_DIR.glob("*.csv"):
             if not path.is_file():
                 continue
             total_count, ext_count, con_count = count_file(path)

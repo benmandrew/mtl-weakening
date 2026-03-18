@@ -21,7 +21,7 @@ Note that the De Bruijn index ([wikipedia](https://en.wikipedia.org/wiki/De_Brui
 
 ## Artefacts
 
-The [docs](doc/README.md) contain full proofs of correctness and optimality, as well as input data for the interval-weakenable requirements in FRET case studies.
+The [artefacts](artefacts/) directory contains full proofs of correctness and optimality, as well as input data for the interval-weakenable requirements in FRET case studies.
 
 ## Tools
 
