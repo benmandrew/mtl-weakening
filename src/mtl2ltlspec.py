@@ -11,6 +11,7 @@ class Namespace(argparse.Namespace):
 
 
 def parse_args(argv: list[str]) -> Namespace:
+    """Parse CLI arguments for MTL-to-LTL conversion."""
     arg_parser = argparse.ArgumentParser(
         description=(
             "Convert MTL formula to SMV- or Promela-compatible "
@@ -23,6 +24,7 @@ def parse_args(argv: list[str]) -> Namespace:
 
 
 def main(model_checker: custom_args.ModelChecker, mtl_formula: mtl.Mtl) -> str:
+    """Convert an MTL formula into backend-specific LTL syntax."""
     ltl_formula = mtl.mtl_to_ltl(mtl_formula)
     if model_checker == custom_args.ModelChecker.SPIN:
         return ltl.to_spin(ltl_formula)

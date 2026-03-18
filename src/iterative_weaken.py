@@ -18,6 +18,7 @@ class Namespace(argparse.Namespace):
 
 
 def parse_args(argv: list[str]) -> Namespace:
+    """Parse CLI arguments for iterative interval weakening runs."""
     arg_parser = argparse.ArgumentParser(
         description="Convert MTL formula to SMV-compatible LTL specifications.",
     )
@@ -33,6 +34,7 @@ def get_context_and_subformula(
     mtl_str: str,
     de_bruijn: list[int],
 ) -> tuple[ctx.Ctx, mtl.Temporal]:
+    """Resolve the selected temporal subformula and its surrounding context."""
     formula = parser.parse_mtl(mtl_str)
     context, subformula = ctx.split_formula(formula, de_bruijn)
     assert isinstance(subformula, mtl.Temporal)
@@ -46,6 +48,7 @@ def substitute_interval(
     formula: mtl.Temporal,
     interval: mtl.Interval,
 ) -> mtl.Temporal:
+    """Return a temporal formula with the same shape and a new interval."""
     if isinstance(formula, mtl.Always):
         return mtl.Always(formula.operand, interval)
     if isinstance(formula, mtl.Eventually):
@@ -64,6 +67,7 @@ BOUND_MIN = 20
 def get_initial_bound(
     interval: mtl.Interval,
 ) -> int:
+    """Choose a starting BMC bound from the current interval."""
     if interval[1] is None:
         return BOUND_MIN
     return max(BOUND_MIN, int(interval[1] * 1.5))
@@ -75,6 +79,7 @@ def main_nuxmv(
     de_bruijn: list[int],
     show_markings: bool,
 ) -> None:
+    """Run iterative weakening with NuXmv as the backend checker."""
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     bound = get_initial_bound(subformula.interval)
@@ -128,6 +133,7 @@ def main_spin(
     de_bruijn: list[int],
     show_markings: bool,
 ) -> None:
+    """Run iterative weakening with SPIN as the backend checker."""
     context, subformula = get_context_and_subformula(mtl_str, de_bruijn)
     de_bruijn = ctx.get_de_bruijn(context)
     n_iterations = 0

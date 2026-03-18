@@ -41,3 +41,6 @@ vulture:
 
 bandit:
 	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q
+
+doc:
+	$(MAKE) -C doc html

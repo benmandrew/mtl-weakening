@@ -8,6 +8,7 @@ from src import marking
 
 
 def parse_variables(s: str) -> dict[str, int | str]:
+    """Parse one serialized SPIN state line into a variable mapping."""
     return typing.cast("dict[str, int | str]", json.loads(s))
 
 
@@ -15,6 +16,7 @@ def expand_state(
     state: dict[str, int | str],
     state_values: OrderedDict[str, None],
 ) -> dict[str, int]:
+    """Expand symbolic state labels into boolean proposition variables."""
     expanded: dict[str, int] = {}
     for k, v in state.items():
         if isinstance(v, int):
@@ -32,6 +34,7 @@ def clear_nonappearing_states(
     states: list[dict[str, int]],
     state_values: OrderedDict[str, None],
 ) -> None:
+    """Remove generated state propositions that never hold in the trace."""
     state_variables = {f"{val}_p" for val in state_values}
     for var in state_variables:
         appears = any(state.get(var, 0) == 1 for state in states)
@@ -43,6 +46,7 @@ def clear_nonappearing_states(
 def get_state_values(
     states: list[dict[str, int | str]],
 ) -> OrderedDict[str, None]:
+    """Collect distinct symbolic state names in first-seen order."""
     state_values: OrderedDict[str, None] = OrderedDict()
     for state in states:
         for k, v in state.items():
@@ -52,6 +56,7 @@ def get_state_values(
 
 
 def parse(s: str) -> marking.Trace:
+    """Parse expanded SPIN trail text into the internal trace model."""
     lines = s.strip().split("\n")
     states: list[dict[str, int | str]] = []
     state_i = 0

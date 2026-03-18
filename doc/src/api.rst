@@ -1,20 +1,33 @@
 API Reference
 =============
 
-Core modules
+This reference is generated from all modules under ``src``.
+
+.. toctree::
+   :hidden:
+
+   _api/modules
+
+Core Modules
 ------------
 
-.. automodule:: src.iterative_weaken
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 2
 
-.. automodule:: src.analyse_cex
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   _api/src.iterative_weaken
+   _api/src.analyse_cex
+   _api/src.mtl2ltlspec
 
-.. automodule:: src.mtl2ltlspec
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Internal Modules
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   _api/src.custom_args
+   _api/src.marking
+   _api/src.trace2marking
+   _api/src.util
+   _api/src.weaken
+   _api/src.logic
+   _api/src.trace_analysis
