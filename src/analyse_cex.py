@@ -1,3 +1,5 @@
+"""Counterexample-guided MTL formula weakening through interval analysis."""
+
 from __future__ import annotations
 
 import argparse

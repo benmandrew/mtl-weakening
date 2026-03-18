@@ -1,3 +1,5 @@
+"""Unit tests for trace parsing and analysis."""
+
 import unittest
 
 from src import marking as m

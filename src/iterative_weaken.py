@@ -1,3 +1,6 @@
+"""Iterative interval weakening of MTL formulas
+against model checker counterexamples."""
+
 import argparse
 import sys
 import tempfile

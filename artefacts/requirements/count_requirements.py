@@ -1,3 +1,5 @@
+"""Utilities for analyzing and counting system requirements."""
+
 import csv
 from pathlib import Path
 

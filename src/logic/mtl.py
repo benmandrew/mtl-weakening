@@ -1,3 +1,5 @@
+"""MTL (Metric Temporal Logic) formula AST and transformation operations."""
+
 from dataclasses import dataclass
 
 from src.logic import ltl

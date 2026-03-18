@@ -1,3 +1,5 @@
+"""Unit tests for interval weakening computations."""
+
 import unittest
 
 import timeout_decorator

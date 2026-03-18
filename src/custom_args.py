@@ -1,3 +1,5 @@
+"""CLI argument parsing utilities for model checking and trace analysis."""
+
 import argparse
 import pathlib
 from enum import Enum

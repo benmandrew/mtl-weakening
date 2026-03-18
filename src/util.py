@@ -1,3 +1,5 @@
+"""Utility functions for trace analysis and temporal logic operations."""
+
 from __future__ import annotations
 
 import os

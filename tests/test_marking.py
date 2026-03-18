@@ -1,3 +1,5 @@
+"""Unit tests for trace marking and state evaluation."""
+
 import unittest
 
 from src import marking, util
