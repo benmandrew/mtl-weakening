@@ -1,3 +1,5 @@
+"""Unit tests for SPIN trace parsing."""
+
 import pathlib
 import unittest
 

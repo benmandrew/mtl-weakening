@@ -1,3 +1,5 @@
+"""Trace state marking and boolean formula evaluation."""
+
 from __future__ import annotations
 
 import typing

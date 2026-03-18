@@ -1,3 +1,5 @@
+"""Convert MTL specifications to backend-compatible LTL syntax."""
+
 import argparse
 import sys
 

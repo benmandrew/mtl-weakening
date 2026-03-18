@@ -1,3 +1,5 @@
+"""Parsing of MTL and LTL specifications into internal representations."""
+
 from __future__ import annotations
 
 from pathlib import Path

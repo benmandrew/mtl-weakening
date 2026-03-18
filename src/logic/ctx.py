@@ -1,3 +1,5 @@
+"""Formula context representation and manipulation for trace-guided analysis."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

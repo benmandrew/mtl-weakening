@@ -1,3 +1,5 @@
+"""Command-line interface and utilities for trace parsing and marking."""
+
 from __future__ import annotations
 
 import argparse

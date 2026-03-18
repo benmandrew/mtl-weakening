@@ -1,3 +1,5 @@
+"""Sphinx documentation build configuration."""
+
 import sys
 from pathlib import Path
 

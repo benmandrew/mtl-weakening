@@ -1,3 +1,5 @@
+"""Parsing of NuXmv XML-formatted execution traces."""
+
 from __future__ import annotations
 
 import typing

@@ -1,3 +1,5 @@
+"""Integration with NuXmv model checker for trace analysis."""
+
 from __future__ import annotations
 
 import shutil

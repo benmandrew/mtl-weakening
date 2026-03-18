@@ -1,3 +1,5 @@
+"""LTL formula AST definitions for backend compatibility."""
+
 from dataclasses import dataclass
 
 

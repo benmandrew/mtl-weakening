@@ -1,3 +1,5 @@
+"""Compute trace-guided interval weakenings for temporal subformulas."""
+
 from __future__ import annotations
 
 from typing import cast
