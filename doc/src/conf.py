@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Add current directory to path for loading extensions
 CONF_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(CONF_DIR))
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name disable=redefined-builtin
 
 project = "CEGIW"
 author = "Ben M. Andrew"
