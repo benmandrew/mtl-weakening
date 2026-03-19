@@ -16,6 +16,8 @@ if typing.TYPE_CHECKING:
 
 
 class Namespace(argparse.Namespace):
+    """Typed CLI namespace for counterexample-analysis arguments."""
+
     mtl: str
     de_bruijn: list[int]
     trace_file: Path | None
@@ -60,11 +62,15 @@ def get_cex_trace(
 
 
 class WeakeningType(Enum):
+    """Direction of interval weakening for a temporal operator."""
+
     EXTENSION = "extension"
     CONTRACTION = "contraction"
 
 
 class AnalyseCex:
+    """Counterexample-driven interval weakening analysis helper."""
+
     def __init__(
         self,
         formula: mtl.Mtl,

@@ -8,6 +8,8 @@ from src.logic import ltl, mtl, parser
 
 
 class Namespace(argparse.Namespace):
+    """Typed CLI namespace for MTL-to-LTL conversion options."""
+
     model_checker: custom_args.ModelChecker
     mtl: str
 

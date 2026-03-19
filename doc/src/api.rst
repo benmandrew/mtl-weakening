@@ -3,11 +3,6 @@ API Reference
 
 This reference is generated from all modules under ``src``.
 
-.. toctree::
-   :hidden:
-
-   _api/modules
-
 Core Modules
 ------------
 

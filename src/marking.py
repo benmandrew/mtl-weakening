@@ -64,6 +64,8 @@ def expand_trace_states(
 
 
 class Trace:
+    """Finite or lasso-shaped execution trace with index mapping helpers."""
+
     def __init__(
         self,
         trace: list[dict[str, bool | int | str]],
@@ -133,6 +135,8 @@ class Trace:
 
 
 class Marking:
+    """Cached evaluator of MTL truth markings over a trace."""
+
     def __init__(self, trace: Trace, formula: m.Mtl) -> None:
         """Initialize cached markings for one formula over a trace."""
         self.trace = trace
@@ -144,16 +148,19 @@ class Marking:
         return self[f][self.trace.idx(i)]
 
     def _get_and(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        """Compute pointwise conjunction markings for two subformulae."""
         return VarMarkings(
             [l and r for l, r in zip(self[left], self[right], strict=True)],
         )
 
     def _get_or(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        """Compute pointwise disjunction markings for two subformulae."""
         return VarMarkings(
             [l or r for l, r in zip(self[left], self[right], strict=True)],
         )
 
     def _get_implies(self, left: m.Mtl, right: m.Mtl) -> VarMarkings:
+        """Compute pointwise implication markings for two subformulae."""
         return VarMarkings(
             [
                 (not l) or r
@@ -166,6 +173,7 @@ class Marking:
         operand: m.Mtl,
         interval: m.Interval,
     ) -> VarMarkings:
+        """Compute bounded eventuality markings over the given interval."""
         vs = self[operand]
         bs: list[bool | int] = [False] * len(vs)
         for i in range(len(vs)):
@@ -177,6 +185,7 @@ class Marking:
         return VarMarkings(bs)
 
     def _get_always(self, operand: m.Mtl, interval: m.Interval) -> VarMarkings:
+        """Compute bounded invariance markings over the given interval."""
         vs = self[operand]
         bs: list[bool | int] = [False] * len(vs)
         for i in range(len(vs)):
@@ -193,6 +202,7 @@ class Marking:
         right: m.Mtl,
         interval: m.Interval,
     ) -> VarMarkings:
+        """Compute bounded-until markings for left and right operands."""
         rights = self[right]
         lefts = self[left]
         bs: list[bool | int] = [False] * len(rights)
@@ -215,6 +225,7 @@ class Marking:
         right: m.Mtl,
         interval: m.Interval,
     ) -> VarMarkings:
+        """Compute bounded-release markings for left and right operands."""
         rights = self[right]
         lefts = self[left]
         bs: list[bool | int] = [False] * len(rights)
@@ -232,6 +243,7 @@ class Marking:
         return VarMarkings(bs)
 
     def _get_next(self, operand: m.Mtl) -> VarMarkings:
+        """Shift operand markings forward by one logical step."""
         operands = self[operand]
         return VarMarkings(
             [operands[self.trace.idx(i + 1)] for i in range(len(operands))],
@@ -279,6 +291,7 @@ class Marking:
 
 
 def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
+    """Build the two-line numeric header shown above marking columns."""
     out = ""
     if trace_len > 10:  # noqa: PLR2004
         out += " " + " " * max_len
@@ -293,6 +306,7 @@ def _get_trace_indices_str(trace_len: int, max_len: int) -> str:
 
 
 def _marking_char(marking: bool | int) -> str:
+    """Convert one marking value into a single-character table cell."""
     if isinstance(marking, bool):
         return "●" if marking else " "
     string = str(marking)
@@ -303,6 +317,7 @@ LOOP_STR = "=Lasso="
 
 
 def _get_loop_str(loop_start: int, max_formula_len: int, trace_len: int) -> str:
+    """Render the ASCII lasso indicator for looped traces."""
     out = f"{LOOP_STR:<{max_formula_len}}  "
     for i in range(trace_len):
         if i == loop_start and i == trace_len - 1:
@@ -319,12 +334,14 @@ def _get_loop_str(loop_start: int, max_formula_len: int, trace_len: int) -> str:
 
 
 def _marking_all_false(f: m.Mtl, marking: list[bool | int]) -> bool:
+    """Return whether a proposition marking contains only False values."""
     if not isinstance(f, m.Prop):
         return False
     return all(isinstance(v, bool) and v is False for v in marking)
 
 
 def _is_constant(formula_s: str) -> bool:
+    """Return whether a formula label is a generated uppercase constant."""
     return all(c.isupper() or c == "_" for c in formula_s)
 
 
