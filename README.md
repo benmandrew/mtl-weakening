@@ -5,7 +5,7 @@ This project takes an ideal property in Metric Temporal Logic (MTL) that does no
 You can run the the interval weakening algorithm on the included examples yourself by running
 
 ```bash
-docker run benmandrew/cegiw
+$ docker run benmandrew/cegiw
 ```
 
 Or set up and run locally, making sure you have `nuXmv 2.1.0` installed, with
