@@ -9,7 +9,7 @@ SOURCEPKG := ../src
 apidoc:
 	sphinx-apidoc -f -e -o $(APIDOCDIR) $(SOURCEPKG)
 	for f in $(APIDOCDIR)/*.rst; do \
-		sed -i '1s/^src\.//' "$$f"; \
+		sed '1s/^src\.//' "$$f" > "$$f.tmp" && mv "$$f.tmp" "$$f"; \
 	done
 	rm -f $(APIDOCDIR)/modules.rst $(APIDOCDIR)/src.rst
 
