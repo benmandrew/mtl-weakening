@@ -11,6 +11,8 @@ from src.logic import ltl, mtl
 
 @lark.v_args(inline=True)
 class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
+    """Lark transformer that builds MTL AST nodes from parse trees."""
+
     def start(self, *args: mtl.Mtl) -> mtl.Mtl:
         """Return the parsed root formula."""
         return args[0]
@@ -112,6 +114,7 @@ class MTLTransformer(lark.Transformer[lark.Token, mtl.Mtl]):
         self,
         args: tuple[mtl.Mtl | tuple[mtl.Interval, mtl.Mtl], ...],
     ) -> tuple[mtl.Interval, mtl.Mtl]:
+        """Normalize temporal-operator arguments into interval and operand."""
         # Craziness to get the mypy type checker happy
         if len(args) == 1:
             assert isinstance(args[0], mtl.Mtl)
@@ -146,6 +149,8 @@ def parse_mtl(text: str) -> mtl.Mtl:
 
 @lark.v_args(inline=True)
 class LTLTransformer(lark.Transformer[lark.Token, ltl.Ltl]):
+    """Lark transformer that builds LTL AST nodes from parse trees."""
+
     def start(self, *args: ltl.Ltl) -> ltl.Ltl:
         """Return the parsed root formula."""
         return args[0]

@@ -11,6 +11,7 @@ apidoc:
 	for f in $(APIDOCDIR)/*.rst; do \
 		sed -i '1s/^src\.//' "$$f"; \
 	done
+	rm -f $(APIDOCDIR)/modules.rst $(APIDOCDIR)/src.rst
 
 html: apidoc
 	$(SPHINXBUILD) -W -b html $(SOURCEDIR) $(BUILDDIR)/html

@@ -2,8 +2,8 @@
 
 
 class PropertyValidError(Exception):
-    pass
+    """Raised when the checked property already holds for the model/trace."""
 
 
 class NoWeakeningError(Exception):
-    pass
+    """Raised when no valid interval weakening can be found."""

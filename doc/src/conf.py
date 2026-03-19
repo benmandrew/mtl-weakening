@@ -6,6 +6,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Add current directory to path for loading extensions
+CONF_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(CONF_DIR))
 # pylint: disable=invalid-name
 
 project = "CEGIW"
@@ -14,8 +17,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "private_members_ext",
 ]
-
 templates_path = ["_templates"]
 exclude_patterns: list[str] = []
 

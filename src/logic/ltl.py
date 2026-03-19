@@ -5,70 +5,90 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, order=True)
 class Ltl:
-    pass
+    """Base class for all LTL abstract syntax tree nodes."""
 
 
 @dataclass(frozen=True)
 class TrueBool(Ltl):
-    pass
+    """LTL boolean literal true."""
 
 
 @dataclass(frozen=True)
 class FalseBool(Ltl):
-    pass
+    """LTL boolean literal false."""
 
 
 @dataclass(frozen=True)
 class Prop(Ltl):
+    """Atomic proposition node."""
+
     name: str
 
 
 @dataclass(frozen=True)
 class Not(Ltl):
+    """Unary logical negation node."""
+
     operand: Ltl
 
 
 @dataclass(frozen=True)
 class Next(Ltl):
+    """Next-time temporal operator node."""
+
     operand: Ltl
 
 
 @dataclass(frozen=True)
 class Eventually(Ltl):
+    """Eventually temporal operator node."""
+
     operand: Ltl
 
 
 @dataclass(frozen=True)
 class Always(Ltl):
+    """Always temporal operator node."""
+
     operand: Ltl
 
 
 @dataclass(frozen=True)
 class And(Ltl):
+    """Binary logical conjunction node."""
+
     left: Ltl
     right: Ltl
 
 
 @dataclass(frozen=True)
 class Or(Ltl):
+    """Binary logical disjunction node."""
+
     left: Ltl
     right: Ltl
 
 
 @dataclass(frozen=True)
 class Implies(Ltl):
+    """Binary logical implication node."""
+
     left: Ltl
     right: Ltl
 
 
 @dataclass(frozen=True)
 class Until(Ltl):
+    """Until temporal operator node."""
+
     left: Ltl
     right: Ltl
 
 
 @dataclass(frozen=True)
 class Release(Ltl):
+    """Release temporal operator node."""
+
     left: Ltl
     right: Ltl
 

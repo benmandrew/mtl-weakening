@@ -258,6 +258,7 @@ class Weaken:
         return a, b
 
     def _weaken_direct(self, trace_idx: int) -> mtl.Interval | None:
+        """Dispatch direct interval weakening based on temporal operator type."""
         if isinstance(self.subformula, mtl.Eventually):
             return self._weaken_direct_eventually(self.subformula, trace_idx)
         if isinstance(self.subformula, mtl.Always):

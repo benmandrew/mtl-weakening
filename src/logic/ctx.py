@@ -8,6 +8,8 @@ from src.logic import mtl
 
 
 class Ctx:
+    """Base class for MTL contexts with a single substitution hole."""
+
     def __str__(self) -> str:
         """Return the canonical textual form of this context."""
         return to_string(self)
@@ -19,69 +21,91 @@ class Ctx:
 
 @dataclass(frozen=True, order=True, repr=False)
 class Hole(Ctx):
-    pass
+    """The distinguished hole position in a context."""
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Not(Ctx):
+    """Context under logical negation."""
+
     operand: Ctx
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class AndLeft(Ctx):
+    """Context in the left operand of conjunction."""
+
     left: Ctx
     right: mtl.Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class AndRight(Ctx):
+    """Context in the right operand of conjunction."""
+
     left: mtl.Mtl
     right: Ctx
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class OrLeft(Ctx):
+    """Context in the left operand of disjunction."""
+
     left: Ctx
     right: mtl.Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class OrRight(Ctx):
+    """Context in the right operand of disjunction."""
+
     left: mtl.Mtl
     right: Ctx
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class ImpliesLeft(Ctx):
+    """Context in the antecedent of implication."""
+
     left: Ctx
     right: mtl.Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class ImpliesRight(Ctx):
+    """Context in the consequent of implication."""
+
     left: mtl.Mtl
     right: Ctx
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Next(Ctx):
+    """Context under next-time temporal operator."""
+
     operand: Ctx
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Eventually(Ctx):
+    """Context under eventually temporal operator."""
+
     operand: Ctx
     interval: mtl.Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Always(Ctx):
+    """Context under always temporal operator."""
+
     operand: Ctx
     interval: mtl.Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class UntilLeft(Ctx):
+    """Context in the left operand of until."""
+
     left: Ctx
     right: mtl.Mtl
     interval: mtl.Interval = (0, None)
@@ -89,6 +113,8 @@ class UntilLeft(Ctx):
 
 @dataclass(frozen=True, order=True, repr=False)
 class UntilRight(Ctx):
+    """Context in the right operand of until."""
+
     left: mtl.Mtl
     right: Ctx
     interval: mtl.Interval = (0, None)
@@ -96,6 +122,8 @@ class UntilRight(Ctx):
 
 @dataclass(frozen=True, order=True, repr=False)
 class ReleaseLeft(Ctx):
+    """Context in the left operand of release."""
+
     left: Ctx
     right: mtl.Mtl
     interval: mtl.Interval = (0, None)
@@ -103,6 +131,8 @@ class ReleaseLeft(Ctx):
 
 @dataclass(frozen=True, order=True, repr=False)
 class ReleaseRight(Ctx):
+    """Context in the right operand of release."""
+
     left: mtl.Mtl
     right: Ctx
     interval: mtl.Interval = (0, None)

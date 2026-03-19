@@ -18,6 +18,7 @@ def parse(s: str) -> marking.Trace:
 
 
 def _parse_state(state: Element) -> dict[str, util.Value]:
+    """Parse one XML state node into a variable-to-value mapping."""
     state_dict = {}
     for item in state:
         assert item.text is not None
@@ -28,6 +29,7 @@ def _parse_state(state: Element) -> dict[str, util.Value]:
 
 
 def _parse_loops(loops: Element) -> int | None:
+    """Parse optional loop-start index from the XML loops node."""
     assert loops.text is not None
     stripped = loops.text.strip()
     return None if stripped == "" else int(stripped)

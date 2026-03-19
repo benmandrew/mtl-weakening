@@ -8,6 +8,8 @@ Interval = tuple[int, int | None]
 
 
 class Mtl:
+    """Base class for all MTL abstract syntax tree nodes."""
+
     def __str__(self) -> str:
         """Return the canonical textual form of this MTL formula."""
         return to_string(self)
@@ -19,61 +21,79 @@ class Mtl:
 
 @dataclass(frozen=True, order=True, repr=False)
 class TrueBool(Mtl):
-    pass
+    """MTL boolean literal true."""
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class FalseBool(Mtl):
-    pass
+    """MTL boolean literal false."""
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Prop(Mtl):
+    """Atomic proposition node."""
+
     name: str
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Not(Mtl):
+    """Unary logical negation node."""
+
     operand: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class And(Mtl):
+    """Binary logical conjunction node."""
+
     left: Mtl
     right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Or(Mtl):
+    """Binary logical disjunction node."""
+
     left: Mtl
     right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Implies(Mtl):
+    """Binary logical implication node."""
+
     left: Mtl
     right: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Next(Mtl):
+    """Next-time temporal operator node."""
+
     operand: Mtl
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Eventually(Mtl):
+    """Bounded or unbounded eventually temporal operator node."""
+
     operand: Mtl
     interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Always(Mtl):
+    """Bounded or unbounded always temporal operator node."""
+
     operand: Mtl
     interval: Interval = (0, None)
 
 
 @dataclass(frozen=True, order=True, repr=False)
 class Until(Mtl):
+    """Bounded or unbounded until temporal operator node."""
+
     left: Mtl
     right: Mtl
     interval: Interval = (0, None)
@@ -81,6 +101,8 @@ class Until(Mtl):
 
 @dataclass(frozen=True, order=True, repr=False)
 class Release(Mtl):
+    """Bounded or unbounded release temporal operator node."""
+
     left: Mtl
     right: Mtl
     interval: Interval = (0, None)
@@ -90,6 +112,7 @@ Temporal = Eventually | Always | Until | Release
 
 
 def _mtl_to_ltl_eventually(formula: Eventually) -> ltl.Ltl:
+    """Translate a bounded/unbounded eventually node into equivalent LTL."""
     a, b = formula.interval
     subf = mtl_to_ltl(formula.operand)
     out = subf
@@ -104,6 +127,7 @@ def _mtl_to_ltl_eventually(formula: Eventually) -> ltl.Ltl:
 
 
 def _mtl_to_ltl_always(formula: Always) -> ltl.Ltl:
+    """Translate a bounded/unbounded always node into equivalent LTL."""
     a, b = formula.interval
     subf = mtl_to_ltl(formula.operand)
     out = subf
@@ -118,6 +142,7 @@ def _mtl_to_ltl_always(formula: Always) -> ltl.Ltl:
 
 
 def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
+    """Translate a bounded/unbounded until node into equivalent LTL."""
     a, b = formula.interval
     left = mtl_to_ltl(formula.left)
     right = mtl_to_ltl(formula.right)
@@ -133,6 +158,7 @@ def _mtl_to_ltl_until(formula: Until) -> ltl.Ltl:
 
 
 def _mtl_to_ltl_release(formula: Release) -> ltl.Ltl:
+    """Translate a bounded/unbounded release node into equivalent LTL."""
     a, b = formula.interval
     left = mtl_to_ltl(formula.left)
     right = mtl_to_ltl(formula.right)
@@ -198,6 +224,8 @@ def make_disjunction(terms: list[ltl.Ltl]) -> ltl.Ltl:
 
 
 class DeBruijnIndexError(IndexError):
+    """Raised when a De Bruijn path is invalid for a formula tree."""
+
     def __init__(
         self,
         indices: list[int],

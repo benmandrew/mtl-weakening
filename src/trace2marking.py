@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class Namespace(argparse.Namespace):
+    """Typed CLI namespace for trace-input arguments."""
+
     trace_file: Path | None
 
 

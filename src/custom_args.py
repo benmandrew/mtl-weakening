@@ -6,6 +6,7 @@ from enum import Enum
 
 
 def _list_of_ints(arg: str) -> list[int]:
+    """Parse a comma-separated list of integers for CLI argument handling."""
     return list(map(int, arg.split(",")))
 
 
@@ -43,6 +44,8 @@ def add_trace_file_argument(parser: argparse.ArgumentParser) -> None:
 
 
 class ModelChecker(Enum):
+    """Supported backend model checkers for analysis workflows."""
+
     NUXMV = "nuxmv"
     SPIN = "spin"
 

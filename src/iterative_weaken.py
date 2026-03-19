@@ -13,6 +13,8 @@ from src.trace_analysis import exceptions, nuxmv, spin
 
 
 class Namespace(argparse.Namespace):
+    """Typed CLI namespace for iterative weakening runs."""
+
     model_checker: custom_args.ModelChecker
     model: Path
     mtl: str
