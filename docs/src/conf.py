@@ -33,7 +33,7 @@ html_title = "CEGIW"
 html_theme_options = {
     "source_repository": "https://github.com/benmandrew/CEGIW/",
     "source_branch": "main",
-    "source_directory": "doc/src/",
+    "source_directory": "docs/src/",
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
     "footer_icons": [

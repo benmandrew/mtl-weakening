@@ -6,4 +6,4 @@ Build HTML documentation from the repository root with:
 make docs
 ```
 
-Output is written to `doc/build/html/index.html`.
+Output is written to `docs/build/html/index.html`.

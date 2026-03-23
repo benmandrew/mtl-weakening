@@ -34,7 +34,7 @@ pylint:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m pylint --score=n
 
 mypy:
-	find . -name "*.py" -not -path "*/.*" -not -path "./doc/*" | PYTHONPATH=src xargs python3 -m mypy --strict
+	find . -name "*.py" -not -path "*/.*" -not -path "./docs/*" | PYTHONPATH=src xargs python3 -m mypy --strict
 
 vulture:
 	find . -name "*.py" -not -path "*/.*" | PYTHONPATH=src xargs python3 -m vulture
@@ -42,5 +42,5 @@ vulture:
 bandit:
 	python3 -m bandit -c pyproject.toml --exclude "./.venv" -r . -q
 
-doc:
-	$(MAKE) -C doc html
+docs:
+	$(MAKE) -C docs html
