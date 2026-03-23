@@ -17,7 +17,7 @@ lint.select = [
     "ALL"
 ]
 src = ["src", "tests"]
-exclude = ["doc"]
+exclude = ["docs"]
 
 lint.ignore = [
     "S101",  # Allow assert

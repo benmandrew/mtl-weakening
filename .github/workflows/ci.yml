@@ -93,7 +93,7 @@ jobs:
       - name: Run bandit
         run: make bandit
 
-  doc:
+  docs:
     name: Build Documentation
     runs-on: ubuntu-latest
     steps:
@@ -109,7 +109,7 @@ jobs:
           pip install -r dev-requirements.txt
 
       - name: Build documentation
-        run: make doc
+        run: make docs
 
   test:
     name: Tests
